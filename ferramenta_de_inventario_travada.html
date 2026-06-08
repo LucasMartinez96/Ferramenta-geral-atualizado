@@ -1,0 +1,445 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Inventário (Leve)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- XLSX (Excel/CSV) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f6f9; --card: #fff; --text: #2c3e50; --accent: #1e88e5;
+      --good: #2e7d32; --bad: #c62828; --neutral: #555; --border: #ddd;
+    }
+    body { font-family: Arial, sans-serif; background: var(--bg); padding: 20px; color: var(--text); }
+    h1 { text-align: center; margin-bottom: 10px; }
+    .container { max-width: 1000px; margin: auto; }
+    .card { background: var(--card); padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    input, button, select { padding: 8px; margin: 5px 0; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+    button { background: var(--accent); color: #fff; border: none; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
+    th { background: var(--text); color: white; position: sticky; top: 0; }
+    .highlight { font-weight: bold; font-size: 18px; }
+    .diff-pos { color: var(--good); font-weight: 600; }
+    .diff-neg { color: var(--bad); font-weight: 600; }
+    .diff-zero { color: var(--neutral); font-weight: 600; }
+    .small { font-size: 12px; color: #555; }
+    .pill { background: #eef6ff; border: 1px solid #cfe0ff; border-radius: 10px; padding: 10px; }
+    .pill h4 { margin: 0 0 6px 0; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Dashboard de Inventário (Leve)</h1>
+
+    <!-- Upload e seleção de aba -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="fileInput"><strong>Arquivo (Excel/CSV):</strong></label><br />
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <span class="small" id="fileNameLabel">Nenhum arquivo</span>
+            <button id="btnClearFile" disabled>Limpar Arquivo</button>
+          </div>
+          <div class="small">Colunas: <em>Item</em>, <em>Quantity</em>, <em>Transaction Date</em>, <em>Subinventory</em>, <em>Source</em>.</div>
+        </div>
+        <div>
+          <label for="sheetSelect"><strong>Aba (se houver):</strong></label><br />
+          <select id="sheetSelect" disabled></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Busca por item (resumo) -->
+    <div class="card">
+      <h3>🔍 Pesquisar Item</h3>
+      <div class="row-3">
+        <input type="text" id="itemSearch" placeholder="Digite parte do código/nome do item" />
+        <button id="btnBuscar">Buscar</button>
+        <button id="btnLimpar">Limpar</button>
+      </div>
+      <p class="highlight">📦 Contado (CARGA): <span id="contado">-</span></p>
+      <p class="highlight">🧮 Sistema (ZERAR): <span id="sistema">-</span></p>
+      <p class="highlight">📊 Diferença (Contado + Sistema): <span id="diferenca">-</span></p>
+    </div>
+
+    <!-- Painel filho – detalhe por Subinventory do Item (oculto até filtrar) -->
+    <div id="subCard" class="card hidden">
+      <h3>🧩 Detalhe por Subinventory do Item</h3>
+
+      <!-- Linha 1: MON -->
+      <div class="grid-2">
+        <div class="pill">
+          <h4>🏭 Fábrica 1 (7120MON)</h4>
+          <div>Contado: <strong id="fabMon1Contado">-</strong></div>
+          <div>Sistema: <strong id="fabMon1Sistema">-</strong></div>
+          <div>Diferença (Contado + Sistema): <strong id="fabMon1Diff">-</strong></div>
+        </div>
+        <div class="pill">
+          <h4>🏭 Fábrica 2 (7320MON)</h4>
+          <div>Contado: <strong id="fabMon2Contado">-</strong></div>
+          <div>Sistema: <strong id="fabMon2Sistema">-</strong></div>
+          <div>Diferença (Contado + Sistema): <strong id="fabMon2Diff">-</strong></div>
+        </div>
+      </div>
+
+      <!-- Linha 2: ALM -->
+      <div class="grid-2" style="margin-top:10px;">
+        <div class="pill">
+          <h4>🏭 Fábrica 1 (7112ALM)</h4>
+          <div>Contado: <strong id="fabAlm1Contado">-</strong></div>
+          <div>Sistema: <strong id="fabAlm1Sistema">-</strong></div>
+          <div>Diferença (Contado + Sistema): <strong id="fabAlm1Diff">-</strong></div>
+        </div>
+        <div class="pill">
+          <h4>🏭 Fábrica 2 (7312ALM)</h4>
+          <div>Contado: <strong id="fabAlm2Contado">-</strong></div>
+          <div>Sistema: <strong id="fabAlm2Sistema">-</strong></div>
+          <div>Diferença (Contado + Sistema): <strong id="fabAlm2Diff">-</strong></div>
+        </div>
+      </div>
+
+      <div class="small" style="margin-top:12px">
+        A tabela abaixo lista <strong>todos</strong> os Subinventory do item (ex.: 7112ALM, 7120MON, 7320MONPH, 7154DMO, 7148MET, 7138COF…), com Contado, Sistema e Diferença.
+      </div>
+
+      <table style="margin-top:10px">
+        <thead>
+          <tr>
+            <th>Subinventory</th>
+            <th>Contado (CARGA)</th>
+            <th>Sistema (ZERAR)</th>
+            <th>Diferença (Contado + Sistema)</th>
+          </tr>
+        </thead>
+        <tbody id="subTabela"></tbody>
+      </table>
+      <div id="noSubMsg" class="small hidden" style="margin-top:8px; color:#888;">
+        Nenhum dado de Subinventory encontrado para este Item.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let dados = {};
+
+    /* Conversão robusta: aceita "1.234,56" ou "1,234.56" */
+    function toNumberFlexible(v) {
+      if (v === null || v === undefined) return 0;
+      let s = String(v).trim();
+      if (s === "") return 0;
+      const hasComma = s.includes(","); const hasDot = s.includes(".");
+      if (hasComma && hasDot) { s = s.replace(/\./g, "").replace(/,/g, "."); }
+      else if (hasComma && !hasDot) { s = s.replace(/,/g, "."); }
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+    const diffSum = (contado, sistema) => contado + sistema;
+    const cleanText = (s) => String(s || "").replace(/\s+/g, " ").trim();
+    const upper = (s) => cleanText(s).toUpperCase();
+
+ // Persistência simples (somente resultados processados)
+ const STORAGE_KEY = 'inventario_state_v1';
+
+
+    /* Regra robusta para origem: palavras-chave */
+    function isContado(source) {
+      const u = upper(source);
+      return u.includes("CARGA"); // "INV FIS ANUAL CARGA", "INV FISICO ANUAL CARGA IDL", etc.
+    }
+    function isSistema(source) {
+      const u = upper(source);
+      return u.includes("ZERAR"); // "INV FIS ANUAL ZERAR", "INV FISICO ANUAL ZERAR IDL", etc.
+    }
+
+    /* Grupos de fábricas por prefixo */
+    const GROUPS = {
+      MON1: ["7120MON"],       // inclui 7120MON, 7120MONPH, 7120MON...
+      MON2: ["7320MON"],       // inclui 7320MON, 7320MONPH, 7320MON...
+      ALM1: ["7112ALM"],       // inclui 7112ALM...
+      ALM2: ["7312ALM"],       // inclui 7312ALM...
+    };
+    function sumGroup(porSub, prefixes) {
+      let c = 0, s = 0;
+      const keys = Object.keys(porSub || {});
+      keys.forEach(k => {
+        if (prefixes.some(p => k.startsWith(p))) {
+          c += porSub[k].contado || 0;
+          s += porSub[k].sistema || 0;
+        }
+      });
+      return { contado: c, sistema: s, diff: diffSum(c, s) };
+    }
+
+    /* Elementos */
+    const fileInput = document.getElementById('fileInput');
+    const sheetSelect = document.getElementById('sheetSelect');
+    const itemSearch = document.getElementById('itemSearch');
+    const btnBuscar = document.getElementById('btnBuscar');
+    const btnLimpar = document.getElementById('btnLimpar');
+ const btnClearFile = document.getElementById('btnClearFile');
+ const fileNameLabel = document.getElementById('fileNameLabel');
+
+    const contadoSpan = document.getElementById('contado');
+    const sistemaSpan = document.getElementById('sistema');
+    const diferencaSpan = document.getElementById('diferenca');
+
+    const subCard = document.getElementById('subCard');
+    const subTabela = document.getElementById('subTabela');
+    const noSubMsg = document.getElementById('noSubMsg');
+
+    /* Fábricas – MON */
+    const fabMon1Contado = document.getElementById('fabMon1Contado');
+    const fabMon1Sistema = document.getElementById('fabMon1Sistema');
+    const fabMon1Diff    = document.getElementById('fabMon1Diff');
+    const fabMon2Contado = document.getElementById('fabMon2Contado');
+    const fabMon2Sistema = document.getElementById('fabMon2Sistema');
+    const fabMon2Diff    = document.getElementById('fabMon2Diff');
+    /* Fábricas – ALM */
+    const fabAlm1Contado = document.getElementById('fabAlm1Contado');
+    const fabAlm1Sistema = document.getElementById('fabAlm1Sistema');
+    const fabAlm1Diff    = document.getElementById('fabAlm1Diff');
+    const fabAlm2Contado = document.getElementById('fabAlm2Contado');
+    const fabAlm2Sistema = document.getElementById('fabAlm2Sistema');
+    const fabAlm2Diff    = document.getElementById('fabAlm2Diff');
+
+    /* Upload / leitura */
+    fileInput.addEventListener('change', async (e) => {
+      resetUI(true);
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const workbook = XLSX.read(ev.target.result, { type: 'binary' });
+
+        // Preenche lista de abas (se houver)
+        sheetSelect.innerHTML = '';
+        workbook.SheetNames.forEach((name) => {
+          const opt = document.createElement('option');
+          opt.value = name; opt.textContent = name;
+          sheetSelect.appendChild(opt);
+        });
+        sheetSelect.disabled = false;
+
+        processSheet(workbook, workbook.SheetNames[0]);
+      // Travar apenas o arquivo (Opção A)
+      fileInput.disabled = true;
+      btnClearFile.disabled = false;
+      fileNameLabel.textContent = file.name;
+      // Persistir estado (dados + sheet selecionada + nome do arquivo)
+      try {
+        const state = { fileName: file.name, sheetName: sheetSelect.value, dados };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { console.warn('Estado não salvo (tamanho excedido?)', e); }
+      };
+      reader.readAsBinaryString(file);
+    });
+
+    sheetSelect.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const wb = XLSX.read(ev.target.result, { type: 'binary' });
+        processSheet(wb, sheetSelect.value);
+    // Atualiza estado persistido com a nova aba selecionada
+    try {
+      const prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const state = { fileName: prev.fileName || (file && file.name) || '', sheetName: sheetSelect.value, dados };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch(e){}
+      };
+      reader.readAsBinaryString(file);
+    });
+
+    function processSheet(workbook, sheetName) {
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+
+      dados = {};
+      rows.forEach((l) => {
+        const item = cleanText(l.Item);
+        const qtd = toNumberFlexible(l.Quantity);
+        const origem = cleanText(l.Source);
+        const subinv = cleanText(l.Subinventory);
+
+        if (!item) return;
+
+        // Cria a estrutura por item e subinventory assim que aparecem (mesmo que a soma vire 0)
+        if (!dados[item]) dados[item] = { contado: 0, sistema: 0, porSub: {} };
+        if (subinv && !dados[item].porSub[subinv]) dados[item].porSub[subinv] = { contado: 0, sistema: 0 };
+
+        // Soma por origem usando palavras-chave
+        if (isContado(origem)) {
+          dados[item].contado += qtd;
+          if (subinv) dados[item].porSub[subinv].contado += qtd;
+        } else if (isSistema(origem)) {
+          dados[item].sistema += qtd;
+          if (subinv) dados[item].porSub[subinv].sistema += qtd;
+        } else {
+          // Origem não mapeada: mantém o subinv registrado, sem somar
+        }
+      });
+
+      resetUI(false); // painel só aparece após buscar
+    }
+
+    /* Busca + painel por Subinventory */
+    btnBuscar.addEventListener('click', buscarItem);
+    itemSearch.addEventListener('keydown', (e) => { if (e.key === 'Enter') buscarItem(); });
+    btnLimpar.addEventListener('click', () => resetUI(true));
+
+    function buscarItem() {
+      const q = itemSearch.value.trim().toLowerCase();
+      if (!q) return;
+
+      const match = Object.keys(dados).find(i => i.toLowerCase().includes(q));
+      if (!match) { alert('Item não encontrado'); return; }
+
+      const d = dados[match];
+
+      // Resumo do item
+      const diff = diffSum(d.contado, d.sistema);
+      contadoSpan.innerText = d.contado;
+      sistemaSpan.innerText = d.sistema;
+      diferencaSpan.innerText = diff;
+
+      // Mostra painel
+      subCard.classList.remove('hidden');
+
+      // Cards das fábricas via grupos (prefixos)
+      const porSub = d.porSub || {};
+
+      const gMon1 = sumGroup(porSub, GROUPS.MON1);
+      fabMon1Contado.innerText = gMon1.contado;
+      fabMon1Sistema.innerText = gMon1.sistema;
+      fabMon1Diff.innerText    = gMon1.diff;
+
+      const gMon2 = sumGroup(porSub, GROUPS.MON2);
+      fabMon2Contado.innerText = gMon2.contado;
+      fabMon2Sistema.innerText = gMon2.sistema;
+      fabMon2Diff.innerText    = gMon2.diff;
+
+      const gAlm1 = sumGroup(porSub, GROUPS.ALM1);
+      fabAlm1Contado.innerText = gAlm1.contado;
+      fabAlm1Sistema.innerText = gAlm1.sistema;
+      fabAlm1Diff.innerText    = gAlm1.diff;
+
+      const gAlm2 = sumGroup(porSub, GROUPS.ALM2);
+      fabAlm2Contado.innerText = gAlm2.contado;
+      fabAlm2Sistema.innerText = gAlm2.sistema;
+      fabAlm2Diff.innerText    = gAlm2.diff;
+
+      // Tabela: listar TODOS os Subinventory do item (mesmo que Contado+Sistema = 0)
+      subTabela.innerHTML = '';
+      const linhas = Object.keys(porSub)
+        .map(sub => {
+          const r = porSub[sub];
+          return { sub, contado: r.contado, sistema: r.sistema, dif: diffSum(r.contado, r.sistema) };
+        })
+        .sort((a, b) => a.sub.localeCompare(b.sub)); // ordena por nome
+
+      if (linhas.length === 0) {
+        noSubMsg.classList.remove('hidden');
+      } else {
+        noSubMsg.classList.add('hidden');
+        linhas.forEach(({ sub, contado, sistema, dif }) => {
+          const cls = dif > 0 ? 'diff-pos' : (dif < 0 ? 'diff-neg' : 'diff-zero');
+          subTabela.innerHTML += `
+            <tr>
+              <td>${sub}</td>
+              <td>${contado}</td>
+              <td>${sistema}</td>
+              <td class="${cls}">${dif}</td>
+            </tr>`;
+        });
+      }
+    }
+
+    function resetUI(clearSearch) {
+      if (clearSearch) itemSearch.value = '';
+      contadoSpan.innerText = '-';
+      sistemaSpan.innerText = '-';
+      diferencaSpan.innerText = '-';
+
+      // Zera cards MON
+      fabMon1Contado.innerText = '-';
+      fabMon1Sistema.innerText = '-';
+      fabMon1Diff.innerText    = '-';
+      fabMon2Contado.innerText = '-';
+      fabMon2Sistema.innerText = '-';
+      fabMon2Diff.innerText    = '-';
+
+      // Zera cards ALM
+      fabAlm1Contado.innerText = '-';
+      fabAlm1Sistema.innerText = '-';
+      fabAlm1Diff.innerText    = '-';
+      fabAlm2Contado.innerText = '-';
+      fabAlm2Sistema.innerText = '-';
+      fabAlm2Diff.innerText    = '-';
+
+      subTabela.innerHTML = '';
+      noSubMsg.classList.add('hidden');
+      subCard.classList.add('hidden');
+    }
+  
+
+// ===== Persistência: limpar tudo (arquivo + resultados) =====
+function clearFileState(){
+  try { localStorage.removeItem(STORAGE_KEY); } catch(_){}
+  // Zera memória
+  dados = {};
+  // Destrava input de arquivo e reseta
+  fileInput.disabled = false;
+  try { fileInput.value = ''; } catch(_){/* alguns browsers bloqueiam */}
+  // Reseta sheetSelect
+  sheetSelect.innerHTML = '';
+  sheetSelect.disabled = true;
+  // UI
+  fileNameLabel.textContent = 'Nenhum arquivo';
+  btnClearFile.disabled = true;
+  // Limpa paineis/busca
+  resetUI(true);
+}
+
+// Botão para limpar arquivo carregado
+btnClearFile.addEventListener('click', clearFileState);
+
+// ===== Restauração automática na abertura =====
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const state = JSON.parse(raw);
+    if(state && state.dados && state.fileName){
+      // Restaura os dados processados
+      dados = state.dados;
+      // Trava arquivo
+      fileInput.disabled = true;
+      btnClearFile.disabled = false;
+      fileNameLabel.textContent = state.fileName;
+      // Sheet selecionada (sem workbook, apenas exibição)
+      sheetSelect.innerHTML = '';
+      if(state.sheetName){
+        const opt = document.createElement('option');
+        opt.value = state.sheetName; opt.textContent = state.sheetName;
+        sheetSelect.appendChild(opt);
+      }
+      sheetSelect.disabled = true; // sem workbook não é possível trocar após restaurar
+      // Mantém UI limpa até o usuário buscar
+      resetUI(true);
+    }
+  } catch(e){ console.warn('Falha ao restaurar estado do inventário:', e); }
+});
+</script>
+<div style="text-align:center;margin-top:40px;color:#ff0000;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>

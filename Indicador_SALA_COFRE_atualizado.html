@@ -1,0 +1,936 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>One Pager - Gestão de Estoque (WMS + Inventários)</title>
+
+  <!-- Bibliotecas -->
+  <script src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      --azul:#003366;
+      --azul-escuro:#0b2545;
+      --azul-botao:#0a4aa6;
+      --cinza:#6b7280;
+      --bg:#f4f6f8;
+      --verde:#2e7d32;
+      --vermelho:#c62828;
+      --perigo:#b91c1c;
+
+      /* Header */
+      --hdr-grad-start:#0b2545;
+      --hdr-grad-end:#0a4aa6;
+      --hdr-text:#ffffff;
+      --hdr-accent:#8ab4ff;
+    }
+    body { font-family: Arial, sans-serif; background: var(--bg); padding: 20px; color: #222; }
+    h1 { margin-bottom: 10px; text-align: center; }
+
+    /* ===================== HEADER ELEGANTE ===================== */
+    .app-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; margin: -10px -10px 18px -10px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--hdr-grad-start), var(--hdr-grad-end));
+      color: var(--hdr-text);
+      box-shadow: 0 10px 30px rgba(10, 30, 60, 0.25);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .app-header .left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .app-header .logo-wrap {
+      width: 44px; height: 44px; display: grid; place-items: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; overflow: hidden;
+    }
+    .app-header .logo-wrap img {
+      width: 36px; height: 36px; object-fit: contain; display: block;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
+    }
+    .app-header .title-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .app-header .title {
+      font-size: 18px; font-weight: 800; letter-spacing: .3px; line-height: 1.15;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .app-header .subtitle {
+      font-size: 12px; color: var(--hdr-accent); opacity: .95; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-variant-numeric: tabular-nums; /* relógio mais estável */
+    }
+
+    .app-header .right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      font-size: 12px; color:#f1f5ff; background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.16);
+      padding: 6px 10px; border-radius: 999px;
+    }
+    .btn-hdr {
+      background: rgba(255,255,255,0.14);
+      color: #fff; border: 1px solid rgba(255,255,255,0.18);
+      padding: 8px 12px; border-radius: 10px; cursor: pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn-hdr:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.25); }
+    .btn-hdr:active { transform: translateY(1px); }
+
+    .box { background:#fff; padding:15px; border-radius:8px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+    .box h3 { margin-bottom:10px; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+    .box canvas { width:100% !important; max-height:320px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { border:1px solid #ddd; padding:8px; text-align:left; vertical-align:top; }
+    th { background:#eee; position: sticky; top:0; z-index:1; }
+    .muted { color:#666; font-size:12px; }
+    .file-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .kpi-row { display:grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap:10px; margin-bottom:10px; }
+    .kpi { background:#f7f9fc; border:1px solid #e3e8ef; border-radius:8px; padding:10px; }
+    .kpi .label { font-size:12px; color:#667085; }
+    .kpi .value { font-size:18px; font-weight:700; margin-top:4px; }
+    .th-sortable { cursor:pointer; user-select:none; }
+
+    /* Modal */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .modal { width:min(520px, 92vw); background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,.25); }
+    .modal-header { background: var(--azul); color:#fff; padding:14px 16px; font-weight:700; display:flex; align-items:center; justify-content:space-between; }
+    .modal-body { padding:16px; }
+    .modal-row { display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:8px; }
+    .modal-footer { padding:16px; background:#fafafa; display:flex; gap:10px; justify-content:flex-end; }
+    .modal .label { font-size:12px; color:#667085; margin-bottom:4px; display:block; }
+    .modal .value { font-size:20px; font-weight:700; color:#0f766e; }
+    .modal input[type="date"] { width:100%; padding:8px; border:1px solid #e3e8ef; border-radius:6px; }
+    .btn-primary { background: var(--azul-botao); }
+    .btn-cancel { background: var(--cinza); }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .app-header { flex-direction: column; align-items: stretch; gap: 10px; }
+      .app-header .right { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ====== Cabeçalho com relógio + botões principais ====== -->
+  <header class="app-header" aria-label="Cabeçalho da aplicação">
+    <div class="left">
+      <div class="logo-wrap">
+        <img src="Imagem1.png" alt="Logo" />
+      </div>
+      <div class="title-block">
+        <div class="title">SALA COFRE · Gestão de Estoque</div>
+        <!-- Subtítulo: data + hora com segundos (relógio ao vivo) -->
+        <div class="subtitle" id="hdrSubtitulo">--/--/---- • --:--:--</div>
+      </div>
+    </div>
+    <div class="right">
+      <span class="chip" id="hdrDataChip">Atualizado: --/--/----</span>
+      <!-- Botões oficiais (no header) -->
+      <button class="btn-hdr" id="btnBaixarCSV" aria-label="Baixar tabela em CSV">Baixar tabela (CSV)</button>
+      <button class="btn-hdr" id="btnExportarHistorico" aria-label="Exportar histórico em Excel">Exportar histórico (Excel)</button>
+      <button class="btn-hdr" id="btnSalvarSnapshot" aria-label="Salvar histórico (congelar dados)">Salvar histórico (congelar)</button>
+      <button class="btn-hdr" id="btnLimparHistoricoGeral" aria-label="Limpar histórico geral">Limpar histórico geral</button>
+    </div>
+  </header>
+
+  <!-- (H1 mantido por SEO/estrutura) -->
+  <h1 id="titulo">Gestão de Estoque</h1>
+
+  <div class="box">
+    <div class="file-row">
+      <h3>📂 Importar Arquivo Excel</h3>
+      <input type="file" id="fileInput" accept=".xlsx" aria-label="Importar arquivo Excel" />
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="kpi-row">
+      <div class="kpi"><div class="label">📅 Atualizado em</div><div class="value" id="dataAtual">--/--/----</div></div>
+      <div class="kpi"><div class="label">📦 Quantidade de Peças</div><div class="value" id="kpiPecas">0</div></div>
+      <div class="kpi"><div class="label">🎯 Acuracidade (%)</div><div class="value" id="kpiAcuracidade">—</div></div>
+      <div class="kpi">
+        <div class="label">📖 Ver inventário do dia</div>
+        <div class="value">
+          <select id="selDiaInv" aria-label="Selecionar dia do inventário"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h3>📈 Histórico de Acuracidade dos Inventários</h3>
+      <div style="height:320px;"><canvas id="chartHistoricoInv"></canvas></div>
+    </div>
+    <div class="box">
+      <h3>🥧 Acuracidade (OK × Desvio)</h3>
+      <div style="height:320px;"><canvas id="chartAcuraciaPizza"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Desvios -->
+  <div class="box">
+    <h3 id="tituloDesvios">📋 Produtos com Desvio</h3>
+    <div style="overflow:auto; max-height:420px;">
+      <table id="tabelaDesvios">
+        <thead><tr id="theadDesvios"></tr></thead>
+        <tbody id="tbodyDesvios"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tabela principal -->
+  <div class="box">
+    <h3>🧾 Dados — Atualizado em: <span id="dataAtualTabela"></span></h3>
+    <div class="file-row" role="group" aria-label="Filtrar e ordenar tabela principal">
+      <input id="filterInput" class="grow" type="text" placeholder="🔎 Filtrar por qualquer coluna..." aria-label="Filtro rápido da tabela principal" />
+      <button id="clearFilterBtn" class="secondary" aria-label="Limpar filtro">Limpar filtro</button>
+    </div>
+
+    <div style="overflow:auto; max-height:420px;">
+      <table id="tabela" aria-label="Tabela de dados do WMS">
+        <thead><tr id="theadRow"></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="muted" id="filterInfo" aria-live="polite"></div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay" aria-modal="true" role="dialog" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header"><div id="modalTitle">Registrar Inventário</div></div>
+      <div class="modal-body">
+        <div>
+          <span class="label">Acuracidade calculada</span>
+          <div class="value" id="modalAcuraciaValor">0,0%</div>
+        </div>
+        <div class="modal-row" style="margin-top:12px;">
+          <div>
+            <label for="modalData" class="label">Data do inventário</label>
+            <input type="date" id="modalData" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btnModalCancelar">Cancelar</button>
+        <button class="btn-primary" id="btnModalSalvar">Salvar inventário</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================
+    TÍTULO / DATA + RELÓGIO
+============================================================ */
+(function setTitulo(){
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const hoje = new Date();
+  const sub = `${meses[hoje.getMonth()]}/${hoje.getFullYear()}`;
+  document.getElementById('titulo').innerText = `Gestão de Estoque - ${sub}`;
+})();
+
+const LOCALE = 'pt-BR';
+const INV_KEY = 'historico_inventarios';
+const INV_SNAP_KEY = 'historico_inventarios_snap';
+
+let chartInv = null;
+let chartPizza = null;
+let lastComputed = { acuracia: 0, ok: 0, total: 0 };
+
+let TBL_HEADERS = [];
+let TBL_ROWS = [];
+let TBL_FILTER = '';
+let TBL_SORT = { colIndex: null, asc: true };
+
+/* Datas locais (evita fuso) */
+function todayLocalISO(){
+  const d = new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function yesterdayISO(){
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function atualizarData(){
+  const br = new Date().toLocaleDateString(LOCALE);
+  const chip = document.getElementById('hdrDataChip');
+  if (chip) chip.textContent = `Atualizado: ${br}`;
+  document.getElementById('dataAtual').innerText = br;
+  document.getElementById('dataAtualTabela').innerText = br;
+}
+
+/* Relógio ao vivo no header */
+function formatHeaderClock(dateObj){
+  const data = dateObj.toLocaleDateString(LOCALE);
+  const hora = dateObj.toLocaleTimeString(LOCALE, { hour12:false }); // HH:MM:SS
+  return `${data} • ${hora}`;
+}
+function startHeaderClock(){
+  const el = document.getElementById('hdrSubtitulo');
+  if (!el) return;
+  const tick = () => { el.textContent = formatHeaderClock(new Date()); };
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* ============================================================
+    HISTÓRICO (acurácia)
+============================================================ */
+function carregarInventarios(){
+  try { return JSON.parse(localStorage.getItem(INV_KEY)) || []; }
+  catch { return []; }
+}
+function salvarInventarioRegistro(reg){
+  const hist = carregarInventarios();
+  hist.push({ data: reg.data, acuracia: reg.acuracia, timestamp: Date.now() });
+  hist.sort((a,b)=> a.data.localeCompare(b.data));
+  localStorage.setItem(INV_KEY, JSON.stringify(hist));
+  return hist;
+}
+
+function limparHistoricoGeral(){
+  // Apaga histórico de inventários e snapshots (LIMPA GERAL)
+  localStorage.removeItem(INV_KEY);
+  localStorage.removeItem(INV_SNAP_KEY);
+
+  // Zera dataset e estado de tabela
+  TBL_HEADERS = []; TBL_ROWS = []; TBL_FILTER = '';
+  TBL_SORT = { colIndex: null, asc: true };
+  const thead = document.getElementById('theadRow');
+  const tbody = document.querySelector('#tabela tbody');
+  if (thead) thead.innerHTML = '';
+  if (tbody) tbody.innerHTML = '';
+  const theadD = document.getElementById('theadDesvios');
+  const tbodyD = document.getElementById('tbodyDesvios');
+  if (theadD) theadD.innerHTML = '';
+  if (tbodyD) tbodyD.innerHTML = '';
+
+  // Zera KPIs e datas exibidas
+  const zeroDate = '--/--/----';
+  const chip = document.getElementById('hdrDataChip');
+  if (chip) chip.textContent = `Atualizado: ${zeroDate}`;
+  document.getElementById('dataAtual').innerText = zeroDate;
+  document.getElementById('dataAtualTabela').innerText = zeroDate;
+  document.getElementById('kpiPecas').innerText = '0';
+  document.getElementById('kpiAcuracidade').innerText = '—';
+
+  // Reseta título de desvios
+  const titulo = document.getElementById('tituloDesvios');
+  if (titulo){ titulo.textContent='📋 Produtos com Desvio'; titulo.style.color=''; titulo.style.fontWeight=''; }
+
+  // Destroi gráficos
+  try { if (chartInv) { chartInv.destroy(); chartInv = null; } } catch(e){}
+  try { if (chartPizza) { chartPizza.destroy(); chartPizza = null; } } catch(e){}
+
+  // Recarrega select vazio e destrava UI
+  reRenderInventarioSelectOptions();
+  setLockMode(false);
+}
+
+/* ============================================================
+    SNAPSHOTS (congelar dados)
+============================================================ */
+function carregarSnapshots(){
+  try { return JSON.parse(localStorage.getItem(INV_SNAP_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function salvarSnapshot(isoData, headers, rows, opts={ overwrite:false }) {
+  if (!isoData) throw new Error('Data ISO não informada.');
+  const snaps = carregarSnapshots();
+  if (!opts.overwrite && snaps[isoData]) return { ok:false, reason:'exists' };
+  const kpis = computeKPIs(headers, rows);
+  snaps[isoData] = {
+    savedAt: Date.now(),
+    headers: [...headers],
+    rows: rows.map(r => ({...r})),
+    kpis
+  };
+  localStorage.setItem(INV_SNAP_KEY, JSON.stringify(snaps));
+  return { ok:true };
+}
+
+function carregarSnapshotPorData(isoData){
+  const snaps = carregarSnapshots();
+  return snaps[isoData] || null;
+}
+
+/* ============================================================
+    GRÁFICOS (com proteção)
+============================================================ */
+function desenharHistoricoInventarios(){
+  const ctx = document.getElementById('chartHistoricoInv');
+  if (!ctx) return;
+  try {
+    if (chartInv) chartInv.destroy();
+    const hist = carregarInventarios();
+    const ordenado = [...hist].sort((a,b)=> a.data.localeCompare(b.data));
+    const labels  = ordenado.map(h => h.data.split('-').reverse().join('/'));
+    const valores = ordenado.map(h => Number(h.acuracia.toFixed(2)));
+    if (typeof Chart === 'undefined') return;
+
+    chartInv = new Chart(ctx, {
+      type:'line',
+      data:{ labels, datasets:[{ label:'Acuracidade do inventário (%)', data: valores, borderColor:'#0f766e', backgroundColor:'rgba(15,118,110,.15)', fill:true, tension:.2, pointRadius:3 }] },
+      options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ min:0, max:100, ticks:{ callback:v=>`${v}%` } } } }
+    });
+  } catch (err) {
+    console.error('Erro ao desenhar histórico:', err);
+  }
+}
+function desenharPizzaAcuracia(acur){
+  const ctx = document.getElementById('chartAcuraciaPizza');
+  if (!ctx) return;
+  try {
+    if (chartPizza) chartPizza.destroy();
+    if (typeof Chart === 'undefined') return;
+    const ok = Math.max(0, Math.min(100, acur||0));
+    const desvio = 100 - ok;
+    chartPizza = new Chart(ctx, {
+      type:'pie',
+      data:{ labels:['OK','Desvio'], datasets:[{ data:[ok, desvio], backgroundColor:['#2e7d32','#c62828'] }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
+    });
+  } catch (err) {
+    console.error('Erro ao desenhar pizza:', err);
+  }
+}
+
+/* ============================================================
+    HELPERS / TABELAS
+============================================================ */
+
+// --- NOVO: cálculo de KPIs unificado ---
+function computeKPIs(headers, rows) {
+  const colQtd = detectarColunaQuantidade(headers, rows) || 'Quantidade';
+  let totalQtdPecas = 0, ok = 0, desvio = 0;
+  for (const r of rows) {
+    const qRaw = toNumber(r[colQtd]);
+    const q = Number.isFinite(qRaw) ? qRaw : 0;
+    totalQtdPecas += q;
+    if (q > 0) ok++; else desvio++;
+  }
+  const total = ok + desvio;
+  const acuracia = total > 0 ? (ok / total) * 100 : 0;
+  return { totalQtdPecas, ok, desvio, acuracia };
+}
+
+// --- NOVO: modo de trava (congela UI quando um snapshot é aplicado) ---
+let LOCKED = false;
+function setLockMode(on, iso = null) {
+  LOCKED = !!on;
+  const file = document.getElementById('fileInput');
+  const btnSalvar = document.getElementById('btnSalvarSnapshot');
+  if (file) file.disabled = LOCKED;
+  if (btnSalvar) btnSalvar.disabled = LOCKED;
+}
+
+function norm(s){
+  return String(s ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+function toNumber(val){
+  if (val == null) return NaN;
+  if (typeof val === 'number') return Number.isFinite(val) ? val : NaN;
+
+  let s = String(val)
+    .replace(/\s+/g, '')                 // remove espaços
+    .replace(/^R\$\s*/i, '')             // remove R$
+    .replace(/\.(?=\d{3}(\D|$))/g, '')   // remove milhar (1.234 -> 1234)
+    .replace(/,/g, '.');                 // vírgula decimal -> ponto
+
+  if (!s || s === '-' || s === '--') return NaN;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+function isNumericLike(v){ const n = toNumber(v); return Number.isFinite(n); }
+
+/* Zero-like => tratar como desvio */
+function isZeroLike(val){
+  if (val === 0) return true;
+  if (val == null) return true; // null/undefined
+  const s = String(val).trim();
+  if (s === '' || s === '-' || s === '--') return true;
+  const n = toNumber(val);
+  if (Number.isFinite(n)) return Math.abs(n) === 0;
+  // se não foi possível converter, tratamos como desvio (zero-like)
+  return true;
+}
+
+/* Tabela principal */
+function setTableDataset(headers, linhas){
+  TBL_HEADERS = [...headers];
+  TBL_ROWS = [...linhas];
+  TBL_FILTER = '';
+  TBL_SORT = { colIndex: null, asc: true };
+  const fi = document.getElementById('filterInput'); if (fi) fi.value = '';
+  renderTable();
+}
+function getFilteredRows(){
+  if (!TBL_FILTER) return [...TBL_ROWS];
+  const q = TBL_FILTER.toLowerCase();
+  return TBL_ROWS.filter(obj => TBL_HEADERS.some(h => String(obj[h] ?? '').toLowerCase().includes(q)));
+}
+function sortRows(rows){
+  const { colIndex, asc } = TBL_SORT; if (colIndex == null) return rows;
+  const key = TBL_HEADERS[colIndex];
+  return [...rows].sort((a,b)=>{
+    const A = a[key] ?? '', B = b[key] ?? '';
+    const numA = isNumericLike(A), numB = isNumericLike(B);
+    if (numA && numB) { const nA=toNumber(A), nB=toNumber(B); return asc ? (nA-nB) : (nB-nA); }
+    return asc
+      ? String(A).localeCompare(String(B),'pt-BR',{sensitivity:'base',numeric:true})
+      : String(B).localeCompare(String(A),'pt-BR',{sensitivity:'base',numeric:true});
+  });
+}
+function renderTable(){
+  const thead = document.getElementById('theadRow');
+  const tbody = document.querySelector('#tabela tbody');
+  const filterInfo = document.getElementById('filterInfo');
+  if (!thead || !tbody) return;
+  thead.innerHTML=''; tbody.innerHTML='';
+
+  TBL_HEADERS.forEach((h, idx)=>{
+    const th = document.createElement('th');
+    th.className = 'th-sortable';
+    th.tabIndex = 0;
+    th.setAttribute('role','button');
+    th.setAttribute('aria-label', `Ordenar por ${h}`);
+    th.setAttribute('aria-sort', TBL_SORT.colIndex === idx ? (TBL_SORT.asc ? 'ascending' : 'descending') : 'none');
+
+    const indicator = document.createElement('span'); indicator.className = 'sort-indicator';
+    indicator.textContent = (TBL_SORT.colIndex === idx) ? (TBL_SORT.asc ? ' ▲' : ' ▼') : '';
+    const title = document.createElement('span'); title.textContent = h;
+
+    const toggleSort = () => {
+      if (TBL_SORT.colIndex === idx) TBL_SORT.asc = !TBL_SORT.asc;
+      else { TBL_SORT.colIndex = idx; TBL_SORT.asc = true; }
+      renderTable();
+    };
+
+    th.onclick = toggleSort;
+    th.onkeydown = (ev)=>{ if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleSort(); } };
+
+    th.appendChild(title); th.appendChild(indicator); thead.appendChild(th);
+  });
+
+  const filtered = sortRows(getFilteredRows());
+  const frag = document.createDocumentFragment();
+  filtered.forEach(obj=>{
+    const tr = document.createElement('tr');
+    TBL_HEADERS.forEach(h=>{
+      const td = document.createElement('td');
+      td.innerText = obj[h] ?? '';
+      tr.appendChild(td);
+    });
+    frag.appendChild(tr);
+  });
+  tbody.appendChild(frag);
+
+  filterInfo.textContent = TBL_FILTER
+    ? `Filtro: "${TBL_FILTER}" — exibindo ${filtered.length.toLocaleString(LOCALE)} de ${TBL_ROWS.length.toLocaleString(LOCALE)} linha(s).`
+    : `Exibindo ${filtered.length.toLocaleString(LOCALE)} linha(s).`;
+}
+
+/* ============================================================
+    DESVIOS — detecção robusta, título vermelho quando houver
+============================================================ */
+function detectarColuna(headers, candidatos){
+  const H = headers.map(h => ({ raw: h, n: norm(h) }));
+  const candNorm = (arr) => arr.map(norm);
+
+  for (const cands of candidatos){
+    const cns = candNorm(cands);
+    // exato primeiro
+    for (const h of H){ if (cns.includes(h.n)) return h.raw; }
+    // parcial depois
+    for (const h of H){ if (cns.some(c => h.n.includes(c))) return h.raw; }
+  }
+  return null;
+}
+
+// Detecta coluna de quantidade por NOME (score) e por PERFIL de dados (fallback)
+function detectarColunaQuantidade(headers, rows){
+  if (!headers?.length) return null;
+
+  const candidatesByName = [
+    'quantidade', 'qtd', 'qty', 'qde', 'qtde',
+    'saldo', 'onhand', 'on hand', 'estoque', 'stock', 'inventory'
+  ].map(norm);
+
+  // 1) Score por nome
+  let bestByName = null;
+  let bestScore = -1;
+  for (const h of headers){
+    const hn = norm(h);
+    let score = 0;
+    if (candidatesByName.some(k => hn === k)) score += 3;         // match exato
+    if (candidatesByName.some(k => hn.includes(k))) score += 2;   // match parcial
+    if (/\b(qt|qtd|qty)\b/.test(hn)) score += 1;                   // abreviações comuns
+    if (score > bestScore){ bestScore = score; bestByName = h; }
+  }
+  if (bestByName && bestScore >= 2) {
+    console.debug('[desvios] Quantidade por NOME ->', bestByName, '(score', bestScore, ')');
+    return bestByName;
+  }
+
+  // 2) Fallback: perfil de dados
+  let bestByData = null;
+  let bestDataScore = -1;
+  const sample = rows.slice(0, Math.min(rows.length, 1000));
+
+  for (const h of headers){
+    let numCount = 0, zeroOrNeg = 0;
+    for (const r of sample){
+      const v = toNumber(r[h]);
+      if (Number.isFinite(v)) {
+        numCount++;
+        if (v <= 0) zeroOrNeg++;
+      }
+    }
+    if (numCount === 0) continue;
+    const percNumeric = numCount / sample.length;
+    const percZeroNeg = zeroOrNeg / numCount;
+    const score = percNumeric * 0.8 + percZeroNeg * 0.2;
+    if (score > bestDataScore){ bestDataScore = score; bestByData = h; }
+  }
+  if (bestByData){
+    console.debug('[desvios] Quantidade por DADOS ->', bestByData, '(score', bestDataScore.toFixed(3), ')');
+    return bestByData;
+  }
+
+  console.warn('[desvios] NENHUMA coluna de quantidade detectada.');
+  return null;
+}
+
+function preencherTabelaDesvios(dados, headers){
+  if (!Array.isArray(dados) || !headers?.length) return;
+
+  // 1) Detectar colunas
+  const colQtd = detectarColunaQuantidade(headers, dados) || 'Quantidade';
+  const colPeca     = detectarColuna(headers, [['peça','peca','produto','item','código','codigo','sku','material']]);
+  const colEtiqueta = detectarColuna(headers, [['etiqueta','tag','serial','sn','id']]);
+  const colProjeto  = detectarColuna(headers, [['projeto','project','job','ordem']]);
+  const colLocal    = detectarColuna(headers, [['localização','localizacao','location','bin','rua','endereco','endereço']]);
+
+  const colunasEx = [colPeca, colEtiqueta, colProjeto, colLocal, colQtd].filter(Boolean);
+  if (!colunasEx.length) colunasEx.push(colQtd);
+
+  const thead = document.getElementById('theadDesvios');
+  const tbody = document.getElementById('tbodyDesvios');
+  if (!thead || !tbody){ console.warn('[desvios] tabela não encontrada no DOM'); return; }
+  thead.innerHTML=''; tbody.innerHTML='';
+
+  // Cabeçalho
+  colunasEx.forEach(c=>{
+    const th = document.createElement('th');
+    th.innerText = c;
+    thead.appendChild(th);
+  });
+
+  if (!colQtd || !headers.includes(colQtd)) {
+    console.warn('[desvios] Coluna de quantidade não localizada entre headers:', headers);
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = colunasEx.length;
+    td.innerText = 'Não foi possível detectar a coluna de quantidade.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    // Título cinza (sem alerta) quando não sabemos a coluna
+    const titulo = document.getElementById('tituloDesvios');
+    if (titulo) titulo.style.color = '';
+    return;
+  }
+
+  // 2) Filtra desvios (zero-like ou <= 0)
+  const desvios = dados.filter(r => {
+    const raw = r[colQtd];
+    const n = toNumber(raw);
+    const zeroLike = isZeroLike(raw);
+    return zeroLike || (Number.isFinite(n) && n <= 0);
+  });
+
+  // 3) Ordena por peça/etiqueta se existirem
+  const chaveOrdenacao = colPeca || colEtiqueta || colQtd;
+  desvios.sort((a,b) => String(a[chaveOrdenacao] ?? '')
+    .localeCompare(String(b[chaveOrdenacao] ?? ''), 'pt-BR', { sensitivity:'base', numeric:true }));
+
+  // 4) Render
+  if (!desvios.length){
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = colunasEx.length;
+    td.innerText = 'Nenhum desvio encontrado.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    const frag = document.createDocumentFragment();
+    desvios.forEach(r=>{
+      const tr = document.createElement('tr');
+      colunasEx.forEach(c=>{
+        const td = document.createElement('td');
+        td.innerText = r[c] ?? '';
+        tr.appendChild(td);
+      });
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+  }
+
+  // 5) Título LIMPO e vermelho quando houver desvios
+  const titulo = document.getElementById('tituloDesvios');
+  if (titulo){
+    titulo.textContent = '📋 Produtos com Desvio';
+    titulo.style.color = desvios.length > 0 ? 'var(--vermelho)' : '';
+    titulo.style.fontWeight = desvios.length > 0 ? '700' : '';
+  }
+
+  // 6) Logs de diagnóstico
+  console.debug('[desvios] headers:', headers);
+  console.debug('[desvios] colQtd:', colQtd);
+  console.debug('[desvios] exemplos da coluna quantidade (primeiros 5):',
+    dados.slice(0,5).map(r => r[colQtd]));
+  console.debug('[desvios] total linhas:', dados.length, 'desvios:', desvios.length);
+}
+
+/* ============================================================
+    EXPORTAÇÕES
+============================================================ */
+function exportarTabelaCSV(){
+  const rows = [];
+  const headers=[...document.querySelectorAll('#tabela thead th')].map(th=>th.childNodes[0].textContent);
+  rows.push(headers.join(';'));
+  [...document.querySelectorAll('#tabela tbody tr')].forEach(tr=>{
+    const cols = [...tr.cells].map(td=>`"${td.innerText.replace(/"/g, '""').replace(/;/g, ',')}"`);
+    rows.push(cols.join(';'));
+  });
+  const blob = new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`estoque_wms_${todayLocalISO()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+function exportarHistoricoExcel(){
+  const hist = carregarInventarios();
+  if(!hist.length){ alert("Não há histórico para exportar."); return; }
+  const dados = hist.map(h=>({ Data: h.data.split("-").reverse().join("/"), Acuracidade: h.acuracia.toFixed(2)+"%", Horário: h.timestamp ? new Date(h.timestamp).toLocaleString("pt-BR") : "" }));
+  const ws = XLSX.utils.json_to_sheet(dados);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Histórico");
+  XLSX.writeFile(wb, `historico_inventarios_${todayLocalISO()}.xlsx`);
+}
+
+/* ============================================================
+    MODAL (fecha mesmo com erro nos gráficos)
+============================================================ */
+const modalOverlay=document.getElementById('modalOverlay');
+const modalAcuraciaValor=document.getElementById('modalAcuraciaValor');
+const modalData=document.getElementById('modalData');
+let lastFocused = null;
+const focusableSel = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+function abrirModal(acur){
+  lastFocused = document.activeElement;
+  modalAcuraciaValor.textContent = `${(acur||0).toFixed(1)}%`;
+  modalData.value = yesterdayISO();
+  modalOverlay.style.display='flex';
+  setTimeout(()=> modalData.focus(), 0);
+}
+function fecharModal(){
+  modalOverlay.style.display='none';
+  if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+}
+document.getElementById('btnModalCancelar').onclick = fecharModal;
+modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) fecharModal(); });
+modalOverlay.addEventListener('keydown', (e)=>{
+  if (e.key === 'Escape') fecharModal();
+  if (e.key === 'Tab') {
+    const focusables = modalOverlay.querySelectorAll(focusableSel);
+    if (!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length-1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+document.getElementById('btnModalSalvar').onclick = ()=>{
+  const iso = modalData.value || yesterdayISO();
+  try {
+    salvarInventarioRegistro({ data: iso, acuracia: lastComputed.acuracia });
+
+    try { desenharHistoricoInventarios(); } catch(e){ console.error(e); }
+    try { reRenderInventarioSelectOptions(); } catch(e){ console.error(e); }
+    try {
+      const sel = document.getElementById('selDiaInv');
+      if (sel) sel.value = iso;
+      atualizarViewsAcuraciaPorSelecao();
+    } catch(e){ console.error(e); }
+  } catch(err){
+    console.error('Erro ao salvar inventário:', err);
+    alert('Ocorreu um erro ao salvar o inventário.');
+  } finally {
+    fecharModal(); // SEMPRE fecha
+  }
+};
+
+/* ============================================================
+    PROCESSAMENTO DO WMS
+============================================================ */
+
+function processarWMS(dados){
+  const headers = Object.keys(dados[0] || {});
+  if (!headers.length) { alert('A planilha está vazia.'); return; }
+  const k = computeKPIs(headers, dados);
+  document.getElementById('kpiPecas').innerText = k.totalQtdPecas.toLocaleString(LOCALE);
+  lastComputed = { acuracia: k.acuracia, ok: k.ok, total: k.ok + k.desvio };
+  setTableDataset(headers, dados);
+  preencherTabelaDesvios(dados, headers);
+  abrirModal(k.acuracia);
+}
+
+/* ============================================================
+    SELECT / KPIs POR SELEÇÃO (com snapshot)
+============================================================ */
+function reRenderInventarioSelectOptions(){
+  const sel = document.getElementById('selDiaInv');
+  const hist = carregarInventarios();
+  if (!sel) return;
+  sel.innerHTML = '';
+
+  if (!hist.length){
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '— sem inventários —';
+    sel.appendChild(opt); return;
+  }
+
+  const ordenado = [...hist].sort((a,b)=> b.data.localeCompare(a.data));
+  ordenado.forEach(h=>{
+    const opt=document.createElement('option');
+    opt.value=h.data;
+    const [y,m,d] = h.data.split('-');
+    opt.textContent = `${d}/${m}/${y} — ${h.acuracia.toFixed(1)}%`;
+    sel.appendChild(opt);
+  });
+  if (!sel.value && sel.options.length) sel.value = sel.options[0].value;
+}
+
+
+function atualizarViewsAcuraciaPorSelecao(){
+  const sel = document.getElementById('selDiaInv');
+  if (!sel) return;
+  const iso = sel.value;
+  const hist = carregarInventarios();
+  const inv = hist.find(h => h.data === iso) || { acuracia:0 };
+  document.getElementById('kpiAcuracidade').innerText =
+    inv.acuracia ? `${inv.acuracia.toFixed(1)}%` : '—';
+  try { desenharPizzaAcuracia(inv.acuracia || 0); } catch(e){ console.error(e); }
+  const snap = carregarSnapshotPorData(iso);
+  if (snap && snap.headers && snap.rows) {
+    setTableDataset(snap.headers, snap.rows);
+    preencherTabelaDesvios(snap.rows, snap.headers);
+    const k = snap.kpis || computeKPIs(snap.headers, snap.rows);
+    document.getElementById('kpiPecas').innerText = k.totalQtdPecas.toLocaleString(LOCALE);
+    const ddmmyyyy = iso ? iso.split('-').reverse().join('/') : '--/--/----';
+    const chip = document.getElementById('hdrDataChip');
+    if (chip) chip.textContent = `Atualizado: ${ddmmyyyy}`;
+    document.getElementById('dataAtual').innerText = ddmmyyyy;
+    document.getElementById('dataAtualTabela').innerText = ddmmyyyy;
+    setLockMode(true, iso);
+  } else {
+    const titulo = document.getElementById('tituloDesvios');
+    if (titulo) { titulo.style.color = ''; titulo.style.fontWeight = ''; }
+    setLockMode(false);
+  }
+}
+
+/* ============================================================
+    EVENTOS
+============================================================ */
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const file=e.target.files[0];
+  if(!file) return;
+
+  const reader=new FileReader();
+  reader.onload = evt=>{
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type:'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const dados = XLSX.utils.sheet_to_json(sheet,{defval:''});
+      if(!dados.length){ alert('A planilha está vazia.'); return; }
+      processarWMS(dados);
+    }catch(err){
+      alert('Erro ao ler o arquivo.');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// Botões (no header)
+document.getElementById('btnBaixarCSV').onclick = exportarTabelaCSV;
+document.getElementById('btnExportarHistorico').onclick = exportarHistoricoExcel;
+document.getElementById('btnLimparHistoricoGeral').onclick = () =>{
+  if(confirm("Deseja limpar TODO o histórico?")) limparHistoricoGeral();
+};
+// Salvar snapshot (congelar)
+document.getElementById('btnSalvarSnapshot').onclick = () => {
+  const sel = document.getElementById('selDiaInv');
+  const iso = (sel && sel.value) ? sel.value : yesterdayISO();
+
+  if (!TBL_HEADERS.length || !TBL_ROWS.length) {
+    alert('Não há dados carregados para salvar. Importe um Excel primeiro.');
+    return;
+  }
+
+  const tentativa = salvarSnapshot(iso, TBL_HEADERS, TBL_ROWS, { overwrite:false });
+  if (!tentativa.ok && tentativa.reason === 'exists') {
+    if (confirm(`Já existe snapshot para ${iso}. Deseja substituir?`)) {
+      const res2 = salvarSnapshot(iso, TBL_HEADERS, TBL_ROWS, { overwrite:true });
+      alert(res2.ok ? `Snapshot atualizado para ${iso}.` : 'Não foi possível atualizar o snapshot.');
+    } else {
+      alert('Operação cancelada. O snapshot existente foi mantido.');
+    }
+  } else if (tentativa.ok) {
+    alert(`Snapshot salvo para ${iso}.`);
+  } else {
+    alert('Não foi possível salvar o snapshot.');
+  }
+};
+
+document.getElementById('selDiaInv').onchange = atualizarViewsAcuraciaPorSelecao;
+
+// Filtro rápido com debounce
+function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), ms); }; }
+const applyFilter = debounce(()=>{
+  TBL_FILTER = (document.getElementById('filterInput').value || '').trim();
+  renderTable();
+}, 200);
+document.getElementById('filterInput').addEventListener('input', applyFilter);
+document.getElementById('clearFilterBtn').addEventListener('click', ()=>{
+  TBL_FILTER = ''; document.getElementById('filterInput').value = ''; renderTable();
+});
+
+/* ============================================================
+    BOOT
+============================================================ */
+function boot(){
+  atualizarData();
+  startHeaderClock();
+  reRenderInventarioSelectOptions();
+  desenharHistoricoInventarios();
+  atualizarViewsAcuraciaPorSelecao();
+}
+boot();
+
+</script>
+<div style="text-align:center;margin-top:40px;color:#000000;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>

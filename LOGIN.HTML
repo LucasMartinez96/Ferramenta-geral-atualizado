@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Login Sistema</title>
+
+<style>
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#020617,#0f172a);
+  font-family:Segoe UI;
+  margin:0;
+}
+
+.box{
+  background:#1e293b;
+  padding:35px;
+  border-radius:12px;
+  width:320px;
+  box-shadow:0 0 30px rgba(0,0,0,0.6);
+}
+
+h2{
+  text-align:center;
+  color:white;
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:8px;
+  background:#0f172a;
+  color:#fff;
+  outline:none;
+}
+
+.btn{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.login{
+  background:#2563eb;
+  color:#fff;
+}
+
+.cadastro{
+  background:#334155;
+  color:#fff;
+}
+
+#msg{
+  margin-top:10px;
+  text-align:center;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>Login</h2>
+
+<input id="email" placeholder="Email">
+<input id="senha" type="password" placeholder="Senha">
+
+<button class="btn login" id="login">Entrar</button>
+<button class="btn cadastro" id="cadastro">Criar Conta</button>
+
+<div id="msg"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ✅ SUA CONFIG CORRETA
+const firebaseConfig = {
+  apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
+  authDomain: "meu-sistema-f83ab.firebaseapp.com",
+  projectId: "meu-sistema-f83ab"
+};
+
+// ✅ INIT
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ELEMENTOS
+const msg = document.getElementById("msg");
+
+// ✅ LOGIN
+login.onclick = ()=>{
+  msg.innerText = "Carregando...";
+  msg.style.color = "#fff";
+
+  signInWithEmailAndPassword(auth,email.value,senha.value)
+  .then(()=>{
+    location="index.html";
+  })
+  .catch(e=>{
+    tratarErro(e);
+  });
+};
+
+// ✅ CADASTRO
+cadastro.onclick = async ()=>{
+
+  if(!email.value || !senha.value){
+    msg.innerText="Preencha email e senha";
+    msg.style.color="orange";
+    return;
+  }
+
+  try{
+
+    const cred = await createUserWithEmailAndPassword(
+      auth,email.value,senha.value
+    );
+
+    await setDoc(doc(db,"usuarios",cred.user.uid),{
+      email: email.value,
+      tipo: "admin"
+    });
+
+    msg.innerText="✅ Usuário criado! Agora faça login.";
+    msg.style.color="lightgreen";
+
+  }catch(e){
+    tratarErro(e);
+  }
+};
+
+// ✅ TRATAMENTO PROFISSIONAL DE ERRO
+function tratarErro(e){
+
+  console.log(e);
+
+  if(e.code === "auth/api-key-not-valid"){
+    msg.innerText = "❌ Erro de configuração do Firebase";
+  }
+  else if(e.code === "auth/user-not-found"){
+    msg.innerText = "Usuário não encontrado";
+  }
+  else if(e.code === "auth/wrong-password"){
+    msg.innerText = "Senha incorreta";
+  }
+  else if(e.code === "auth/email-already-in-use"){
+    msg.innerText = "Email já cadastrado";
+  }
+  else{
+    msg.innerText = e.message;
+  }
+
+  msg.style.color = "#f87171";
+}
+
+</script>
+
+</body>
+</html>

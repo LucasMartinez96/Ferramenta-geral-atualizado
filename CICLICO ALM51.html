@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Inventário Cíclico — ALM51</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{ --azul:#2fa8dc; --azul-escuro:#0a5d94; --borda:#b9c3cf; --borda-escura:#8ea0b2; --bg:#f6f8fb; }
+*{ box-sizing:border-box; }
+body{ font-family: Arial, Helvetica, sans-serif; margin:16px; color:#222; background:var(--bg); }
+h2{ font-size:24px; font-weight:800; margin:0 0 12px; }
+.card{ background:#fff; border:1px solid #d1dae3; border-radius:10px; padding:12px; margin:14px 0; }
+.row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+input,button,select{ padding:8px 12px; border:1px solid #c8d2dd; border-radius:6px; }
+input[type="file"]{ padding:6px; }
+button{ cursor:pointer; border:none; }
+.btn-lg{ min-width:200px; padding:12px 18px; font-weight:800; border-radius:8px; font-size:14px; }
+.alt{ background:#e9f6ff; border:2px dashed var(--azul-escuro); color:var(--azul-escuro); }
+.primary{ background:var(--azul); color:#fff; }
+.secondary{ background:#e5eef6; color:#123; }
+.muted{ font-size:12px; color:#666; }
+/* tabela / impressão */
+table{ width:100%; border-collapse:collapse; }
+th,td{ border:1px solid #d8e1ea; padding:4px 6px; font-size:12px; line-height:1.1; }
+th{ background:#eef3f8; font-weight:700; }
+.grid{ border:1px solid #d8e1ea; }
+#printArea{ background:#fff; }
+.sheet{ position:relative; border:3px double var(--borda-escura); padding:12px; margin-bottom:20px; background:#fff; page-break-inside: avoid; display:grid; grid-template-rows:auto 1fr auto; grid-auto-rows:auto; row-gap:4px; }
+.sheet + .sheet{ position:relative; page-break-before: always; }
+.hdr{ display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px; }
+.hdr-left{ line-height:1.2; }
+.hdr-left .titulo{ font-size:16px; font-weight:800; margin:0 0 2px; }
+.hdr-left .dh{ font-size:12px; color:#333; }
+.hdr-right{display:flex;justify-content:flex-end;align-items:center;}
+.hdr-right img{ display:block; height:auto; max-height:18mm; max-width:60mm; object-fit:contain; image-rendering:-webkit-optimize-contrast; }
+.page-header{ margin-bottom:4px; }
+.inventariante{ font-size:12px; margin:4px 0 0; }
+.inventariante .line{ display:inline-block; width:260px; border-bottom:1px solid #666; height:12px; }
+.grid-wrap{ min-height:0; }
+.page-footer{ margin-top:0; font-size:12px; text-align:right; align-self:end; }
+.segmented{ display:inline-flex; border:1px solid #c8d2dd; border-radius:8px; overflow:hidden; background:#fff; }
+.segmented label{ padding:8px 10px; cursor:pointer; font-size:12px; }
+.segmented input{ display:none; }
+.segmented input:checked + span{ background:var(--azul); color:#fff; }
+.small{ font-size:12px; }
+.row.gap8{ gap:8px }
+@media print{
+ @page{ size: A4 landscape; margin:8mm; }
+ html, body{ margin:0 !important; padding:0 !important; background:#fff !important; }
+ /* Esconder qualquer UI de configuração na impressão */
+ h2, #builder, #controles, #resultados{ display:none !important; visibility:hidden !important; height:0 !important; overflow:hidden !important; }
+ .card{ border:none !important; padding:0 !important; margin:0 !important; border-radius:0 !important; box-shadow:none !important; }
+ #printArea{ padding:0 !important; margin:0 auto !important; background:#fff !important; }
+ .sheet{ position:relative; width:281mm; min-height:194mm; height:auto; margin:0 auto; }
+ th,td{ border-color:#cfd6de; border-width:0.5pt; padding:4px 6px; }
+ .grid{ border-width:0.75pt; border-color:#cfd6de; }
+ table{ page-break-inside:auto; }
+ tr{ page-break-inside:avoid; }
+ img{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+
+@media print{
+ .hdr-right img{max-height:18mm !important; max-width:60mm !important;}
+}
+</style>
+</head>
+<body>
+<h2>Inventário Cíclico — ALM51</h2>
+<!-- ====== SheetJS embutível ====== -->
+<script id="sheetjs-inline" type="text/plain">/* Cole aqui o conteúdo minificado de xlsx.full.min.js (SheetJS CE) para ficar 100% offline. */</script>
+<div id="builder" class="card">
+ <div class="row">
+ <strong>SheetJS (XLSX) embutido</strong>
+ <span id="sheetjsStatus" class="muted">Aguardando código embutido ou upload do xlsx.full.min.js…</span>
+ </div>
+ <div class="row" style="margin-top:8px">
+ <input type="file" id="sheetjsFile" accept=".js" />
+ <button id="btnDownloadSelf" class="secondary">Gerar HTML auto‑contido (salvar)</button>
+ <button id="btnLimpar" class="secondary" title="Apaga dados, mapeamento e SheetJS salvos">Limpar dados</button>
+ </div>
+</div>
+<div id="controles" class="card">
+ <div class="row">
+ <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+ <span class="muted">Aceita CSV/XLSX/XLS. Para ALM: Item, Item Description, Locator, On‑hand Qty.</span>
+ </div>
+ <!-- Mapeamento de colunas -->
+ <details style="margin-top:8px">
+ <summary class="small"><strong>Ajustar mapeamento de colunas</strong></summary>
+ <div class="row gap8" style="margin-top:8px">
+ <label class="small">Item
+ <select id="col_item"></select>
+ </label>
+ <label class="small">Descrição
+ <select id="col_desc"></select>
+ </label>
+ <label class="small">Posição (Locator)
+ <select id="col_loc"></select>
+ </label>
+ <label class="small">Quantidade (On-hand Qty)
+ <select id="col_qty"></select>
+ </label>
+ </div>
+ </details>
+ <hr />
+ <!-- Busca e filtros -->
+ <div class="row">
+ <input id="search" type="text" placeholder="Buscar por Item ou Descrição" />
+ <button class="primary" id="btnBuscar">Buscar</button>
+ <input id="searchPos" type="text" placeholder="Buscar por Posição (ex.: 8B-4F1)" style="min-width:280px" />
+ <div class="segmented" title="Filtrar lado (par/ímpar) do bloco numérico da posição">
+ <label><input type="radio" name="lado" value="todos" checked><span>Todos</span></label>
+ <label><input type="radio" name="lado" value="par"><span>Par</span></label>
+ <label><input type="radio" name="lado" value="impar"><span>Ímpar</span></label>
+ </div>
+ </div>
+ <div class="row" style="margin-top:10px;">
+ <button class="btn-lg alt" id="btnCiclicoQtd">Cíclico QTD (filtro)</button>
+ <button class="btn-lg primary" id="btnCiclicoSqtd">Cíclico SQTD (filtro)</button>
+ <button class="btn-lg primary" id="btnAmbos">Imprimir QTD + SQTD (filtro)</button>
+ <button class="btn-lg primary" onclick="window.print()">🖨️ Imprimir</button>
+ </div>
+ <hr />
+ <!-- Itens fixos (manual) -->
+ <div class="row"><strong>Itens fixos (manual)</strong><span class="muted"> (um item por linha)</span></div>
+ <div class="row gap8" style="align-items:flex-start">
+  <textarea id="fixedItemsInput" rows="6" style="min-width:380px;flex:1" placeholder="Exemplo:
+ITEM001
+ITEM002
+ITEM003"></textarea>
+  <div class="row" style="gap:8px">
+   <button id="btnSaveFixed" class="secondary">Salvar itens fixos</button>
+   <button id="btnViewFixed" class="alt">Ver itens fixos</button>
+   <button id="btnClearFixed" class="secondary">Limpar itens fixos</button>
+   <button id="btnLockFixed" class="primary" title="Bloqueia edição em massa; permite adicionar/renomear/remover via botões">🔒 Bloquear</button>
+  </div>
+ </div>
+ <div class="row gap8" style="margin-top:6px">
+   <button id="btnAddItem" class="secondary">Adicionar item</button>
+   <button id="btnRenameItem" class="secondary">Renomear item</button>
+   <button id="btnRemoveItem" class="secondary">Remover item</button>
+ </div>
+<hr />
+ <!-- Plano diário -->
+ <div class="row"><strong>Plano diário (Inventário cíclico sem repetir item)</strong></div>
+ <div class="row gap8">
+ <label class="small">Data inicial
+ <input type="date" id="startDate" />
+ </label>
+ <label class="small">Data final
+ <input type="date" id="endDate" />
+ </label>
+ <label class="small">Somente dias úteis
+ <select id="businessDays"><option value="1" selected>Sim (Seg–Sex)</option><option value="0">Não (todos)</option></select>
+ </label>
+ <label class="small">Itens por dia (opcional)
+ <input type="number" id="itemsPerDay" min="1" placeholder="Auto (N_itens/N_dias)" />
+ </label>
+ <button class="secondary" id="btnBuildPlan">Gerar cronograma anual</button>
+ </div>
+ <div class="row gap8" style="margin-top:8px">
+ <button id="btnTodayPlan" class="alt">Ver itens de hoje (plano)</button>
+ <button id="btnPrintPlanQtd" class="primary">Imprimir (Plano) QTD</button>
+ <button id="btnPrintPlanSqtd" class="primary">Imprimir (Plano) SQTD</button>
+ <button id="btnCsvPlan" class="secondary">Baixar cronograma (CSV)</button>
+ <a id="btnMailPlan" class="secondary" href="#" target="_blank">E‑mail do dia (Plano)</a>
+ <span id="planInfo" class="muted"></span>
+ </div>
+</div>
+<div id="resultados" class="card">
+ <strong>Prévia dos resultados filtrados</strong>
+ <table id="tabela"></table>
+</div>
+<div id="printArea" class="card"></div>
+<script>
+'use strict';
+const LPP = 21; // linhas por página
+let dados = []; let headers = []; let ultimoFiltro = []; let mapping = {}; let plan = null;
+// ===== util =====
+const $ = (s)=> document.querySelector(s);
+const $$ = (s)=> Array.from(document.querySelectorAll(s));
+const pad = (n)=> n<10? '0'+n : ''+n;
+const fmtISO = (d)=> `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fmtBR = (d)=> `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+function chunkArray(arr, size){ const out = []; for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
+function numeroFinal(ubi){ if (!ubi) return null; const partes = String(ubi).split('-'); const bloco = partes[partes.length-1]||''; const n = parseInt(bloco.replace(/\D/g,''), 10); return isNaN(n) ? null : n; }
+function ladoSelecionado(){ const el = document.querySelector('input[name="lado"]:checked'); return (el?.value)||'todos'; }
+function byPosAZ(a,b){ return String(getField(a,'loc')||'').localeCompare(String(getField(b,'loc')||''),'pt-BR',{numeric:true,sensitivity:'base'}); }
+function filtraPorLado(arr){ const lado = ladoSelecionado(); if(lado==='todos') return arr; return arr.filter(l=>{ const n = numeroFinal(getField(l,'loc')); if(n==null||Number.isNaN(n)) return false; return lado==='par' ? (n%2===0) : (n%2!==0); }); }
+// ===== SheetJS inline loader =====
+let __SHEETJS_CODE = '';
+function setSJStatus(msg){ const el=$('#sheetjsStatus'); if(el){ el.textContent = msg; }}
+function injectSheetJS(code){ try{ (0, eval)(code); }catch(e){ setSJStatus('Falha ao embutir: '+e.message); return false; } if(window.XLSX){ setSJStatus('OK — SheetJS carregado'); __SHEETJS_CODE = code; try{ localStorage.setItem('ciclico_sheetjs', code); }catch{} return true;} setSJStatus('Código lido, mas XLSX não foi exposto'); return false; }
+(function bootInline(){ const el=document.getElementById('sheetjs-inline'); if(!el) return; const code = el.textContent.trim(); if(code && code.length>1000){ injectSheetJS(code); }})();
+$('#sheetjsFile').addEventListener('change', async (ev)=>{ const f=ev.target.files[0]; if(!f) return; const txt = await f.text(); if(injectSheetJS(txt)){ try{ localStorage.setItem('ciclico_sheetjs', txt); }catch{} }
+});
+$('#btnDownloadSelf').addEventListener('click', ()=>{ const inline=document.getElementById('sheetjs-inline'); const code=__SHEETJS_CODE||inline.textContent; if(!code||code.length<1000){ alert('Carregue o xlsx.full.min.js primeiro.'); return; } const html=document.documentElement.outerHTML.replace(/(<script id="sheetjs-inline"[^>]*>)([\s\S]*?)(<\/script>)/, (m,a,b,c)=> a+'\n'+code.replace(/<\//g,'<\\/')+'\n'+c); const blob=new Blob([html],{type:'text/html;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='IMPRESSAO_CICLICO_LABELORIGIN_CLEAN_EMBUTIDO.html'; document.body.appendChild(a); a.click(); a.remove(); });
+// ===== mapeamento de colunas =====
+function buildMappingUI(){ const selects = {item:$('#col_item'),desc:$('#col_desc'),loc:$('#col_loc'),qty:$('#col_qty')}; for(const k in selects){ selects[k].innerHTML=''; }
+ headers.forEach((h,idx)=>{ const opt = new Option(String(h||`Coluna ${idx+1}`), idx); for(const k in selects){ selects[k].add(opt.cloneNode(true)); } });
+ function findExact(name){ return headers.findIndex(h => String(h).trim().toLowerCase() === name.toLowerCase()); }
+ function findLike(name){ const lx = name.toLowerCase(); return headers.findIndex(h => String(h).toLowerCase().includes(lx)); }
+ mapping = mapping && Object.keys(mapping).length? mapping : {
+ item: (findExact('Item')>=0? findExact('Item') : findLike('Item')),
+ desc: (findExact('Item Description')>=0? findExact('Item Description') : findLike('Description')),
+ loc: (findExact('Locator')>=0? findExact('Locator') : findLike('Locator')),
+ qty: (findExact('On-hand Qty')>=0? findExact('On-hand Qty') : findLike('Qty'))
+ };
+ for(const k in selects){ if(mapping[k]>=0) selects[k].value = String(mapping[k]); selects[k].addEventListener('change', ()=>{ mapping[k] = parseInt(selects[k].value,10); try{ localStorage.setItem('ciclico_mapping', JSON.stringify(mapping)); }catch{} }); }
+}
+function getField(row, role){ const idx = mapping[role]; if(idx==null||idx<0) return ''; const key = headers[idx]; if(key==null) return ''; return row[key]; }
+// ===== restauração automática =====
+(function restoreAll(){ try{
+ const sjLS = localStorage.getItem('ciclico_sheetjs'); if(sjLS && !window.XLSX){ injectSheetJS(sjLS); }
+ const dadosLS = localStorage.getItem('ciclico_dados');
+ const headersLS = localStorage.getItem('ciclico_headers');
+ const mappingLS = localStorage.getItem('ciclico_mapping');
+ if(dadosLS && headersLS){ dados = JSON.parse(dadosLS); headers = JSON.parse(headersLS); mapping = JSON.parse(mappingLS||'{}'); buildMappingUI(); montarTabela(); }
+ }catch(e){ console.warn('Restauração falhou', e); }
+})();
+// ===== cabeçalho e tabelas (layout base) =====
+function cabecalho(titulo){ const d=new Date(); const data=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}); const hora=d.toLocaleTimeString('pt-BR'); const src='Imagem1.png'; return `<div class="page-header"><div class="hdr"><div class="hdr-left"><div class="titulo">${titulo}</div><div class="dh">${data} • ${hora}</div></div><div class="hdr-right"><img src="${src}" alt="Logo"></div></div><div class="inventariante">Inventariante: <span class="line"></span></div></div>`; }
+function tabelaHTML(linhas, mostrarQtd){ const thObs = mostrarQtd ? '<th>Observação</th>' : ''; return `<div class="grid-wrap"><table class="grid"><thead><tr><th>Posição</th><th>Item</th><th>Descrição</th><th>Quantidade</th>${thObs}</tr></thead><tbody>${linhas.map(l=>`<tr><td>${getField(l,'loc')??''}</td><td>${getField(l,'item')??''}</td><td>${getField(l,'desc')??''}</td><td style="text-align:right">${ mostrarQtd ? (getField(l,'qty')??'') : '' }</td>${ mostrarQtd ? '<td></td>' : '' }</tr>`).join('')}</tbody></table></div>`; }
+function numerarGrupo(grupo){ const sheets=[...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)]; const total=sheets.length; sheets.forEach((sheet,idx)=>{ let footer = sheet.querySelector('.page-footer'); if(!footer){ footer=document.createElement('div'); footer.className='page-footer'; sheet.appendChild(footer);} footer.textContent = `Página ${idx+1} de ${total}`; }); }
+// ===== carregamento =====
+$('#fileInput').addEventListener('change', async (e)=>{
+ const file = e.target.files[0]; if(!file) return; const nome = file.name.toLowerCase();
+ try{
+ if (nome.endsWith('.csv')){
+ const text = await file.text(); const lines=text.split(/\r?\n/).filter(l=>l.trim()!==''); const sep = (lines[0]&&lines[0].includes(';'))? ';' : ','; const cols=(lines[0]||'').split(sep).map(s=>s.trim()); headers=cols; const arr = lines.slice(1).map(l=>{ const c=l.split(sep); const obj={}; cols.forEach((h,i)=> obj[h]=c[i]||''); return obj; }); dados=arr; buildMappingUI(); try{ localStorage.setItem('ciclico_dados', JSON.stringify(dados)); localStorage.setItem('ciclico_headers', JSON.stringify(headers)); localStorage.setItem('ciclico_mapping', JSON.stringify(mapping)); }catch{} alert('CSV lido e salvo! Linhas: '+dados.length); return;
+ } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')){
+ if(!window.XLSX){ alert('SheetJS não está carregado. Use o bloco embutido acima.'); return; }
+ const buf = await file.arrayBuffer(); const wb = XLSX.read(buf, {type:'array'}); const ws = wb.Sheets[wb.SheetNames[0]]; dados = XLSX.utils.sheet_to_json(ws, {defval:''}); headers = Object.keys(dados[0]||{}); buildMappingUI(); try{ localStorage.setItem('ciclico_dados', JSON.stringify(dados)); localStorage.setItem('ciclico_headers', JSON.stringify(headers)); localStorage.setItem('ciclico_mapping', JSON.stringify(mapping)); }catch{} alert('Arquivo lido e salvo! Linhas: '+dados.length);
+ } else { alert('Formato não suportado. Use CSV, XLSX ou XLS.'); }
+ }catch(err){ alert('Erro ao carregar: ' + (err?.message || err)); }
+});
+// ===== busca e filtros =====
+$('#btnBuscar').addEventListener('click', montarTabela);
+$('#search').addEventListener('keypress', (e)=>{ if(e.key==='Enter') montarTabela(); });
+$('#searchPos').addEventListener('keypress', (e)=>{ if(e.key==='Enter') montarTabela(); });
+$$('input[name="lado"]').forEach(r => r.addEventListener('change', montarTabela));
+function montarTabela(){
+ const termo = (($('#search').value)||'').toLowerCase();
+ const termoPos = (($('#searchPos')?.value)||'').toLowerCase().trim();
+ const tabela = $('#tabela'); tabela.innerHTML = '';
+ if(!Array.isArray(dados) || dados.length===0){ tabela.innerHTML='<tr><td>Carregue um arquivo primeiro.</td></tr>'; return; }
+ let base = dados.filter(l => (String(getField(l,'item')||'').toLowerCase() === termo) || (String(getField(l,'desc')||'').toLowerCase().includes(termo)));
+ if(termoPos){ base = base.filter(l => String(getField(l,'loc')||'').toLowerCase().startsWith(termoPos)); }
+ ultimoFiltro = filtraPorLado(base);
+ if (ultimoFiltro.length === 0){ tabela.innerHTML = '<tr><td>Nada encontrado</td></tr>'; return; }
+ const header = tabela.insertRow();
+ ['Posição','Item','Descrição','Quantidade'].forEach(txt => { const th = document.createElement('th'); th.textContent = txt; header.appendChild(th); });
+ ultimoFiltro.forEach(l => {
+ const tr = tabela.insertRow();
+ tr.insertCell().textContent = getField(l,'loc') ?? '';
+ tr.insertCell().textContent = getField(l,'item') ?? '';
+ tr.insertCell().textContent = getField(l,'desc') ?? '';
+ tr.insertCell().textContent = getField(l,'qty') ?? '';
+ });
+}
+// ===== impressão (filtro manual) =====
+function gerarCadernos(tipo){
+ if(ultimoFiltro.length===0){ $('#printArea').innerHTML='Pesquise primeiro.'; return; }
+ const ordenado=[...ultimoFiltro].sort(byPosAZ);
+ const cod = String(getField(ordenado[0],'item')||'');
+ const partes = chunkArray(ordenado, LPP);
+ const printArea = $('#printArea'); printArea.innerHTML='';
+ partes.forEach((bloco)=>{
+ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo', tipo);
+ const titulo=`Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`;
+ section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo==='qtd')}<div class="page-footer"></div>`;
+ printArea.appendChild(section);
+ });
+ numerarGrupo(tipo);
+}
+$('#btnCiclicoQtd').addEventListener('click', ()=> gerarCadernos('qtd'));
+$('#btnCiclicoSqtd').addEventListener('click', ()=> gerarCadernos('sqtd'));
+$('#btnAmbos').addEventListener('click', ()=>{ gerarCadernos('qtd'); gerarCadernos('sqtd'); window.print(); });
+// ===== plano diário =====
+
+// ===== itens fixos (manual) =====
+function loadFixedItems(){
+  try{
+    const raw = localStorage.getItem('ciclico_itens_fixos');
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.from(new Set(arr.map(x => String(x||'').trim()).filter(Boolean)));
+  }catch(e){ return []; }
+}
+function saveFixedItemsFromTextarea(){
+  const txt = ($('#fixedItemsInput')?.value || '');
+  const items = Array.from(new Set(txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)));
+  if(items.length===0){ alert('Digite pelo menos um item.'); return; }
+  try{ localStorage.setItem('ciclico_itens_fixos', JSON.stringify(items)); alert(items.length+' itens fixos salvos!'); }
+  catch(e){ alert('Falha ao salvar: '+(e?.message||e)); }
+}
+function clearFixedItems(){
+  localStorage.removeItem('ciclico_itens_fixos');
+  if($('#fixedItemsInput')) $('#fixedItemsInput').value='';
+  alert('Itens fixos removidos.');
+}
+function viewFixedItems(){
+  const items = loadFixedItems();
+  const tabela = $('#tabela'); tabela.innerHTML='';
+  if(items.length===0){ tabela.innerHTML='<tr><td>Nenhum item fixo salvo.</td></tr>'; return; }
+  const header = tabela.insertRow(); const th=document.createElement('th'); th.textContent='Itens fixos (salvos)'; header.appendChild(th);
+  items.forEach(c=>{ const tr=tabela.insertRow(); tr.insertCell().textContent=c; });
+}
+$('#btnSaveFixed')?.addEventListener('click', saveFixedItemsFromTextarea);
+$('#btnClearFixed')?.addEventListener('click', clearFixedItems);
+$('#btnViewFixed')?.addEventListener('click', viewFixedItems);
+
+(function prefillFixed(){
+  const items = loadFixedItems();
+  if(items.length>0 && $('#fixedItemsInput')) { $('#fixedItemsInput').value = items.join('\n'); }
+})();
+
+// ===== bloqueio e edição controlada =====
+function isFixedLocked(){ return localStorage.getItem('ciclico_itens_fixos_locked') === '1'; }
+function setFixedLocked(v){ localStorage.setItem('ciclico_itens_fixos_locked', v?'1':'0'); syncFixedLockUI(); }
+function syncFixedLockUI(){
+  const locked = isFixedLocked();
+  const ta = $('#fixedItemsInput');
+  if(ta){ ta.readOnly = locked; ta.style.background = locked? '#f7f7f7' : '#fff'; }
+  const btnSave = $('#btnSaveFixed'); if(btnSave) btnSave.disabled = locked; // bloqueia edição em massa
+  const btnLock = $('#btnLockFixed'); if(btnLock){ btnLock.textContent = locked? '🔓 Desbloquear' : '🔒 Bloquear'; btnLock.className = locked? 'secondary' : 'primary'; }
+}
+
+const __saveFixedItemsFromTextarea = saveFixedItemsFromTextarea;
+saveFixedItemsFromTextarea = function(){
+  if(isFixedLocked()){ alert('Lista bloqueada. Desbloqueie para salvar em massa. Use os botões Adicionar/Renomear/Remover.'); return; }
+  __saveFixedItemsFromTextarea();
+}
+
+function saveFixedArray(arr){ localStorage.setItem('ciclico_itens_fixos', JSON.stringify(Array.from(new Set(arr)))); }
+function addFixedItem(){
+  const cur = loadFixedItems();
+  const v = prompt('Adicionar item (código exato):');
+  if(!v) return; const code = String(v).trim(); if(!code){ alert('Código inválido.'); return; }
+  if(cur.includes(code)){ alert('Item já existe.'); return; }
+  cur.push(code); saveFixedArray(cur); alert('Item adicionado.'); viewFixedItems(); prefillFixedApply();
+}
+function renameFixedItem(){
+  const cur = loadFixedItems(); if(cur.length===0){ alert('Nenhum item fixo salvo.'); return; }
+  const from = prompt('Renomear: digite o item atual (código exato)'); if(!from) return; if(!cur.includes(from)){ alert('Item não encontrado.'); return; }
+  const to = prompt('Novo código para "'+from+'":'); if(!to) return; const code = String(to).trim(); if(!code){ alert('Código inválido.'); return; }
+  if(from===code){ alert('Não há alteração.'); return; }
+  if(cur.includes(code)){ alert('Já existe um item com esse código.'); return; }
+  const idx = cur.indexOf(from); cur[idx]=code; saveFixedArray(cur); alert('Item renomeado.'); viewFixedItems(); prefillFixedApply();
+}
+function removeFixedItem(){
+  const cur = loadFixedItems(); if(cur.length===0){ alert('Nenhum item fixo salvo.'); return; }
+  const it = prompt('Remover: digite o item (código exato)'); if(!it) return; const code = String(it).trim();
+  const idx = cur.indexOf(code); if(idx<0){ alert('Item não encontrado.'); return; }
+  if(!confirm('Tem certeza que deseja remover "'+code+'"?')) return;
+  cur.splice(idx,1); saveFixedArray(cur); alert('Item removido.'); viewFixedItems(); prefillFixedApply();
+}
+function prefillFixedApply(){ const items = loadFixedItems(); if($('#fixedItemsInput')) $('#fixedItemsInput').value = items.join('\n'); }
+$('#btnLockFixed')?.addEventListener('click', ()=> setFixedLocked(!isFixedLocked()));
+$('#btnAddItem')?.addEventListener('click', addFixedItem);
+$('#btnRenameItem')?.addEventListener('click', renameFixedItem);
+$('#btnRemoveItem')?.addEventListener('click', removeFixedItem);
+(function initFixedLock(){ syncFixedLockUI(); prefillFixedApply(); })();
+
+function daysBetween(start, end, onlyBiz){ const out=[]; const d=new Date(start); while(d<=end){ const w=d.getDay(); if(!onlyBiz || (w>=1 && w<=5)) out.push(fmtISO(d)); d.setDate(d.getDate()+1); } return out; }
+function hash(str){ let h=5381; for(let i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h&=0 } return (h>>>0).toString(36); }
+
+function buildPlan(){
+  const codes = loadFixedItems();
+  if(!codes || codes.length===0){ alert('Defina os itens fixos (abaixo) antes de gerar o cronograma.'); return; }
+  const sd=new Date($('#startDate').value||new Date(new Date().getFullYear(),0,1));
+  const ed=new Date($('#endDate').value||new Date(new Date().getFullYear(),11,31));
+  const onlyBiz=$('#businessDays').value==='1';
+  const dates=daysBetween(sd,ed,onlyBiz);
+  if(dates.length===0){ alert('Período sem dias válidos.'); return; }
+  const custom=parseInt($('#itemsPerDay').value,10);
+  const perDay=isNaN(custom)? Math.ceil(codes.length/dates.length) : Math.max(1, custom);
+  const map={}; let p=0;
+  for(const d of dates){ map[d]=codes.slice(p,p+perDay); p+=perDay; }
+  if(p<codes.length){ let k=dates.length-1; while(p<codes.length){ map[dates[k]].push(codes[p]); p++; k=(k-1+dates.length)%dates.length; } }
+  plan={dates,map};
+  const key='cyclePlan_'+(new Date(sd).getFullYear())+'_'+hash(JSON.stringify(codes));
+  try{ localStorage.setItem(key, JSON.stringify(plan)); }catch{}
+  $('#planInfo').textContent = `${codes.length} itens (fixos) • ${dates.length} dias • ~${perDay}/dia`;
+}
+$('#btnBuildPlan').addEventListener('click', buildPlan);
+
+function itensDoDia(dateStr){ if(!plan){ alert('Gere o cronograma primeiro.'); return []; } return plan.map[dateStr]||[]; }
+$('#btnTodayPlan').addEventListener('click', ()=>{ if(!plan){ alert('Gere o cronograma primeiro.'); return; } const key = fmtISO(new Date()); const lst = itensDoDia(key); if(lst.length===0){ alert('Sem itens planejados para hoje.'); return; } const tabela=$('#tabela'); tabela.innerHTML=''; const header = tabela.insertRow(); ['Item do dia (Plano)'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; header.appendChild(th); }); lst.forEach(c=>{ const tr=tabela.insertRow(); tr.insertCell().textContent=c; }); const subject=encodeURIComponent(`Inventário cíclico — Itens do dia ${fmtBR(new Date())}`); const body=encodeURIComponent(lst.map(c=>`• ${c}`).join('\n')); $('#btnMailPlan').href = `mailto:?subject=${subject}&body=${body}`; });
+function imprimirPlano(mostrarQtd){ if(!plan){ alert('Gere o cronograma primeiro.'); return; } const dateStr = fmtISO(new Date()); const codes = itensDoDia(dateStr); if(codes.length===0){ alert('Sem itens no plano para hoje.'); return; } const printArea = $('#printArea'); printArea.innerHTML=''; for(const cod of codes){ const linhas = dados.filter(r=> String(getField(r,'item')||'').trim()===cod).sort(byPosAZ); if(linhas.length===0) continue; const partes = chunkArray(linhas, LPP); partes.forEach((bloco)=>{ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo', mostrarQtd? 'plan-qtd':'plan-sqtd'); const titulo=`Inventário Cíclico (${mostrarQtd? 'QTD':'SQTD'}) – Item: ${cod}`; section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, mostrarQtd)}<div class="page-footer"></div>`; printArea.appendChild(section); }); } numerarGrupo(mostrarQtd? 'plan-qtd':'plan-sqtd'); window.print(); }
+$('#btnPrintPlanQtd').addEventListener('click', ()=> imprimirPlano(true));
+$('#btnPrintPlanSqtd').addEventListener('click', ()=> imprimirPlano(false));
+$('#btnCsvPlan').addEventListener('click', ()=>{ if(!plan){ alert('Gere o cronograma primeiro.'); return; } const lines = ['data;item']; for(const d of plan.dates){ for(const c of plan.map[d]) lines.push(`${d};"${c.replaceAll('"','""')}"`); } const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `cronograma_${(new Date($('#startDate').value||new Date()).getFullYear())}.csv`; document.body.appendChild(a); a.click(); a.remove(); });
+// botão limpar dados
+$('#btnLimpar').addEventListener('click', ()=>{
+ try{
+  localStorage.removeItem('ciclico_dados');
+  localStorage.removeItem('ciclico_headers');
+  localStorage.removeItem('ciclico_mapping');
+  localStorage.removeItem('ciclico_sheetjs');
+ }catch{}
+ location.reload();
+});
+// datas padrão
+(function initDates(){ const today = new Date(); const y = today.getFullYear(); $('#startDate').value = fmtISO(new Date(y,0,1)); $('#endDate').value = fmtISO(new Date(y,11,31)); })();
+</script>
+<div style="text-align:center;margin-top:40px;color:#ff0000;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>

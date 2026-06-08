@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel de Embalagens</title>
+
+<!-- ✅ BIBLIOTECAS CORRETAS -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI, Arial;
+  background:linear-gradient(180deg,#081327,#020817);
+  color:#fff;
+}
+
+h1{padding:20px;}
+
+.top{
+  padding:10px 20px;
+  display:flex;
+  gap:10px;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;
+  padding:20px;
+}
+
+.card{
+  background:#0a1b33;
+  padding:18px;
+  border-radius:14px;
+}
+
+.card span{
+  font-size:12px;
+  color:#3aa6ff;
+}
+
+.card strong{
+  font-size:24px;
+}
+
+.chart-box{
+  margin:20px;
+  background:#08172e;
+  border-radius:16px;
+  padding:20px;
+  height:360px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Painel de Embalagens – FAB1 x FAB2</h1>
+
+<div class="top">
+  <input type="file" id="file">
+  <select id="mes"></select>
+</div>
+
+<div class="cards">
+  <div class="card"><span>Total</span><strong id="total">0</strong></div>
+  <div class="card"><span>Maior dia</span><strong id="maior">-</strong></div>
+  <div class="card"><span>Média</span><strong id="media">0</strong></div>
+  <div class="card"><span>Dias</span><strong id="dias">0</strong></div>
+  <div class="card"><span>Importação</span><strong id="importacao">-</strong></div>
+</div>
+
+<div class="chart-box">
+  <canvas id="grafico"></canvas>
+</div>
+
+<script>
+let dados = {};
+let chart;
+
+function parseData(v){
+  if(typeof v==="number"){
+    return new Date((v-25569)*86400*1000);
+  }
+  let p = v.match(/\d+/g);
+  if(!p) return null;
+  return new Date(p[2],p[1]-1,p[0]);
+}
+
+document.getElementById("file").addEventListener("change", e=>{
+  let reader = new FileReader();
+  reader.onload = ev=>{
+    let wb = XLSX.read(ev.target.result,{type:"array"});
+    let linhas = XLSX.utils.sheet_to_json(
+      wb.Sheets[wb.SheetNames[0]], {defval:""}
+    );
+
+    document.getElementById("importacao").innerText =
+      new Date().toLocaleString("pt-BR");
+
+    processar(linhas);
+  };
+  reader.readAsArrayBuffer(e.target.files[0]);
+});
+
+function processar(linhas){
+
+  let controle = {};
+  dados = {};
+
+  linhas.forEach(l=>{
+
+    let loc = l["Localização"];
+    if(loc!=="RECE_PS_FAB1" && loc!=="RECE_PS_FAB2") return;
+
+    let cod = l["Código"];
+    if(!cod) return;
+
+    let data = parseData(l["Data do Movimento"]);
+    if(!data) return;
+
+    let mes = (data.getMonth()+1)+"/"+data.getFullYear();
+    let dia = data.toLocaleDateString("pt-BR");
+
+    controle[mes] ??= {};
+    controle[mes][dia] ??= {fab1:new Set(), fab2:new Set()};
+
+    if(loc==="RECE_PS_FAB1"){
+      controle[mes][dia].fab1.add(cod);
+    }else{
+      controle[mes][dia].fab2.add(cod);
+    }
+  });
+
+  Object.keys(controle).forEach(m=>{
+    dados[m]={};
+    Object.keys(controle[m]).forEach(d=>{
+      dados[m][d]={
+        fab1: controle[m][d].fab1.size,
+        fab2: controle[m][d].fab2.size
+      };
+    });
+  });
+
+  carregarMes();
+}
+
+function carregarMes(){
+  let s = document.getElementById("mes");
+  s.innerHTML="";
+
+  Object.keys(dados).forEach(m=>{
+    s.innerHTML += `<option>${m}</option>`;
+  });
+
+  s.onchange=()=> atualizar(s.value);
+  atualizar(s.value);
+}
+
+function atualizar(m){
+
+  let obj = dados[m];
+  if(!obj) return;
+
+  let dias = Object.keys(obj).sort((a,b)=>{
+    return new Date(a.split("/").reverse().join("-")) -
+           new Date(b.split("/").reverse().join("-"));
+  });
+
+  let fab1 = dias.map(d=>obj[d].fab1||0);
+  let fab2 = dias.map(d=>obj[d].fab2||0);
+  let totalDia = dias.map((_,i)=>fab1[i]+fab2[i]);
+
+  // ✅ MÉDIA ACUMULADA
+  let mediaLinha = [];
+  let soma = 0;
+
+  totalDia.forEach((v,i)=>{
+    soma += v;
+    mediaLinha.push(soma/(i+1));
+  });
+
+  let total = totalDia.reduce((a,b)=>a+b,0);
+  let max = Math.max(...totalDia);
+  let idx = totalDia.indexOf(max);
+
+  document.getElementById("total").innerText = total;
+  document.getElementById("media").innerText = (total/dias.length).toFixed(1);
+  document.getElementById("dias").innerText = dias.length;
+  document.getElementById("maior").innerText = max+" em "+dias[idx];
+
+  desenhar(dias,fab1,fab2,mediaLinha);
+}
+
+function desenhar(labels,fab1,fab2,media){
+
+  if(chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("grafico"),{
+
+    data:{
+      labels,
+      datasets:[
+        {type:"bar",label:"FAB1",data:fab1,backgroundColor:"#2ea1ff"},
+        {type:"bar",label:"FAB2",data:fab2,backgroundColor:"#ff8c00"},
+        {
+          type:"line",
+          label:"Média",
+          data:media,
+          borderColor:"#ffd700",
+          backgroundColor:"rgba(255,215,0,0.15)",
+          borderWidth:3,
+          tension:0.4,
+          fill:true,
+          pointRadius:4
+        }
+      ]
+    },
+
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:"#fff"}}
+      },
+      scales:{
+        x:{ticks:{color:"#fff"}},
+        y:{ticks:{color:"#fff"}}
+      }
+    },
+
+    plugins:[{
+      afterDatasetsDraw(chart){
+        const {ctx} = chart;
+
+        chart.data.datasets.forEach((ds,i)=>{
+          if(ds.type !== "bar") return;
+
+          const meta = chart.getDatasetMeta(i);
+
+          meta.data.forEach((bar,idx)=>{
+            const val = ds.data[idx];
+            if(val===0) return;
+
+            ctx.fillStyle="#fff";
+            ctx.font="bold 11px Segoe UI";
+            ctx.textAlign="center";
+            ctx.fillText(val, bar.x, bar.y - 6);
+          });
+        });
+      }
+    }]
+  });
+}
+</script>
+<div style="text-align:center;margin-top:40px;color:#ffffff;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>

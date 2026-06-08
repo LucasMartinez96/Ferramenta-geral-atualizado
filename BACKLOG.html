@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Controle Diário de Backlog</title>
+  <!-- Libs -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    :root { --bg:#f4f6f8; --card:#ffffff; --ink:#1f2937; --muted:#6b7280; --shadow:0 2px 6px rgba(0,0,0,.1); }
+    *{box-sizing:border-box}
+    body{font-family:Arial, Helvetica, sans-serif;background:var(--bg);padding:20px;color:#111827}
+    .header{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+    .logo{height:55px;max-width:240px;object-fit:contain;display:block}
+    .logo-wrap{display:flex;align-items:center;gap:12px}
+    h1{margin:0;font-size:1.5rem;color:var(--ink)}
+    .controls{display:flex;gap:12px;margin-bottom:15px;flex-wrap:wrap}
+    input[type=file],select{padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff}
+    button{padding:8px 14px;border:none;border-radius:6px;background:var(--ink);color:#fff;cursor:pointer}
+    button:hover{filter:brightness(1.05)}
+    .kpis{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+    .kpi{background:var(--card);padding:12px;border-radius:8px;box-shadow:var(--shadow);min-width:200px}
+    .kpi h2{margin:0 0 4px 0}
+    .kpi p{margin:0;color:var(--muted);font-size:.9rem}
+    .chart-box{background:var(--card);padding:12px;border-radius:10px;box-shadow:var(--shadow);margin-bottom:16px}
+    .chart-title{font-weight:bold;margin-bottom:6px;text-align:center}
+    canvas{max-height:280px}
+    table{width:100%;border-collapse:collapse;background:var(--card);box-shadow:var(--shadow);border-radius:8px;overflow:hidden}
+    th,td{padding:8px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left}
+    th{background:var(--ink);color:#fff}
+    tbody tr:hover{background:#f9fafb}
+    .logo-fallback{font-size:.85rem;color:#b91c1c}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-wrap">
+      <img src="Imagem1.png" alt="Logomarca Sese" title="Sese" class="logo"
+           onerror="this.style.display='none';document.getElementById('logoErro').style.display='inline';"/>
+      <span id="logoErro" class="logo-fallback" style="display:none;">⚠️ Não foi possível carregar a logo (Imagem1.png). Verifique se o arquivo está na mesma pasta.</span>
+    </div>
+    <h1>📊 Controle Diário de Backlog</h1>
+  </div>
+
+  <div class="controls">
+    <input type="file" id="csvFile" accept=".csv" />
+    <select id="filtroPosicao">
+      <option value="">Todos os setores</option>
+    </select>
+    <button id="btnBaixar">📥 Baixar relatório</button>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <h2 id="kpiAntigo">0</h2>
+      <p>Backlog mais antigo (dias)</p>
+    </div>
+    <div class="kpi">
+      <h2 id="kpiDataAntiga">-</h2>
+      <p>Data mais antiga</p>
+    </div>
+    <div class="kpi">
+      <h2 id="kpiQtd">0</h2>
+      <p>Total de peças (unidades)</p>
+    </div>
+    <!-- Embalagem Total = quantidade de PEÇAS DISTINTAS (regra antiga) na visão atual -->
+    <div class="kpi">
+      <h2 id="kpiEmbalagemTotal">0</h2>
+      <p>Embalagem Total (visão atual)</p>
+    </div>
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">📍 Quantidade de peças por setor (unidades)</div>
+    <canvas id="chartSetor"></canvas>
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">📦 Embalagem Total por setor (peças únicas)</div>
+    <canvas id="chartEmbalagemSetor"></canvas>
+  </div>
+
+  <div class="chart-box">
+    <div class="chart-title">🗓️ Setor x ReferenceDate (quantidade de peças)</div>
+    <canvas id="chartReference"></canvas>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>PEÇAS</th>
+        <th>SETOR</th>
+        <th>BACKLOG (dias)</th>
+        <th>REFERENCEDATE</th>
+        <th>QUANTIDADE</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+<script>
+  Chart.register(ChartDataLabels);
+  let chartSetor, chartReference, chartEmbalagemSetor;
+  let dadosOriginais = [], dadosAtuais = [];
+
+  function normaliza(t){
+    return String(t ?? "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+  function toNumber(v){
+    const n = Number(String(v ?? "").toString().replace(",","."));
+    return Number.isFinite(n) ? n : 0;
+  }
+  function normalizaCodigoPeca(v){
+    return String(v ?? "").trim().toUpperCase();
+  }
+
+  document.getElementById("csvFile").addEventListener("change", (e)=>{
+    Papa.parse(e.target.files[0], {
+      header:true, skipEmptyLines:true,
+      complete:(res)=>{
+        dadosOriginais = res.data;
+        dadosAtuais = dadosOriginais.slice();
+        preencherFiltro(dadosOriginais);
+        processar(dadosOriginais);
+      }
+    });
+  });
+
+  document.getElementById("filtroPosicao").addEventListener("change", ()=>{
+    const setor = document.getElementById("filtroPosicao").value;
+    dadosAtuais = setor ? dadosOriginais.filter(r => normaliza(r["POSIÇÃO"])===setor) : dadosOriginais.slice();
+    processar(dadosAtuais);
+  });
+
+  document.getElementById("btnBaixar").addEventListener("click", baixarCSV);
+
+  function preencherFiltro(data){
+    const select = document.getElementById("filtroPosicao");
+    select.innerHTML = '<option value="">Todos os setores</option>';
+    const setores = [...new Set(
+      data.map(r => normaliza(r["POSIÇÃO"]))
+          .filter(s => s && s.trim()!=="")
+    )].sort();
+    setores.forEach(s=>{ const opt=document.createElement("option"); opt.value=s; opt.textContent=s; select.appendChild(opt); });
+  }
+
+  function processar(data){
+    const filtroAtivo = document.getElementById("filtroPosicao").value !== "";
+    let backlogMaisAntigo=0, qtdTotal=0;
+    const mapaSetorUnidades = {}, mapaRefUnidades = {};
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    data.forEach(r=>{
+      const setor = normaliza(r["POSIÇÃO"]);
+      const dias  = toNumber(r["Backlog"]);
+      const qtd   = toNumber(r["QUANTIDADE TOTAL"]) || toNumber(r["QUANTIDADE"]);
+      const ref   = r["REFERENCEDATE"];
+
+      backlogMaisAntigo = Math.max(backlogMaisAntigo, dias);
+      qtdTotal += qtd;
+
+      if(setor){ mapaSetorUnidades[setor] = (mapaSetorUnidades[setor] ?? 0) + qtd; }
+      if(ref){ if(!mapaRefUnidades[ref]) mapaRefUnidades[ref] = {}; mapaRefUnidades[ref][setor] = (mapaRefUnidades[ref][setor] ?? 0) + qtd; }
+
+      tbody.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td>${r["PEÇAS"] ?? ""}</td>
+          <td>${setor ?? ""}</td>
+          <td>${dias}</td>
+          <td>${ref ?? ""}</td>
+          <td>${qtd}</td>
+        </tr>
+      `);
+    });
+
+    // === Embalagem Total (visão atual) = CONTAGEM DE PEÇAS ÚNICAS NA BASE ATUAL ===
+    const pecasDistintasAtual = new Set(data.map(r => normalizaCodigoPeca(r["PEÇAS"])) .filter(Boolean)).size;
+
+    // KPIs
+    const baseDatas = filtroAtivo ? data : dadosOriginais;
+    const todasDatas = baseDatas.map(r=>r["REFERENCEDATE"]).filter(Boolean).sort();
+
+    document.getElementById("kpiAntigo").innerText = backlogMaisAntigo;
+    document.getElementById("kpiQtd").innerText = qtdTotal;
+    document.getElementById("kpiDataAntiga").innerText = todasDatas.length ? todasDatas[0] : "-";
+    document.getElementById("kpiEmbalagemTotal").innerText = pecasDistintasAtual;
+
+    // Gráficos de unidades (como antes)
+    desenharSetorUnidades(mapaSetorUnidades);
+    desenharReferencia(mapaRefUnidades);
+
+    // === Embalagem Total por setor (mesma regra: peças únicas), usando a visão atual ===
+    const embalagemSetorAtual = contagemUnicaPorSetor(data);
+    desenharEmbalagemPorSetor(embalagemSetorAtual);
+  }
+
+  function contagemUnicaPorSetor(linhas){
+    // Conta quantas PEÇAS únicas existem em cada setor dentro do conjunto 'linhas'
+    const mapa = {}; // setor -> Set de peças
+    linhas.forEach(r => {
+      const setor = normaliza(r["POSIÇÃO"]);
+      const peca  = normalizaCodigoPeca(r["PEÇAS"]);
+      if(!setor || !peca) return;
+      if(!mapa[setor]) mapa[setor] = new Set();
+      mapa[setor].add(peca);
+    });
+    const saida = {};
+    Object.keys(mapa).forEach(setor => { saida[setor] = mapa[setor].size; });
+    return saida;
+  }
+
+  function desenharSetorUnidades(mapa){
+    if(chartSetor) chartSetor.destroy();
+    const labels = Object.keys(mapa);
+    const data   = Object.values(mapa);
+    chartSetor = new Chart(document.getElementById("chartSetor"),{
+      type:"bar",
+      data:{ labels, datasets:[{ label:"Unidades", data, backgroundColor:"#3b82f6" }] },
+      options:{
+        plugins:{ legend:{display:false}, datalabels:{ anchor:"end", align:"top", clamp:true, color:"#111827", formatter:(v)=>v.toLocaleString('pt-BR'), font:{weight:"bold", size:11} } },
+        scales:{ x:{ ticks:{autoSkip:false,maxRotation:45,minRotation:0}}, y:{beginAtZero:true} }
+      }
+    });
+  }
+
+  function desenharEmbalagemPorSetor(mapa){
+    if(chartEmbalagemSetor) chartEmbalagemSetor.destroy();
+    const labels = Object.keys(mapa);
+    const data   = Object.values(mapa);
+    chartEmbalagemSetor = new Chart(document.getElementById("chartEmbalagemSetor"),{
+      type:"bar",
+      data:{ labels, datasets:[{ label:"Embalagem Total (peças únicas)", data, backgroundColor:"#16a34a" }] },
+      options:{
+        plugins:{ legend:{display:false}, datalabels:{ anchor:"end", align:"top", clamp:true, color:"#111827", formatter:(v)=>v.toLocaleString('pt-BR'), font:{weight:"bold", size:11} } },
+        scales:{ x:{ ticks:{autoSkip:false,maxRotation:45,minRotation:0}}, y:{beginAtZero:true} }
+      }
+    });
+  }
+
+  function desenharReferencia(mapa){
+    if(chartReference) chartReference.destroy();
+    const datas = Object.keys(mapa).sort();
+    const setores = [...new Set(datas.flatMap(d => Object.keys(mapa[d] ?? {})))].sort();
+    chartReference = new Chart(document.getElementById("chartReference"),{
+      type:"line",
+      data:{
+        labels:datas,
+        datasets:setores.map((s,idx)=>({ label:s, data:datas.map(d=> (mapa[d]?.[s] ?? 0)), borderWidth:2, fill:false, tension:0.3, borderColor:palette(idx), pointBackgroundColor:palette(idx), pointRadius:3 }))
+      },
+      options:{ plugins:{ legend:{position:"bottom"}, datalabels:{display:false} }, scales:{ y:{beginAtZero:true} } }
+    });
+  }
+
+  function palette(i){
+    const colors = ["#2563eb","#16a34a","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#f97316","#22c55e","#e11d48","#0ea5e9"]; return colors[i % colors.length];
+  }
+
+  function baixarCSV(){
+    const csv = Papa.unparse(dadosAtuais);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `relatorio_backlog_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }
+</script>
+<div style="text-align:center;margin-top:40px;color:#000000;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>

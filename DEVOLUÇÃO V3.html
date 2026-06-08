@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Diário de Devoluções</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<style>
+:root{
+ --bg:#0a0f1e;
+ --card:#111a2f;
+ --chart:#141c2f;
+ --text:#ffffff;
+ --muted:#b8c0ff;
+}
+body{
+ margin:0;
+ background:var(--bg);
+ color:var(--text);
+ font-family:Segoe UI, Arial, sans-serif;
+}
+.wrap{max-width:1200px;margin:18px auto;padding:0 16px}
+.card{
+ background:var(--card);
+ padding:16px;
+ border-radius:14px;
+ box-shadow:0 0 18px #0d6efd44;
+}
+.header{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:10px;
+}
+.clock{font-size:14px;color:var(--muted)}
+.controls{display:flex;gap:10px;margin-bottom:10px}
+input,button{
+ padding:8px 12px;
+ border-radius:8px;
+ border:1px solid #2c3f63;
+ background:#1a2235;
+ color:#fff;
+}
+button{cursor:pointer}
+.btn-clear{background:#913030}
+.kpis{
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ gap:10px;
+ margin:14px 0;
+}
+.kpi{background:#0f162b;padding:10px;border-radius:10px}
+.kpi .label{font-size:11px;color:var(--muted)}
+.kpi .value{font-size:18px;font-weight:800}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.pill{
+ background:#0f162b;
+ padding:6px 12px;
+ border-radius:999px;
+ font-size:12px;
+ border:1px solid #2c3f63;
+}
+.chart-box{height:220px;margin-top:10px}
+.chart-box canvas{
+ width:100%!important;
+ height:100%!important;
+ background:var(--chart);
+ border-radius:12px;
+}
+.sub{margin-top:14px;font-weight:700;color:var(--muted)}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+<div class="card">
+<div class="header">
+ <h2>Painel Diário de Devoluções</h2>
+ <div class="clock" id="clock"></div>
+</div>
+
+<div class="controls">
+ <input type="file" id="fileInput" accept=".xlsx,.xls">
+ <button class="btn-clear" id="btnClear">Limpar Dados</button>
+</div>
+
+<div class="kpis">
+ <div class="kpi"><div class="label">Total Embalagens</div><div class="value" id="kEmb">0</div></div>
+ <div class="kpi"><div class="label">Total Peças</div><div class="value" id="kPec">0</div></div>
+ <div class="kpi"><div class="label">Maior Dia</div><div class="value" id="kMaior">-</div></div>
+ <div class="kpi"><div class="label">Média Diária</div><div class="value" id="kMedia">0</div></div>
+ <div class="kpi"><div class="label">Dias</div><div class="value" id="kDias">0</div></div>
+</div>
+
+<div class="pills">
+ <span class="pill" id="totFab1"></span>
+ <span class="pill" id="totFab3"></span>
+</div>
+
+<div class="chart-box">
+ <canvas id="graficoPrincipal"></canvas>
+</div>
+
+<div class="sub">Detalhe do dia selecionado</div>
+
+<div class="pills">
+ <span class="pill" id="dDia">Dia: -</span>
+ <span class="pill" id="dEmb">Embalagens: -</span>
+ <span class="pill" id="dPec">Peças: -</span>
+</div>
+
+<div class="chart-box">
+ <canvas id="graficoDia"></canvas>
+</div>
+
+</div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+let dataMap = {}, g1 = null, g2 = null;
+
+function atualizarRelogio(){
+ const n = new Date();
+ clock.innerText = n.toLocaleTimeString("pt-BR") + " – " + n.toLocaleDateString("pt-BR");
+}
+setInterval(atualizarRelogio,1000);
+atualizarRelogio();
+
+fileInput.onchange = e => {
+ const r = new FileReader();
+ r.onload = x => {
+  const wb = XLSX.read(x.target.result,{type:"binary"});
+  const sh = wb.Sheets[wb.SheetNames[0]];
+  process(XLSX.utils.sheet_to_json(sh,{raw:true}));
+ };
+ r.readAsBinaryString(e.target.files[0]);
+};
+
+btnClear.onclick = () => location.reload();
+
+const fmt = v =>
+ typeof v === "number"
+ ? (() => {
+    const d = XLSX.SSF.parse_date_code(v);
+    return `${String(d.d).padStart(2,'0')}/${String(d.m).padStart(2,'0')}/${d.y}`;
+   })()
+ : String(v).split(" ")[0];
+
+function process(rows){
+ dataMap = {};
+ rows.forEach(r=>{
+  if(!r["Data Inserção"]) return;
+  const d = fmt(r["Data Inserção"]);
+  const q = Number(r["Qtde"]) || 0;
+  const z = r["Zona de origem"];
+
+  if(!dataMap[d]) dataMap[d] = {emb:0, pec:0, f1:{e:0,p:0}, f3:{e:0,p:0}};
+  dataMap[d].emb++;
+  dataMap[d].pec += q;
+
+  if(z === "MO1"){ dataMap[d].f1.e++; dataMap[d].f1.p += q; }
+  if(z === "MO3"){ dataMap[d].f3.e++; dataMap[d].f3.p += q; }
+ });
+ render();
+}
+
+function render(){
+
+ /* ===== ALTERAÇÃO ÚNICA: ORDENA AS DATAS DO MENOR PARA O MAIOR ===== */
+ const labels = Object.keys(dataMap).sort((a,b)=>{
+  const [da,ma,ya] = a.split('/').map(Number);
+  const [db,mb,yb] = b.split('/').map(Number);
+  return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
+ });
+ /* ================================================================ */
+
+ if(!labels.length) return;
+
+ let te=0,tp=0,md="-",mx=0,f1e=0,f1p=0,f3e=0,f3p=0;
+
+ labels.forEach(d=>{
+  const o = dataMap[d];
+  te += o.emb; tp += o.pec;
+  f1e += o.f1.e; f1p += o.f1.p;
+  f3e += o.f3.e; f3p += o.f3.p;
+  if(o.emb > mx){ mx = o.emb; md = d; }
+ });
+
+ kEmb.innerText = te;
+ kPec.innerText = tp;
+ kMaior.innerText = md;
+ kMedia.innerText = (te/labels.length).toFixed(1);
+ kDias.innerText = labels.length;
+ totFab1.innerText = `Fábrica 1 (MO1) • Emb: ${f1e} • Peças: ${f1p}`;
+ totFab3.innerText = `Fábrica 3 (MO3) • Emb: ${f3e} • Peças: ${f3p}`;
+
+ if(g1) g1.destroy();
+
+ g1 = new Chart(graficoPrincipal,{
+  data:{
+   labels,
+   datasets:[
+    {
+     type:"bar",
+     label:"Embalagens",
+     data:labels.map(d=>dataMap[d].emb),
+     backgroundColor:"#0d6efd",
+     yAxisID:"y",
+     order:1,
+     datalabels:{color:"#fff",anchor:"center",align:"center",font:{weight:"bold"}}
+    },
+    {
+     type:"line",
+     label:"Peças",
+     data:labels.map(d=>dataMap[d].pec),
+     borderColor:"#00c853",
+     yAxisID:"y1",
+     order:2,
+     datalabels:{color:"#fff",anchor:"end",align:"top",offset:8}
+    }
+   ]
+  },
+  options:{
+   maintainAspectRatio:false,
+   scales:{
+    y:{beginAtZero:true,max:100},
+    y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false}}
+   },
+   onClick:(_,e)=>e.length && det(labels[e[0].index])
+  }
+ });
+}
+
+function det(d){
+ const o = dataMap[d];
+ dDia.innerText = "Dia: " + d;
+ dEmb.innerText = "Embalagens: " + o.emb;
+ dPec.innerText = "Peças: " + o.pec;
+
+ if(g2) g2.destroy();
+
+ g2 = new Chart(graficoDia,{
+  data:{
+   labels:["Fábrica 1","Fábrica 3"],
+   datasets:[
+    {
+     type:"bar",
+     label:"Embalagens",
+     data:[o.f1.e,o.f3.e],
+     backgroundColor:"#0d6efd",
+     datalabels:{color:"#fff",anchor:"center",align:"center"}
+    },
+    {
+     type:"line",
+     label:"Peças",
+     data:[o.f1.p,o.f3.p],
+     borderColor:"#00c853",
+     yAxisID:"y1",
+     datalabels:{color:"#fff",anchor:"end",align:"top",offset:8}
+    }
+   ]
+  },
+  options:{
+   maintainAspectRatio:false,
+   scales:{
+    y:{beginAtZero:true,max:100},
+    y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false}}
+   }
+  }
+ });
+}
+</script>
+
+<div style="text-align:center;margin-top:40px;color:#ff0000;font-size:14px;">
+Desenvolvido por <b>Lucas Martinez</b>
+</div>
+
+</body>
+</html>
+``

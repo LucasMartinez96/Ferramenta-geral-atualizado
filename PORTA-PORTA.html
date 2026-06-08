@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Inventário com Divergências — Tabelas por Item (Corrigido)</title>
+<link rel='preconnect' href='https://cdnjs.cloudflare.com'>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'></script>
+<style>
+ body { font-family: Arial, sans-serif; background:#eef1f5; padding:25px; }
+ .container { background:white; padding:25px; border-radius:14px; max-width:900px; margin:auto; box-shadow:0 4px 16px rgba(0,0,0,0.15); }
+ h2 { color:#003b99; margin-bottom:18px; font-size:26px; text-align:center; }
+ .grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+ label { font-weight:600; margin-bottom:4px; display:block; color:#333; }
+ input { padding:12px; font-size:16px; width:100%; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
+ .btn { padding:12px 14px; border:none; border-radius:8px; cursor:pointer; font-size:15px; font-weight:600; }
+ .primary { background:#005ce6; color:#fff; }
+ .danger { background:#cc0000; color:#fff; }
+ .success { background:#00994d; color:#fff; }
+ .neutral { background:#6b7280; color:#fff; }
+ .toolbar { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap }
+ table { width:100%; border-collapse:collapse; margin-top:16px; border-radius:10px; overflow:hidden; background:white; }
+ th { background:#d9e6ff; padding:10px; font-size:15px; }
+ td { padding:9px; font-size:14px; border-bottom:1px solid #ddd; text-align:center }
+ tr.positivo { background:#caffc8; }
+ tr.negativo { background:#ffc6c6; }
+ tr.zero { background:#f2f2f2; }
+ .itemHeader { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:24px; }
+ .itemTitle { font-size:18px; color:#003b99; font-weight:700; }
+ .totalBox { margin-top:12px; font-size:18px; font-weight:bold; color:#003b99; text-align:right; padding:10px; background:#e6ecff; border-radius:8px; }
+ .groupCard { background:#ffffff; border:1px solid #e7ecff; border-radius:12px; padding:14px; box-shadow:0 2px 10px rgba(0,0,0,0.06); margin-top:18px }
+ .hr { height:1px; background:#e9eefc; margin:12px 0 }
+</style>
+</head>
+<body>
+<div class='container'>
+<h2>📦 Inventário com Divergências — Tabelas por Item (Corrigido)</h2>
+
+<div class='grid'>
+ <div><label>Item</label><input id='item' placeholder='Ex.: 088135'></div>
+ <div><label>Subinventory</label><input id='sub' placeholder='Ex.: RET, MON, ARMAZÉM-01'></div>
+ <div><label>Qtd Física</label><input id='fisica' placeholder='Ex.: 0, 10, 12,5'></div>
+ <div><label>Qtd Sistema</label><input id='sistema' placeholder='Ex.: 72, 255'></div>
+</div>
+
+<div class='toolbar'>
+ <button class='btn primary' onclick='adicionar()'>Adicionar Registro</button>
+ <button class='btn neutral' onclick='novoGrupoManual()'>Nova Tabela (novo item)</button>
+ <button class='btn danger' onclick='limparTudo()'>Limpar Tudo</button>
+</div>
+
+<div class='hr'></div>
+<div class='muted'>Dica: se você digitar um <b>Item</b> que já existe, as linhas serão acrescentadas na tabela daquele item.</div>
+
+<div id='grupos'></div>
+</div>
+
+<script>
+const KEY='inventario_grupos_corrigido';
+function getGrupos(){ try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return [];} }
+function setGrupos(a){ localStorage.setItem(KEY,JSON.stringify(a)); }
+function $(s,c=document){ return c.querySelector(s); }
+function toNumber(v){ return parseFloat(String(v).replace(/\./g,'').replace(',','.')); }
+function classeDiff(d){ return d>0?'positivo': d<0?'negativo':'zero'; }
+function normalizeItem(s){ return String(s||'').trim().toUpperCase().replace(/\s+/g,''); }
+function findGroupIndexByItem(item){ const g=getGrupos(); const key=normalizeItem(item); for(let i=0;i<g.length;i++){ if(normalizeItem(g[i].item)==key){ return i; }} return -1; }
+
+function render(){
+ const wrapper=document.getElementById('grupos');
+ wrapper.innerHTML='';
+ const grupos=getGrupos();
+ grupos.forEach((g,idx)=>{
+   const card=document.createElement('div'); card.className='groupCard';
+   const header=document.createElement('div'); header.className='itemHeader';
+   header.innerHTML = `<div class='itemTitle'>Item: ${g.item}</div>
+   <button class='btn success' onclick='baixarPNG(${idx})'>Baixar PNG</button>`;
+
+   const capture=document.createElement('div'); capture.id='capture_'+idx;
+   capture.style.padding='10px'; capture.style.background='white';
+
+   const table=document.createElement('table');
+   table.innerHTML=`<thead><tr>
+     <th>Item</th><th>Subinventory</th><th>Físico</th><th>Sistema</th><th>Diferença</th>
+   </tr></thead><tbody></tbody>`;
+
+   const tbody=table.querySelector('tbody');
+   let total=0;
+   g.rows.forEach(r=>{
+      const [sub,f,s]=r;
+      const diff=toNumber(f)-toNumber(s);
+      total+=diff;
+      const tr=document.createElement('tr'); tr.className=classeDiff(diff);
+      tr.innerHTML=`<td>${g.item}</td><td>${sub}</td><td>${f}</td><td>${s}</td><td>${diff}</td>`;
+      tbody.appendChild(tr);
+   });
+
+   const totalBox=document.createElement('div'); totalBox.className='totalBox';
+   totalBox.textContent='TOTAL: '+Number(total.toFixed(2));
+
+   capture.appendChild(table);
+   capture.appendChild(totalBox);
+   card.appendChild(header);
+   card.appendChild(capture);
+   wrapper.appendChild(card);
+ });
+}
+
+function novoGrupoManual(){
+ let g=getGrupos();
+ const item=$('#item').value.trim();
+ if(item){
+   const idx=findGroupIndexByItem(item);
+   if(idx!==-1){ render(); setTimeout(()=>document.getElementById('capture_'+idx).scrollIntoView({behavior:'smooth'}),50); alert('Item já existe.'); return; }
+   g.push({item,rows:[]});
+ } else {
+   g.push({item:'NOVO-ITEM',rows:[]});
+ }
+ setGrupos(g); render();
+}
+
+function garantirGrupoParaItem(item){
+ let g=getGrupos();
+ const found=findGroupIndexByItem(item);
+ if(found!==-1) return found;
+ if(g.length){
+   const last=g.length-1;
+   if(normalizeItem(g[last].item)=='NOVO-ITEM' && g[last].rows.length===0){
+      g[last].item=item; setGrupos(g); return last;
+   }
+ }
+ g.push({item,rows:[]}); setGrupos(g); return g.length-1;
+}
+
+function adicionar(){
+ const item=$('#item').value.trim();
+ const sub=$('#sub').value.trim();
+ const fStr=$('#fisica').value.trim();
+ const sStr=$('#sistema').value.trim();
+ if(!item||!sub||!fStr||!sStr){ alert('Preencha todos os campos!'); return; }
+ const f=toNumber(fStr); const s=toNumber(sStr);
+ if(isNaN(f)||isNaN(s)){ alert('Valores inválidos'); return; }
+ const idx=garantirGrupoParaItem(item);
+ let g=getGrupos(); g[idx].rows.push([sub,f,s]); setGrupos(g);
+ render(); $('#sub').value=''; $('#fisica').value=''; $('#sistema').value=''; $('#sub').focus();
+ setTimeout(()=>document.getElementById('capture_'+idx).scrollIntoView({behavior:'smooth'}),50);
+}
+
+function baixarPNG(idx){
+ const el=document.getElementById('capture_'+idx);
+ el.style.boxShadow='none'; el.style.borderRadius='0';
+ setTimeout(()=>{
+   html2canvas(el,{scale:2}).then(canvas=>{
+     const a=document.createElement('a');
+     a.download='tabela_item_'+idx+'.png';
+     a.href=canvas.toDataURL('image/png');
+     a.click();
+   });
+ },200);
+}
+
+function limparTudo(){ if(confirm('Deseja realmente limpar tudo?')){ localStorage.removeItem(KEY); render(); }}
+window.addEventListener('load',render);
+</script>
+<div style="text-align:center;margin-top:40px;color:#ffffff;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>

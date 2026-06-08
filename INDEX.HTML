@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Sistema Logístico</title>
+
+<style>
+body{
+  margin:0;
+  display:flex;
+  height:100vh;
+  font-family:Segoe UI;
+  background:#0f172a;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:80px;
+  background:#020617;
+  color:#fff;
+  transition:.3s;
+}
+.sidebar:hover{width:260px;}
+
+.item{
+  padding:12px;
+  cursor:pointer;
+  display:flex;
+  gap:10px;
+}
+.item:hover{background:#1e293b;}
+.item.active{background:#2563eb;}
+
+.text{opacity:0;}
+.sidebar:hover .text{opacity:1;}
+
+/* MAIN */
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+/* TOPO */
+.topbar{
+  height:55px;
+  background:linear-gradient(90deg,#0f172a,#1e3a8a);
+  color:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 20px;
+}
+
+.btnLogout{
+  background:#ef4444;
+  border:none;
+  padding:6px 12px;
+  border-radius:6px;
+  color:#fff;
+  cursor:pointer;
+}
+
+/* IFRAME */
+iframe{
+  flex:1;
+  border:none;
+  transition:opacity .3s;
+}
+
+/* LOADING */
+.loading{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:#fff;
+  font-size:18px;
+  display:none;
+}
+
+/* PAINEL */
+.panel{
+  display:none;
+  padding:30px;
+  background:#e5e7eb;
+  height:100%;
+  overflow:auto;
+}
+
+.card{
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+td,th{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+}
+th{background:#f1f5f9;}
+
+.btn{
+  padding:8px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.btn-primary{background:#2563eb;color:#fff;}
+.btn-danger{background:#ef4444;color:#fff;}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+<div class="item" onclick="abrir('Batimento de estoque.html',this)">📊 <span class="text">Batimento</span></div>
+<div class="item" onclick="abrir('BACKLOG.html',this)">📈 <span class="text">Backlog</span></div>
+<div class="item" onclick="abrir('CICLICO_PORTA_PORTA_SEM_BORDA2.html',this)">📦 <span class="text">Inventário</span></div>
+<div class="item" onclick="abrir('PORTA-PORTA.html',this)">📋 <span class="text">Divergência</span></div>
+<div class="item" onclick="abrir('ferramenta_de_inventario_travada.html',this)">📌 <span class="text">Travado</span></div>
+<div class="item" onclick="abrir('DEVOLUÇÃO V3.html',this)">↩️ <span class="text">Devoluções</span></div>
+<div class="item" onclick="abrir('Contencão atualizada.html',this)">🛑 <span class="text">Contenção</span></div>
+<div class="item" onclick="abrir('Dashbord de produção.html',this)">🏭 <span class="text">Produção</span></div>
+<div class="item" onclick="abrir('RECE1 REC2.html',this)">📦 <span class="text">Recebimento</span></div>
+<div class="item" onclick="abrir('iNDICADOR PERECIVEL.html',this)">🥫 <span class="text">Perecíveis</span></div>
+<div class="item" onclick="abrir('Indicador_SALA_COFRE_atualizado.html',this)">🏛️ <span class="text">Sala Cofre</span></div>
+<div class="item" onclick="abrirPainel(this)">👥 <span class="text">Usuários</span></div>
+
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<div class="topbar">
+<div>🚀 Sistema Logístico</div>
+
+<div style="display:flex;gap:15px;">
+<span id="user"></span>
+<button class="btnLogout" onclick="logout()">Sair</button>
+</div>
+</div>
+
+<div id="loading" class="loading">Carregando...</div>
+
+<!-- PAINEL -->
+<div class="panel" id="panel">
+
+<h2>👥 Gestão de Usuários</h2>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+<div class="card">
+<h3>Criar Usuário</h3>
+
+<input id="emailNovo" placeholder="Email" style="width:100%;margin-top:10px;">
+<input id="senhaNovo" type="password" placeholder="Senha" style="width:100%;margin-top:10px;">
+
+<select id="tipoNovo" style="width:100%;margin-top:10px;">
+<option value="admin">Admin</option>
+<option value="operador">Operador</option>
+</select>
+
+<button class="btn btn-primary" onclick="criarUsuario()" style="width:100%;margin-top:10px;">
+Criar
+</button>
+
+</div>
+
+<div class="card">
+<h3>Usuários</h3>
+
+<table>
+<thead>
+<tr>
+<th>Email</th>
+<th>Tipo</th>
+<th>Ação</th>
+</tr>
+</thead>
+<tbody id="listaUsuarios"></tbody>
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<iframe id="frame"></iframe>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
+  authDomain: "meu-sistema-f83ab.firebaseapp.com",
+  projectId: "meu-sistema-f83ab"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const frame = document.getElementById("frame");
+const panel = document.getElementById("panel");
+const loading = document.getElementById("loading");
+const items = document.querySelectorAll(".item");
+
+/* LOGIN */
+onAuthStateChanged(auth, async(user)=>{
+
+if(!user){
+  location="login.html";
+  return;
+}
+
+document.getElementById("user").innerText = user.email;
+
+// garante no banco
+const ref = doc(db,"usuarios",user.uid);
+const snap = await getDoc(ref);
+
+if(!snap.exists()){
+  await setDoc(ref,{ email:user.email, tipo:"admin" });
+}
+
+// carregar usuários
+carregarUsuarios();
+
+// restaurar tela
+const ultima = localStorage.getItem("pagina");
+if(ultima){
+  frame.src = ultima;
+}
+
+});
+
+/* NAVEGAÇÃO (CORRIGIDO DEFINITIVO) */
+window.abrir = (pagina,el)=>{
+
+items.forEach(i=>i.classList.remove("active"));
+el.classList.add("active");
+
+// ✅ MOSTRAR FRAME DE VOLTA
+frame.style.display = "block";
+panel.style.display = "none";
+
+loading.style.display="block";
+frame.style.opacity=0;
+
+localStorage.setItem("pagina",pagina);
+
+setTimeout(()=>{
+frame.src = pagina;
+
+setTimeout(()=>{
+frame.style.opacity=1;
+loading.style.display="none";
+},300);
+
+},200);
+
+};
+
+/* PAINEL */
+window.abrirPainel = (el)=>{
+
+items.forEach(i=>i.classList.remove("active"));
+el.classList.add("active");
+
+frame.style.display="none";
+panel.style.display="block";
+
+};
+
+/* USUÁRIOS */
+window.criarUsuario = async()=>{
+const cred = await createUserWithEmailAndPassword(auth,emailNovo.value,senhaNovo.value);
+
+await setDoc(doc(db,"usuarios",cred.user.uid),{
+  email: emailNovo.value,
+  tipo: tipoNovo.value
+});
+
+carregarUsuarios();
+}
+
+async function carregarUsuarios(){
+const query = await getDocs(collection(db,"usuarios"));
+listaUsuarios.innerHTML="";
+
+query.forEach(docu=>{
+  const u = docu.data();
+
+  listaUsuarios.innerHTML += `
+  <tr>
+  <td>${u.email}</td>
+  <td>${u.tipo}</td>
+  <td><button class="btn btn-danger" onclick="remover('${docu.id}')">Excluir</button></td>
+  </tr>`;
+});
+}
+
+window.remover = async(id)=>{
+await deleteDoc(doc(db,"usuarios",id));
+carregarUsuarios();
+}
+
+/* LOGOUT */
+window.logout = ()=>{
+signOut(auth).then(()=>location="login.html");
+};
+
+</script>
+
+</body>
+</html>

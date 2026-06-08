@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dashboard de Produção – Sesé Neon Dark</title>
+<style>
+:root{--bg:#05060a;--card:#0b0e14;--ink:#e8ecf6;--muted:#7e8ca1;--line:#222834;--neon-blue:#2b8aff;--neon-blue-strong:#4da0ff;--neon-cyan:#00eaff;--neon-green:#00ffbf;--warn:#ffb347}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"Segoe UI",Roboto,Arial,sans-serif}
+header{position:sticky;top:0;z-index:10;background:#090c12;padding:14px 26px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 20px rgba(0,180,255,.25);border-bottom:1px solid #0f141c}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo-sese{height:40px;display:block;object-fit:contain;filter:drop-shadow(0 0 6px var(--neon-blue))}
+header h1{font-size:22px;font-weight:700;color:var(--neon-blue);text-shadow:0 0 8px var(--neon-blue)}
+#clock{font-size:20px;font-weight:700;color:var(--neon-cyan);text-shadow:0 0 10px var(--neon-cyan)}
+.wrap{padding:34px 26px;max-width:1250px;margin:auto}
+.panel{margin-bottom:34px}
+.panel h2{font-size:22px;margin-bottom:12px;color:var(--neon-blue-strong);padding-left:12px;border-left:6px solid var(--neon-cyan);text-shadow:0 0 6px var(--neon-blue)}
+.panel-head{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin:6px 0 8px}
+.subhead{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 10px;color:var(--muted);font-size:13px}
+.card{background:var(--card);padding:18px;border-radius:14px;border:1px solid #131821;box-shadow:0 0 18px rgba(0,0,0,.6);margin-bottom:14px}
+.grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.card h3{margin-bottom:8px;font-size:18px;color:var(--neon-blue)}
+.row{display:flex;align-items:center;gap:10px}
+.result{margin-top:8px;font-weight:700;line-height:1.45}
+.muted{color:var(--muted)}
+input[type=file]{border:1px solid var(--line);padding:7px 10px;border-radius:8px;background:var(--bg);color:var(--ink);font-size:13px;width:100%}
+input[type=file]::file-selector-button{background:var(--neon-blue);color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px;box-shadow:0 0 10px var(--neon-blue)}
+input[type=file]::-webkit-file-upload-text{visibility:hidden}
+input[type=file]::after{content:"Nenhum arquivo";color:var(--muted);font-size:13px;margin-left:6px}
+button{background:var(--neon-blue);color:#fff;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:.2s;box-shadow:0 0 12px var(--neon-blue)}
+button:hover{background:var(--neon-cyan);box-shadow:0 0 14px var(--neon-cyan)}
+button.secondary{background:#3b4350;box-shadow:0 0 10px #3b4350aa}
+button.secondary:hover{background:#4c5566}
+.base.locked{opacity:.55;filter:grayscale(.4);pointer-events:none}
+.canvas-wrap{margin-top:10px;height:420px;background:#0d1118;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 0 35px rgba(255,255,255,.18),0 0 60px rgba(255,255,255,.10),0 0 25px rgba(0,0,0,.9)}
+canvas{width:100%;height:100%}
+.chart-row{display:flex;align-items:stretch;gap:14px}
+.legend-vert{list-style:none;margin:0;padding:12px 14px;min-width:180px;height:420px;background:var(--card);border-radius:12px;border:1px solid #131821;box-shadow:0 0 14px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
+.legend-vert .item{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:14px}
+.legend-vert .swatch{width:14px;height:14px;border-radius:4px;box-shadow:0 0 10px currentColor}
+@media (max-width:980px){.chart-row{flex-direction:column}.legend-vert{height:auto;min-width:unset;width:100%}}
+</style>
+</head>
+<body class="dark">
+<header>
+  <div class="header-left">
+    <img src="Imagem1.png" alt="Logomarca Sesé" class="logo-sese"/>
+    <h1>Dashboard de Produção</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="clock">--:--:--</div>
+    <button id="btnClear">Limpar Dados</button>
+  </div>
+</header>
+<div class="wrap">
+  <section class="panel">
+    <h2>PROCESO‑FAB2</h2>
+    <div class="panel-head">
+      <button class="secondary" data-save="FAB2-IE">Baixar PNG (Itens/Emb.)</button>
+    </div>
+    <div class="card">
+      <div class="subhead">Gráfico 1 — Colunas agrupadas: <b>Itens</b> vs <b>Embalagens</b></div>
+      <div class="chart-row">
+        <div class="canvas-wrap" data-canvaswrap="FAB2-IE">
+          <canvas data-canvas="FAB2-IE"></canvas>
+          <div class="tooltip" data-tip="FAB2-IE"></div>
+        </div>
+        <ul class="legend-vert">
+          <li class="item"><span class="swatch" style="background:var(--neon-blue)"></span>Itens</li>
+          <li class="item"><span class="swatch" style="background:var(--neon-green)"></span>Embalagens</li>
+          <li class="item"><span class="swatch" style="background:var(--warn)"></span>Média (linha tracejada)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel-head" style="margin-top:8px">
+      <button class="secondary" data-save="FAB2-PC">Baixar PNG (Peças)</button>
+    </div>
+    <div class="card">
+      <div class="subhead">Gráfico 2 — Colunas: <b>Quantidade de Peças</b></div>
+      <div class="chart-row">
+        <div class="canvas-wrap" data-canvaswrap="FAB2-PC">
+          <canvas data-canvas="FAB2-PC"></canvas>
+          <div class="tooltip" data-tip="FAB2-PC"></div>
+        </div>
+        <ul class="legend-vert">
+          <li class="item"><span class="swatch" style="background:var(--neon-cyan)"></span>Peças</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid" data-bases="FAB2"></div>
+  </section>
+  <section class="panel">
+    <h2>PROCESO‑FAB1</h2>
+    <div class="panel-head">
+      <button class="secondary" data-save="FAB1-IE">Baixar PNG (Itens/Emb.)</button>
+    </div>
+    <div class="card">
+      <div class="subhead">Gráfico 1 — Colunas agrupadas: <b>Itens</b> vs <b>Embalagens</b></div>
+      <div class="chart-row">
+        <div class="canvas-wrap" data-canvaswrap="FAB1-IE">
+          <canvas data-canvas="FAB1-IE"></canvas>
+          <div class="tooltip" data-tip="FAB1-IE"></div>
+        </div>
+        <ul class="legend-vert">
+          <li class="item"><span class="swatch" style="background:var(--neon-blue)"></span>Itens</li>
+          <li class="item"><span class="swatch" style="background:var(--neon-green)"></span>Embalagens</li>
+          <li class="item"><span class="swatch" style="background:var(--warn)"></span>Média (linha tracejada)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel-head" style="margin-top:8px">
+      <button class="secondary" data-save="FAB1-PC">Baixar PNG (Peças)</button>
+    </div>
+    <div class="card">
+      <div class="subhead">Gráfico 2 — Colunas: <b>Quantidade de Peças</b></div>
+      <div class="chart-row">
+        <div class="canvas-wrap" data-canvaswrap="FAB1-PC">
+          <canvas data-canvas="FAB1-PC"></canvas>
+          <div class="tooltip" data-tip="FAB1-PC"></div>
+        </div>
+        <ul class="legend-vert">
+          <li class="item"><span class="swatch" style="background:var(--neon-cyan)"></span>Peças</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid" data-bases="FAB1"></div>
+  </section>
+</div>
+<script>
+setInterval(()=>{const el=document.getElementById('clock'); if(el) el.textContent=new Date().toLocaleTimeString('pt-BR',{hour12:false});},1000);
+function parseCSV(text){if(text.charCodeAt(0)===0xFEFF) text=text.slice(1); const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim()); const header=lines[0].split(';'); const rows=lines.slice(1).map(l=>l.split(';')); return {header,rows};}
+const BASES=["07:00","10:00","13:00","16:00"];
+function makeState(ubic){return{ubicacion:ubic,points:[],locked:Object.fromEntries(BASES.map(b=>[b,false])),fileNames:Object.fromEntries(BASES.map(b=>[b,""]))}};
+let STATES={FAB2:makeState('PROCESO-FAB2'),FAB1:makeState('PROCESO-FAB1')};
+function createCard(base,panel){const el=document.createElement('div');el.className='card base';el.id=`base-${panel}-${base.replace(':','')}`;el.innerHTML=`<h3>Base ${base}</h3><div class="row"><input type="file" id="file-${panel}-${base}" accept=".csv"><button data-proc="${panel}-${base}">Processar & Travar</button></div><div class="result" id="res-${panel}-${base}"><span class="muted">Aguardando arquivo...</span></div><div class="muted" id="info-${panel}-${base}" style="font-size:12px"></div>`;return el}
+function buildPanel(panel){const grid=document.querySelector(`.grid[data-bases="${panel}"]`); if(!grid) return; grid.append(...BASES.map(b=>createCard(b,panel)));}
+buildPanel('FAB2'); buildPanel('FAB1');
+function baseToTimestamp(base){
+  const [h,m] = base.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.getTime();
+}
+
+function processBase(panel,base){const st=STATES[panel]; if(!st||st.locked[base]) return; const input=document.getElementById(`file-${panel}-${base}`); const file=input?.files?.[0]; if(!file){alert('Selecione um arquivo CSV.');return;} const reader=new FileReader(); reader.onload=e=>{const {header,rows}=parseCSV(e.target.result); const iU=header.indexOf('Ubicacion'); const iC=header.indexOf('CantidadTotal'); const iP=header.indexOf('Pieza'); if(iU===-1||iP===-1){alert("CSV inválido. Precisa ter 'Ubicacion' e 'Pieza'.");return;} const itensSet=new Set(); let emb=0,pecas=0; for(const r of rows){ if((r[iU]||'').trim()===st.ubicacion){ itensSet.add(r[iP]); emb++; if(iC!==-1){ const n=Number((r[iC]||'').replace(',','.')); if(!isNaN(n)) pecas+=n; } } } const itens=itensSet.size; const t = baseToTimestamp(base); st.points=st.points.filter(p=>p.base!==base); st.points.push({t,y:itens,base,itens,emb,pecas}); st.locked[base]=true; st.fileNames[base]=file.name; document.getElementById(`base-${panel}-${base.replace(':','')}`).classList.add('locked'); document.getElementById(`res-${panel}-${base}`).innerHTML=`Itens únicos: <b>${itens}</b><br>Embalagens: <b>${emb}</b><br>Peças: <b>${pecas}</b>`; document.getElementById(`info-${panel}-${base}`).textContent=file.name; drawCharts(panel); saveAll();}; reader.readAsText(file);}
+document.addEventListener('click',ev=>{const proc=ev.target?.getAttribute?.('data-proc'); if(proc){ const [panel,...rest]=proc.split('-'); const base=rest.join('-'); processBase(panel,base); }});
+function dpi(){return Math.max(1,Math.floor(window.devicePixelRatio||1))}
+function setupCanvas(canvas,wrap){const d=dpi(); canvas.width=Math.floor(wrap.clientWidth*d); canvas.height=Math.floor(wrap.clientHeight*d); canvas.style.width=wrap.clientWidth+'px'; canvas.style.height=wrap.clientHeight+'px'; const ctx=canvas.getContext('2d'); ctx.setTransform(d,0,0,d,0,0); return ctx}
+function niceStep(max){if(max<=10) return 2; const pow=Math.pow(10,Math.floor(Math.log10(max))); for(const s of [1,2,2.5,5,10]) if(max/(pow*s)<=6) return pow*s; return pow*10}
+function timeBounds(ts){if(ts.length===0){const n=Date.now();return[n-2*60e3,n+2*60e3]} const mn=Math.min(...ts),mx=Math.max(...ts); if(mn===mx) return [mn-30*60e3,mx+30*60e3]; const pad=(mx-mn)*.1+5*60e3; return [mn-pad,mx+pad]}
+function fmtTime(ms){return new Date(ms).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+function getCanvasColors(){const css=getComputedStyle(document.documentElement); return {BG:'#0d1118',GRID:'#2c3750',TEXT:'#c9d4e6',PRI:css.getPropertyValue('--neon-blue').trim()||'#2b8aff',SEC:css.getPropertyValue('--neon-green').trim()||'#00ffbf',CYAN:css.getPropertyValue('--neon-cyan').trim()||'#00eaff',WARN:css.getPropertyValue('--warn').trim()||'#ffb347'} }
+function drawChartItensEmb(panel){const st=STATES[panel]; const wrap=document.querySelector(`.canvas-wrap[data-canvaswrap="${panel}-IE"]`); const canvas=document.querySelector(`canvas[data-canvas="${panel}-IE"]`); const tip=document.querySelector(`.tooltip[data-tip="${panel}-IE"]`); if(!wrap||!canvas||!tip) return; const ctx=setupCanvas(canvas,wrap); const W=canvas.clientWidth,H=canvas.clientHeight; const m={top:20,right:20,bottom:50,left:70}; const C=getCanvasColors(); ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H); if(st.points.length===0){ctx.fillStyle=C.TEXT; ctx.font='600 14px Segoe UI'; ctx.fillText('Carregue os arquivos para ver o gráfico.',m.left,m.top+10); return;} const pts=[...st.points].sort((a,b)=>a.t-b.t); const ts=pts.map(p=>p.t); const serieItens=pts.map(p=>p.itens); const serieEmb=pts.map(p=>p.emb); const [tMin,tMax]=timeBounds(ts); const yMaxRaw=Math.max(Math.max(...serieItens),Math.max(...serieEmb)); const stepY=niceStep(yMaxRaw*1.25); const yMax=Math.ceil((yMaxRaw*1.25)/stepY)*stepY; const yMin=0; const Xi=t=>m.left+((t-tMin)/(tMax-tMin||1))*(W-m.left-m.right); const Y=v=>H-m.bottom-((v-yMin)/(yMax-yMin||1))*(H-m.top-m.bottom); ctx.strokeStyle=C.GRID; ctx.fillStyle=C.TEXT; ctx.font='12px Segoe UI'; for(let v=0; v<=yMax; v+=stepY){const yy=Y(v); ctx.beginPath(); ctx.moveTo(m.left,yy); ctx.lineTo(W-m.right,yy); ctx.stroke(); ctx.fillText(v,14,yy+4);} const spanMin=Math.max(15,Math.round((tMax-tMin)/(6*60e3))); const tickMin=Math.min(60,Math.max(5,spanMin)); const start=Math.floor(tMin/(tickMin*60e3))*(tickMin*60e3); ctx.textAlign='center'; for(let t=start; t<=tMax+tickMin*60e3; t+=tickMin*60e3){const xx=Xi(t); ctx.beginPath(); ctx.moveTo(xx,m.top); ctx.lineTo(xx,H-m.bottom); ctx.stroke(); ctx.fillText(fmtTime(t),xx,H-12);} ctx.font='600 12px Segoe UI'; ctx.fillText('Horário real do processamento', m.left+(W-m.left-m.right)/2, H-2); let groupW=36; if(pts.length>1){let minDX=Infinity; for(let i=1;i<pts.length;i++){const dx=Math.abs(Xi(pts[i].t)-Xi(pts[i-1].t)); if(dx>0&&dx<minDX) minDX=dx;} if(isFinite(minDX)) groupW=Math.max(28,Math.min(64,Math.floor(minDX*0.7)));} const barGap=8; const barW=Math.max(10,Math.floor((groupW-barGap)/2)); const radius=6; const gradItens=ctx.createLinearGradient(m.left,0,W-m.right,0); gradItens.addColorStop(0,C.PRI); gradItens.addColorStop(1,C.PRI); const gradEmb=ctx.createLinearGradient(m.left,0,W-m.right,0); gradEmb.addColorStop(0,C.SEC); gradEmb.addColorStop(1,C.SEC); function rr(x,y,w,h,r){ctx.beginPath(); ctx.moveTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h); ctx.lineTo(x,y+h); ctx.closePath();} const local=[]; pts.forEach(p=>{const cx=Xi(p.t); const x1=Math.round(cx-groupW/2); const y1=Y(p.itens); const h1=(H-m.bottom)-y1; const x2=x1+barW+barGap; const y2=Y(p.emb); const h2=(H-m.bottom)-y2; ctx.shadowColor='rgba(255,255,255,0.10)'; ctx.shadowBlur=14; ctx.fillStyle=gradItens; rr(x1,y1,barW,h1,radius); ctx.fill(); ctx.fillStyle=gradEmb; rr(x2,y2,barW,h2,radius); ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=1.3; ctx.strokeStyle='rgba(255,255,255,0.18)'; rr(x1,y1,barW,h1,radius); ctx.stroke(); rr(x2,y2,barW,h2,radius); ctx.stroke(); ctx.fillStyle='#fff'; ctx.font='700 13px Segoe UI'; ctx.textAlign='center'; ctx.fillText(p.itens,x1+barW/2,y1-8); ctx.fillText(p.emb,x2+barW/2,y2-8); local.push({serie:'Itens',...p,x:x1,y:y1,w:barW,h:h1,cx:x1+barW/2,cy:y1},{serie:'Embalagens',...p,x:x2,y:y2,w:barW,h:h2,cx:x2+barW/2,cy:y2});}); const wrapEl=wrap; wrapEl.onmousemove=ev=>{const rect=wrapEl.getBoundingClientRect(); const px=ev.clientX-rect.left,py=ev.clientY-rect.top; let best=null; for(const b of local){if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h){best=b;break}} if(!best){tip.style.display='none';return} tip.innerHTML=`<b>${fmtTime(best.t)}</b> — Base ${best.base}<br><div style="height:1px;background:#223042;margin:6px 0;opacity:.6"></div>Série: <b>${best.serie}</b><br>Itens: <b>${best.itens}</b> • Emb.: <b>${best.emb}</b><br>Peças: <b>${best.pecas}</b>`; tip.style.left=best.cx+'px'; tip.style.top=best.cy+'px'; tip.style.display='block'}; wrapEl.onmouseleave=()=>tip.style.display='none'; const btn=document.querySelector(`button[data-save="${panel}-IE"]`); btn.onclick=()=>{const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=canvas.height; tmp.getContext('2d').drawImage(canvas,0,0); const a=document.createElement('a'); a.href=tmp.toDataURL('image/png'); a.download=`grafico-itens-emb-${panel}.png`; a.click();}} 
+function drawChartPecas(panel){const st=STATES[panel]; const wrap=document.querySelector(`.canvas-wrap[data-canvaswrap="${panel}-PC"]`); const canvas=document.querySelector(`canvas[data-canvas="${panel}-PC"]`); const tip=document.querySelector(`.tooltip[data-tip="${panel}-PC"]`); if(!wrap||!canvas||!tip) return; const ctx=setupCanvas(canvas,wrap); const W=canvas.clientWidth,H=canvas.clientHeight; const m={top:20,right:20,bottom:50,left:70}; const C=getCanvasColors(); ctx.fillStyle=C.BG; ctx.fillRect(0,0,W,H); if(st.points.length===0){ctx.fillStyle=C.TEXT; ctx.font='600 14px Segoe UI'; ctx.fillText('Carregue os arquivos para ver o gráfico.',m.left,m.top+10); return;} const pts=[...st.points].sort((a,b)=>a.t-b.t); const ts=pts.map(p=>p.t); const ys=pts.map(p=>p.pecas); const [tMin,tMax]=timeBounds(ts); const yMaxRaw=Math.max(...ys); const stepY=niceStep(yMaxRaw*1.25); const yMax=Math.ceil((yMaxRaw*1.25)/stepY)*stepY; const yMin=0; const Xi=t=>m.left+((t-tMin)/(tMax-tMin||1))*(W-m.left-m.right); const Y=v=>H-m.bottom-((v-yMin)/(yMax-yMin||1))*(H-m.top-m.bottom); ctx.strokeStyle=C.GRID; ctx.fillStyle=C.TEXT; ctx.font='12px Segoe UI'; for(let v=0; v<=yMax; v+=stepY){const yy=Y(v); ctx.beginPath(); ctx.moveTo(m.left,yy); ctx.lineTo(W-m.right,yy); ctx.stroke(); ctx.fillText(v,14,yy+4);} const spanMin=Math.max(15,Math.round((tMax-tMin)/(6*60e3))); const tickMin=Math.min(60,Math.max(5,spanMin)); const start=Math.floor(tMin/(tickMin*60e3))*(tickMin*60e3); ctx.textAlign='center'; for(let t=start; t<=tMax+tickMin*60e3; t+=tickMin*60e3){const xx=Xi(t); ctx.beginPath(); ctx.moveTo(xx,m.top); ctx.lineTo(xx,H-m.bottom); ctx.stroke(); ctx.fillText(fmtTime(t),xx,H-12);} ctx.font='600 12px Segoe UI'; ctx.fillText('Horário real do processamento', m.left+(W-m.left-m.right)/2, H-2); let barW=24; if(pts.length>1){let minDX=Infinity; for(let i=1;i<pts.length;i++){const dx=Math.abs(Xi(pts[i].t)-Xi(pts[i-1].t)); if(dx>0&&dx<minDX) minDX=dx;} if(isFinite(minDX)) barW=Math.max(16,Math.min(48,Math.floor(minDX*0.6)));} const radius=6; const gradP=ctx.createLinearGradient(m.left,0,W-m.right,0); gradP.addColorStop(0,C.CYAN); gradP.addColorStop(1,C.CYAN); function rr(x,y,w,h,r){ctx.beginPath(); ctx.moveTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h); ctx.lineTo(x,y+h); ctx.closePath();} const local=[]; pts.forEach(p=>{const xCenter=Xi(p.t); const w=barW; const x=Math.round(xCenter-w/2); const y=Y(p.pecas); const h=(H-m.bottom)-y; ctx.shadowColor='rgba(255,255,255,0.10)'; ctx.shadowBlur=14; ctx.fillStyle=gradP; rr(x,y,w,h,radius); ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=1.3; ctx.strokeStyle='rgba(255,255,255,0.18)'; rr(x,y,w,h,radius); ctx.stroke(); ctx.fillStyle='#fff'; ctx.font='700 13px Segoe UI'; ctx.textAlign='center'; ctx.fillText(p.pecas,x+w/2,y-8); local.push({...p,x,y,w,h,cx:x+w/2,cy:y});}); const wrapEl=wrap; wrapEl.onmousemove=ev=>{const rect=wrapEl.getBoundingClientRect(); const px=ev.clientX-rect.left,py=ev.clientY-rect.top; let best=null; for(const b of local){if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h){best=b;break}} if(!best){tip.style.display='none';return} tip.innerHTML=`<b>${fmtTime(best.t)}</b> — Base ${best.base}<br><div style="height:1px;background:#223042;margin:6px 0;opacity:.6"></div>Peças: <b>${best.pecas}</b><br>Itens: <b>${best.itens}</b> • Emb.: <b>${best.emb}</b>`; tip.style.left=best.cx+'px'; tip.style.top=best.cy+'px'; tip.style.display='block'}; wrapEl.onmouseleave=()=>tip.style.display='none'; const btn=document.querySelector(`button[data-save="${panel}-PC}"]`); const btn2=document.querySelector(`button[data-save="${panel}-PC"]`); (btn||btn2).onclick=()=>{const tmp=document.createElement('canvas'); tmp.width=canvas.width; tmp.height=canvas.height; tmp.getContext('2d').drawImage(canvas,0,0); const a=document.createElement('a'); a.href=tmp.toDataURL('image/png'); a.download=`grafico-pecas-${panel}.png`; a.click();}}
+function drawCharts(panel){drawChartItensEmb(panel);drawChartPecas(panel)}
+const STORAGE_KEY='producao_state_v1';
+function ensureStateShape(st){if(!st.locked) st.locked=Object.fromEntries(BASES.map(b=>[b,false])); if(!st.points) st.points=[]; if(!st.fileNames) st.fileNames=Object.fromEntries(BASES.map(b=>[b,''])); return st}
+function saveAll(){const payload={FAB1:STATES.FAB1,FAB2:STATES.FAB2}; try{localStorage.setItem(STORAGE_KEY,JSON.stringify(payload))}catch(e){console.warn('Falha ao salvar estado:',e)}}
+function restoreCardsUI(panel){const st=STATES[panel]; BASES.forEach(base=>{const card=document.getElementById(`base-${panel}-${base.replace(':','')}`); const res=document.getElementById(`res-${panel}-${base}`); const info=document.getElementById(`info-${panel}-${base}`); if(st.locked[base]){card?.classList.add('locked'); const p=st.points.find(pp=>pp.base===base); if(p&&res){res.innerHTML=`Itens únicos: <b>${p.itens}</b><br>Embalagens: <b>${p.emb}</b><br>Peças: <b>${p.pecas}</b>`} if(info){info.textContent=(st.fileNames&&st.fileNames[base])||''}} else {card?.classList.remove('locked'); if(res){res.innerHTML='<span class="muted">Aguardando arquivo...</span>'} if(info){info.textContent=''} const inp=document.getElementById(`file-${panel}-${base}`); if(inp) inp.value=''}})}
+function loadAll(){try{const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return; const data=JSON.parse(raw); if(data.FAB1){STATES.FAB1=ensureStateShape(data.FAB1)} if(data.FAB2){STATES.FAB2=ensureStateShape(data.FAB2)} restoreCardsUI('FAB1'); restoreCardsUI('FAB2'); drawCharts('FAB1'); drawCharts('FAB2');}catch(e){console.warn('Falha ao restaurar estado:',e)}}
+function clearAll(){try{localStorage.removeItem(STORAGE_KEY)}catch(_){} STATES.FAB1=makeState('PROCESO-FAB1'); STATES.FAB2=makeState('PROCESO-FAB2'); restoreCardsUI('FAB1'); restoreCardsUI('FAB2'); drawCharts('FAB1'); drawCharts('FAB2'); saveAll();}
+window.addEventListener('DOMContentLoaded',()=>{const btn=document.getElementById('btnClear'); if(btn) btn.addEventListener('click',clearAll); restoreCardsUI('FAB1'); restoreCardsUI('FAB2'); loadAll();});
+window.addEventListener('resize',()=>{drawCharts('FAB2'); drawCharts('FAB1')});
+drawCharts('FAB2'); drawCharts('FAB1');
+</script>
+<div style="text-align:center;margin-top:40px;color:#ffffff;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>

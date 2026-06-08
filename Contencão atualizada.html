@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel de Contenção MP</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+body{margin:0;background:#070b16;font-family:Inter;color:#fff}
+.wrap{max-width:1500px;margin:20px auto;padding:20px}
+.card{background:#0d1224;border-radius:18px;padding:20px;box-shadow:0 0 30px #0d6efd66}
+h1{margin:0 0 15px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px}
+select,input,button{
+ padding:10px 14px;border-radius:10px;
+ background:#121a33;color:#fff;border:1px solid #223
+}
+button{cursor:pointer;border:none}
+.btn-red{background:#ff3b3b}
+.btn-green{background:#00c853}
+.btn-blue{background:#0d6efd}
+.kpis{
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ gap:14px;
+ margin-bottom:14px
+}
+.kpi{
+ background:#0c1020;
+ border-radius:14px;
+ padding:14px;
+ box-shadow:0 0 12px #0d6efd55
+}
+.kpi span{display:block;font-size:12px;color:#b3c2ff}
+.kpi strong{font-size:22px}
+.section{margin-top:20px;font-weight:800;color:#b3c2ff}
+.chart-box{margin-top:10px;height:300px}
+.chart-box canvas{
+ width:100%!important;
+ height:100%!important;
+ background:#17203A;
+ border-radius:14px
+}
+.pill{
+ display:inline-block;
+ background:#0c1020;
+ padding:6px 14px;
+ border-radius:18px;
+ margin-right:6px
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+<div class="card">
+<h1>Painel de Contenção MP</h1>
+
+<div class="controls">
+<input type="file" id="fileInput" accept=".xlsx,.xls">
+<select id="mesSelect"><option value="">Todos os meses</option></select>
+<select id="alturaSelect">
+<option value="200">Altura 200px</option>
+<option value="300" selected>Altura 300px</option>
+<option value="400">Altura 400px</option>
+</select>
+<button class="btn-red" id="btnLimpar">Limpar</button>
+<button class="btn-green" id="btnExport">Exportar PNG</button>
+<button class="btn-blue" id="btnFull">Tela cheia</button>
+</div>
+
+<div class="kpis">
+<div class="kpi"><span>TOTAL DO MÊS</span><strong id="kTotal">0</strong></div>
+<div class="kpi"><span>MAIOR DIA</span><strong id="kMaior">-</strong></div>
+<div class="kpi"><span>MÉDIA POR DIA</span><strong id="kMedia">0</strong></div>
+<div class="kpi"><span>DIAS REGISTRADOS</span><strong id="kDias">0</strong></div>
+<div class="kpi"><span>ÚLTIMA IMPORTAÇÃO</span><strong id="kData">-</strong></div>
+</div>
+
+<div class="chart-box"><canvas id="grafico"></canvas></div>
+
+<div class="section">Detalhe do dia selecionado</div>
+<span class="pill" id="pDia">Dia: -</span>
+<span class="pill" id="pValor">Valor: -</span>
+<button id="btnLimparDia">Limpar seleção</button>
+<div class="chart-box"><canvas id="graficoDia"></canvas></div>
+
+<div class="section">Total por mês</div>
+<div class="chart-box"><canvas id="graficoMes"></canvas></div>
+
+</div>
+</div>
+
+<script>
+/* ================= NUMEROS NAS COLUNAS ================= */
+const valueLabelsPlugin={
+ id:'valueLabels',
+ afterDatasetsDraw(chart){
+  const ctx=chart.ctx;
+  ctx.save();
+  ctx.font='600 12px Inter';
+  ctx.fillStyle='#fff';
+  ctx.textAlign='center';
+  chart.data.datasets.forEach((ds,i)=>{
+   if(ds.type==='line') return;
+   chart.getDatasetMeta(i).data.forEach((bar,idx)=>{
+    const v=ds.data[idx];
+    if(v!==undefined) ctx.fillText(v,bar.x,bar.y-6);
+   });
+  });
+  ctx.restore();
+ }
+};
+
+/* ================= BASE ================= */
+const STORE='mp_contencao_height_ok';
+const load=()=>JSON.parse(localStorage.getItem(STORE)||'{}');
+const save=d=>localStorage.setItem(STORE,JSON.stringify(d));
+const clear=()=>localStorage.removeItem(STORE);
+let cMain,cDay,cMonth,selected=null;
+
+/* ================= ALTURA ================= */
+function aplicarAltura(px){
+ document.querySelectorAll('.chart-box').forEach(b=>b.style.height=px+'px');
+}
+alturaSelect.onchange=e=>aplicarAltura(e.target.value);
+aplicarAltura(alturaSelect.value);
+
+/* ================= DATA ================= */
+function normalizarData(v){
+ if(v instanceof Date) return v.toISOString().slice(0,10);
+ if(typeof v==='number'){
+  const d=XLSX.SSF.parse_date_code(v);
+  return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+ }
+ if(typeof v==='string'){
+  const p=v.split(' ')[0].split('/');
+  return `${p[2]}-${p[1]}-${p[0]}`;
+ }
+}
+
+/* ================= IMPORTAÇÃO ================= */
+fileInput.onchange=e=>{
+ const file=e.target.files[0];
+ if(!file) return;
+ const r=new FileReader();
+ r.onload=ev=>{
+  const wb=XLSX.read(ev.target.result,{type:'binary',cellDates:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+  const map={};
+  rows.forEach(r=>{
+   if(String(r['Localização']).trim()==='MP-CONTENCAO'){
+    const iso=normalizarData(r['Data do Movimento']);
+    if(iso) map[iso]=(map[iso]||0)+1;
+   }
+  });
+  save(map);
+  update();
+ };
+ r.readAsBinaryString(file);
+};
+
+/* ================= CORES DOS EIXOS ================= */
+const scalesDatesWhite={
+ x:{
+  ticks:{color:'#ffffff'},
+  grid:{color:'rgba(255,255,255,0.08)'}
+ },
+ y:{
+  ticks:{color:'#ffffff'},
+  grid:{color:'rgba(255,255,255,0.1)'}
+ }
+};
+
+/* ================= UPDATE ================= */
+function update(){
+ const raw=load();
+ const mes=mesSelect.value;
+ const data={};
+ Object.keys(raw).forEach(d=>{if(!mes||d.startsWith(mes)) data[d]=raw[d]});
+ const dias=Object.keys(data).sort();
+ const vals=dias.map(d=>data[d]);
+
+ cMain?.destroy();
+ cMain=new Chart(grafico,{
+  type:'bar',
+  data:{
+   labels:dias.map(d=>d.split('-').reverse().join('/')),
+   datasets:[{
+    label:'Quantidade',
+    data:vals,
+    backgroundColor:'#1673ff'
+   }]
+  },
+  plugins:[valueLabelsPlugin],
+  options:{
+   responsive:true,
+   maintainAspectRatio:false,
+   scales:scalesDatesWhite,
+   onClick:(e)=>{
+    const p=cMain.getElementsAtEventForMode(e,'nearest',{intersect:true},true);
+    if(p.length){
+     selected=dias[p[0].index];
+     drawDay();
+    }
+   }
+  }
+ });
+
+ let total=0,max=0,maxDay='-';
+ dias.forEach(d=>{
+  total+=data[d];
+  if(data[d]>max){max=data[d];maxDay=d;}
+ });
+
+ kTotal.textContent=total;
+ kDias.textContent=dias.length;
+ kMedia.textContent=dias.length?(total/dias.length).toFixed(1):0;
+ kMaior.textContent=max?`${max} em ${maxDay.split('-').reverse().join('/')}`:'-';
+ kData.textContent=new Date().toLocaleString();
+
+ carregarMeses(raw);
+ drawDay();
+ drawMonth(raw);
+}
+
+/* ================= DIA ================= */
+function drawDay(){
+ cDay?.destroy();
+ if(!selected){
+  pDia.textContent='Dia: -';
+  pValor.textContent='Valor: -';
+  return;
+ }
+ cDay=new Chart(graficoDia,{
+  type:'bar',
+  data:{
+   labels:[selected.split('-').reverse().join('/')],
+   datasets:[{
+    label:'Quantidade no dia',
+    data:[load()[selected]],
+    backgroundColor:'#00c853'
+   }]
+  },
+  plugins:[valueLabelsPlugin],
+  options:{responsive:true,maintainAspectRatio:false,scales:scalesDatesWhite}
+ });
+ pDia.textContent='Dia: '+selected.split('-').reverse().join('/');
+ pValor.textContent='Valor: '+load()[selected];
+}
+
+/* ================= MÊS ================= */
+function drawMonth(data){
+ const m={};
+ Object.keys(data).forEach(d=>{
+  const ym=d.slice(0,7);
+  m[ym]=(m[ym]||0)+data[d];
+ });
+ const labs=Object.keys(m).sort();
+ const vals=labs.map(l=>m[l]);
+
+ cMonth?.destroy();
+ cMonth=new Chart(graficoMes,{
+  data:{
+   labels:labs.map(v=>v.split('-')[1]+'/'+v.split('-')[0]),
+   datasets:[
+    {type:'bar',label:'Total mensal',data:vals,backgroundColor:'#1673ff'},
+    {type:'line',label:'Tendência',data:vals,borderColor:'#00c853',tension:.35}
+   ]
+  },
+  plugins:[valueLabelsPlugin],
+  options:{responsive:true,maintainAspectRatio:false,scales:scalesDatesWhite}
+ });
+}
+
+/* ================= MESES ================= */
+function carregarMeses(data){
+ const meses=[...new Set(Object.keys(data).map(d=>d.slice(0,7)))].sort();
+ mesSelect.innerHTML='<option value="">Todos os meses</option>';
+ meses.forEach(m=>{
+  const o=document.createElement('option');
+  o.value=m;
+  o.textContent='Mês '+m.split('-')[1]+'/'+m.split('-')[0];
+  mesSelect.appendChild(o);
+ });
+}
+mesSelect.onchange=update;
+
+/* ================= BOTÕES ================= */
+btnLimpar.onclick=()=>{if(confirm('Limpar dados?')){clear();update();}};
+btnLimparDia.onclick=()=>{selected=null;drawDay();};
+btnFull.onclick=()=>document.documentElement.requestFullscreen();
+btnExport.onclick=()=>{
+ const a=document.createElement('a');
+ a.href=grafico.toBase64Image();
+ a.download='grafico.png';
+ a.click();
+};
+
+update();
+</script>
+<div style="text-align:center;margin-top:40px;color:#ffffff;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+</body>
+</html>
