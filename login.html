@@ -12,17 +12,21 @@ body{
   justify-content:center;
   align-items:center;
   font-family:Segoe UI, Arial;
-  background:linear-gradient(135deg,#f8fafc,#e2e8f0);
+  background:linear-gradient(135deg,#0f172a,#1e3a8a);
 }
 
 /* CARD */
 .box{
   background:white;
   padding:40px;
-  border-radius:12px;
+  border-radius:14px;
   width:340px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  transition:0.3s;
+}
 
-  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+.box:hover{
+  transform:translateY(-3px);
 }
 
 /* TITULO */
@@ -55,6 +59,7 @@ input{
 
 input:focus{
   border-color:#2563eb;
+  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
 }
 
 /* BOTÕES */
@@ -65,9 +70,10 @@ input:focus{
   border-radius:8px;
   font-weight:600;
   cursor:pointer;
-  transition:0.3s;
+  transition:all 0.25s ease;
 }
 
+/* LOGIN */
 .login{
   background:#2563eb;
   color:white;
@@ -76,8 +82,16 @@ input:focus{
 
 .login:hover{
   background:#1d4ed8;
+  transform:translateY(-2px) scale(1.02);
+  box-shadow:0 8px 20px rgba(37,99,235,0.4);
 }
 
+.login:active{
+  transform:scale(0.98);
+  box-shadow:0 4px 10px rgba(37,99,235,0.3);
+}
+
+/* CADASTRO */
 .cadastro{
   background:#f1f5f9;
   color:#334155;
@@ -86,6 +100,11 @@ input:focus{
 
 .cadastro:hover{
   background:#e2e8f0;
+  transform:translateY(-2px);
+}
+
+.cadastro:active{
+  transform:scale(0.98);
 }
 
 /* MSG */
@@ -128,7 +147,7 @@ from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// CONFIG
+// CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
   authDomain: "meu-sistema-f83ab.firebaseapp.com",
@@ -138,14 +157,17 @@ const firebaseConfig = {
   appId: "1:33394533141:web:785b4b4e0f139589bdbf1c"
 };
 
+// INIT
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// BASE GITHUB
 const base = window.location.pathname.includes("Ferramenta-geral-atualizado")
   ? "/Ferramenta-geral-atualizado/"
   : "/";
 
+// ELEMENTOS
 const email = document.getElementById("email");
 const senha = document.getElementById("senha");
 const msg = document.getElementById("msg");
@@ -157,10 +179,11 @@ document.getElementById("login").onclick = async () => {
 
   try {
     await signInWithEmailAndPassword(auth, email.value, senha.value);
+
     msg.innerText = "✅ Login realizado!";
     location = base + "index.html";
 
-  } catch(e) {
+  } catch(e){
     tratarErro(e);
   }
 };
@@ -185,10 +208,10 @@ document.getElementById("cadastro").onclick = async () => {
       tipo: "user"
     });
 
-    msg.innerText = "✅ Conta criada com sucesso!";
+    msg.innerText = "✅ Conta criada!";
     msg.style.color = "green";
 
-  } catch(e) {
+  } catch(e){
     tratarErro(e);
   }
 };
