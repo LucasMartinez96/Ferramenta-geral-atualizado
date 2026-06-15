@@ -87,8 +87,7 @@ const firebaseConfig = {
   projectId: "meu-sistema-f83ab",
   storageBucket: "meu-sistema-f83ab.firebasestorage.app",
   messagingSenderId: "33394533141",
-  appId: "1:33394533141:web:785b4b4e0f139589bdbf1c",
-  measurementId: "G-FL9WM0GGWG"
+  appId: "1:33394533141:web:785b4b4e0f139589bdbf1c"
 };
 
 // INIT
@@ -96,7 +95,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔥 BASE DINÂMICO (FUNCIONA EM QUALQUER LUGAR)
+// BASE PRA GITHUB PAGES
 const base = window.location.pathname.includes("Ferramenta-geral-atualizado")
   ? "/Ferramenta-geral-atualizado/"
   : "/";
@@ -105,30 +104,20 @@ const base = window.location.pathname.includes("Ferramenta-geral-atualizado")
 const email = document.getElementById("email");
 const senha = document.getElementById("senha");
 const msg = document.getElementById("msg");
+const login = document.getElementById("login");
+const cadastro = document.getElementById("cadastro");
 
-// LOGIN
+// ✅ LOGIN (SEM ADMIN.HTML)
 login.onclick = async () => {
   msg.innerText = "Carregando...";
 
   try {
-    const cred = await signInWithEmailAndPassword(
-      auth, email.value, senha.value
-    );
+    await signInWithEmailAndPassword(auth, email.value, senha.value);
 
-    const ref = doc(db, "usuarios", cred.user.uid);
-    const snap = await getDoc(ref);
+    // 👉 sempre vai para index (não quebra mais)
+    location = base + "index.html";
 
-    if(snap.exists()){
-      const dados = snap.data();
-
-      if(dados.tipo === "admin"){
-        location = base + "admin.html";
-      } else {
-        location = base + "index.html";
-      }
-    }
-
-  } catch(e) {
+  } catch (e) {
     tratarErro(e);
   }
 };
