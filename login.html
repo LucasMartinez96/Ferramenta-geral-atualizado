@@ -23,7 +23,7 @@ body{
   box-shadow:0 0 30px rgba(0,0,0,0.6);
 }
 
-h2{ text-align:center; color:white; margin-bottom:20px; }
+h2{ text-align:center; color:white; }
 
 input{
   width:100%;
@@ -32,7 +32,7 @@ input{
   border:none;
   border-radius:8px;
   background:#0f172a;
-  color:#fff;
+  color:white;
 }
 
 .btn{
@@ -74,14 +74,13 @@ input{
 
 <script type="module">
 
-// ✅ SDK CORRETO (IMPORTANTE)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc }
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ✅ SEU CONFIG REAL
+// ✅ CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
   authDomain: "meu-sistema-f83ab.firebaseapp.com",
@@ -97,18 +96,21 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// 🔥 BASE DINÂMICO (FUNCIONA EM QUALQUER LUGAR)
+const base = window.location.pathname.includes("Ferramenta-geral-atualizado")
+  ? "/Ferramenta-geral-atualizado/"
+  : "/";
+
 // ELEMENTOS
 const email = document.getElementById("email");
 const senha = document.getElementById("senha");
 const msg = document.getElementById("msg");
-const login = document.getElementById("login");
-const cadastro = document.getElementById("cadastro");
 
 // LOGIN
-login.onclick = async () =>{
+login.onclick = async () => {
   msg.innerText = "Carregando...";
 
-  try{
+  try {
     const cred = await signInWithEmailAndPassword(
       auth, email.value, senha.value
     );
@@ -120,39 +122,41 @@ login.onclick = async () =>{
       const dados = snap.data();
 
       if(dados.tipo === "admin"){
-        location = "admin.html";
+        location = base + "admin.html";
       } else {
-        location = "index.html";
+        location = base + "index.html";
       }
     }
 
-  }catch(e){
+  } catch(e) {
     tratarErro(e);
   }
 };
 
 // CADASTRO
-cadastro.onclick = async () =>{
+cadastro.onclick = async () => {
 
   if(!email.value || !senha.value){
-    msg.innerText="Preencha email e senha";
+    msg.innerText = "Preencha email e senha";
+    msg.style.color = "orange";
     return;
   }
 
-  try{
+  try {
+
     const cred = await createUserWithEmailAndPassword(
       auth, email.value, senha.value
     );
 
-    await setDoc(doc(db,"usuarios",cred.user.uid),{
+    await setDoc(doc(db,"usuarios",cred.user.uid), {
       email: email.value,
       tipo: "user"
     });
 
-    msg.innerText="✅ Conta criada! Faça login.";
-    msg.style.color="lightgreen";
+    msg.innerText = "✅ Conta criada! Faça login.";
+    msg.style.color = "lightgreen";
 
-  }catch(e){
+  } catch(e) {
     tratarErro(e);
   }
 };
