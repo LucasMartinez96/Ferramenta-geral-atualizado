@@ -78,6 +78,7 @@ button{cursor:pointer}
 <body>
 <div class="wrap">
 <div class="card">
+
 <div class="header">
  <h2>Painel Diário de Devoluções</h2>
  <div class="clock" id="clock"></div>
@@ -161,24 +162,24 @@ function process(rows){
   const z = r["Zona de origem"];
 
   if(!dataMap[d]) dataMap[d] = {emb:0, pec:0, f1:{e:0,p:0}, f3:{e:0,p:0}};
+
   dataMap[d].emb++;
   dataMap[d].pec += q;
 
   if(z === "MO1"){ dataMap[d].f1.e++; dataMap[d].f1.p += q; }
   if(z === "MO3"){ dataMap[d].f3.e++; dataMap[d].f3.p += q; }
  });
+
  render();
 }
 
 function render(){
 
- /* ===== ALTERAÇÃO ÚNICA: ORDENA AS DATAS DO MENOR PARA O MAIOR ===== */
  const labels = Object.keys(dataMap).sort((a,b)=>{
   const [da,ma,ya] = a.split('/').map(Number);
   const [db,mb,yb] = b.split('/').map(Number);
   return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
  });
- /* ================================================================ */
 
  if(!labels.length) return;
 
@@ -197,6 +198,7 @@ function render(){
  kMaior.innerText = md;
  kMedia.innerText = (te/labels.length).toFixed(1);
  kDias.innerText = labels.length;
+
  totFab1.innerText = `Fábrica 1 (MO1) • Emb: ${f1e} • Peças: ${f1p}`;
  totFab3.innerText = `Fábrica 3 (MO3) • Emb: ${f3e} • Peças: ${f3p}`;
 
@@ -213,7 +215,7 @@ function render(){
      backgroundColor:"#0d6efd",
      yAxisID:"y",
      order:1,
-     datalabels:{color:"#fff",anchor:"center",align:"center",font:{weight:"bold"}}
+     datalabels:{color:"#fff",anchor:"center",align:"center"}
     },
     {
      type:"line",
@@ -229,6 +231,14 @@ function render(){
   options:{
    maintainAspectRatio:false,
    scales:{
+    x:{
+     ticks:{
+      color:"#ffffff",
+      maxRotation:45,
+      minRotation:45
+     },
+     grid:{ color:"#2c3f63" }
+    },
     y:{beginAtZero:true,max:100},
     y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false}}
    },
@@ -239,6 +249,7 @@ function render(){
 
 function det(d){
  const o = dataMap[d];
+
  dDia.innerText = "Dia: " + d;
  dEmb.innerText = "Embalagens: " + o.emb;
  dPec.innerText = "Peças: " + o.pec;
@@ -254,7 +265,7 @@ function det(d){
      label:"Embalagens",
      data:[o.f1.e,o.f3.e],
      backgroundColor:"#0d6efd",
-     datalabels:{color:"#fff",anchor:"center",align:"center"}
+     datalabels:{color:"#fff"}
     },
     {
      type:"line",
@@ -262,7 +273,7 @@ function det(d){
      data:[o.f1.p,o.f3.p],
      borderColor:"#00c853",
      yAxisID:"y1",
-     datalabels:{color:"#fff",anchor:"end",align:"top",offset:8}
+     datalabels:{color:"#fff"}
     }
    ]
   },
@@ -283,4 +294,3 @@ Desenvolvido por <b>Lucas Martinez</b>
 
 </body>
 </html>
-``
