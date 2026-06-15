@@ -50,15 +50,8 @@ input{
   cursor:pointer;
 }
 
-.login{
-  background:#2563eb;
-  color:#fff;
-}
-
-.cadastro{
-  background:#334155;
-  color:#fff;
-}
+.login{ background:#2563eb; color:#fff; }
+.cadastro{ background:#334155; color:#fff; }
 
 #msg{
   margin-top:10px;
@@ -78,6 +71,7 @@ input{
 <input id="senha" type="password" placeholder="Senha">
 
 <button class="btn login" id="login">Entrar</button>
+<button class="btn cadastro" id="cadastro">Criar conta</button>
 
 <div id="msg"></div>
 
@@ -88,40 +82,59 @@ input{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc } 
+import { getFirestore, doc, setDoc, getDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ✅ SUA CONFIG CORRETA
+// CONFIG
 const firebaseConfig = {
-  apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
+  apiKey: "SUA_API_KEY_AQUI",
   authDomain: "meu-sistema-f83ab.firebaseapp.com",
   projectId: "meu-sistema-f83ab"
 };
 
-// ✅ INIT
+// INIT
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ELEMENTOS
+const email = document.getElementById("email");
+const senha = document.getElementById("senha");
 const msg = document.getElementById("msg");
+const login = document.getElementById("login");
+const cadastro = document.getElementById("cadastro");
 
-// ✅ LOGIN
-login.onclick = ()=>{
+// LOGIN
+login.onclick = async () =>{
   msg.innerText = "Carregando...";
   msg.style.color = "#fff";
 
-  signInWithEmailAndPassword(auth,email.value,senha.value)
-  .then(()=>{
-    location="index.html";
-  })
-  .catch(e=>{
+  try{
+
+    const cred = await signInWithEmailAndPassword(
+      auth, email.value, senha.value
+    );
+
+    const ref = doc(db, "usuarios", cred.user.uid);
+    const snap = await getDoc(ref);
+
+    if(snap.exists()){
+      const dados = snap.data();
+
+      if(dados.tipo === "admin"){
+        location = "admin.html";
+      }else{
+        location = "index.html";
+      }
+    }
+
+  }catch(e){
     tratarErro(e);
-  });
+  }
 };
 
-// ✅ CADASTRO
-cadastro.onclick = async ()=>{
+// CADASTRO
+cadastro.onclick = async () =>{
 
   if(!email.value || !senha.value){
     msg.innerText="Preencha email e senha";
@@ -132,15 +145,15 @@ cadastro.onclick = async ()=>{
   try{
 
     const cred = await createUserWithEmailAndPassword(
-      auth,email.value,senha.value
+      auth, email.value, senha.value
     );
 
     await setDoc(doc(db,"usuarios",cred.user.uid),{
       email: email.value,
-      tipo: "admin"
+      tipo: "user" // ✅ corrigido aqui
     });
 
-    msg.innerText="✅ Usuário criado! Agora faça login.";
+    msg.innerText="✅ Conta criada! Faça login.";
     msg.style.color="lightgreen";
 
   }catch(e){
@@ -148,15 +161,12 @@ cadastro.onclick = async ()=>{
   }
 };
 
-// ✅ TRATAMENTO PROFISSIONAL DE ERRO
+// TRATAR ERRO
 function tratarErro(e){
 
   console.log(e);
 
-  if(e.code === "auth/api-key-not-valid"){
-    msg.innerText = "❌ Erro de configuração do Firebase";
-  }
-  else if(e.code === "auth/user-not-found"){
+  if(e.code === "auth/user-not-found"){
     msg.innerText = "Usuário não encontrado";
   }
   else if(e.code === "auth/wrong-password"){
