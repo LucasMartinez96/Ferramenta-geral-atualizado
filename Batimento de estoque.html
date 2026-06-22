@@ -1,634 +1,684 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard de Batimento</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- ====== ESTILO no padrão SALA COFRE (somente aparência) ====== -->
-  <style>
-    :root{
-      /* Paleta/variáveis principais da Sala Cofre */
-      --azul:#003366;
-      --azul-escuro:#0b2545;
-      --azul-botao:#0a4aa6;
-      --cinza:#6b7280;
-      --bg:#f4f6f8;
-      --verde:#22c55e; /* OK */
-      --vermelho:#ef4444; /* Divergência */
-      /* Header */
-      --hdr-grad-start:#0b2545;
-      --hdr-grad-end:#0a4aa6;
-      --hdr-text:#ffffff;
-      --hdr-accent:#8ab4ff;
-    }
-    body { font-family: Arial, sans-serif; background: var(--bg); margin:0; color:#222; }
-
-    /* ===== Header elegante (aparência Sala Cofre) ===== */
-    .app-header{
-      position: sticky; top: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 18px; margin: 0 0 18px 0;
-      background: linear-gradient(135deg, var(--hdr-grad-start), var(--hdr-grad-end));
-      color: var(--hdr-text);
-      box-shadow: 0 10px 30px rgba(10,30,60,.25);
-      border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    }
-    .app-header .left{ display:flex; align-items:center; gap:12px; min-width:0; }
-    .logo-wrap{
-      width: 44px; height: 44px; display:grid; place-items:center;
-      background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
-      border-radius:10px; overflow:hidden;
-    }
-    .logo-wrap img{ width:36px; height:36px; object-fit:contain; display:block; }
-    .title-block{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-    .title{ font-size:18px; font-weight:800; letter-spacing:.3px; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .subtitle{ font-size:12px; color:var(--hdr-accent); opacity:.95; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
-    .right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .chip{
-      font-size:12px; color:#f1f5ff; background:rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.16); padding:6px 10px; border-radius:999px;
-    }
-
-    /* ===== Containers ===== */
-    .container{ max-width: 1400px; margin:0 auto; padding: 0 16px 20px; }
-    .box{
-      background:#fff; padding:15px; border-radius:14px;
-      margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,.10);
-    }
-    .box h2, .box h3{ margin:4px 0 10px; }
-
-    /* Upload / controles */
-    .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
-    label{ font-weight:600; }
-    select, input[type="file"]{ padding:8px; font-size:14px; }
-
-    /* Botões */
-    .btn{ background:var(--azul-botao); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.15); }
-    .btn:hover{ filter:brightness(1.05); }
-    .btn.secondary{ background:#6b7280; }
-
-    /* Tabela */
-    table{ width:100%; border-collapse:collapse; margin-top:12px; font-size:14px; }
-    th, td{ border:1px solid #e3e8ef; padding:8px; text-align:center; vertical-align:middle; }
-    th{ background:#eee; position:sticky; top:0; z-index:1; }
-    .dif-green{ background:var(--verde); color:#fff; }
-    .dif-red{ background:var(--vermelho); color:#fff; }
-
-    /* Gráficos lado a lado */
-    .charts{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; }
-    .chart-box{ flex:1 1 420px; max-width:calc(50% - 10px); min-width:320px; }
-    .chart-box h3{ text-align:center; margin:6px 0 10px; }
-    canvas{ max-width:420px !important; margin:auto; display:block; }
-
-    /* Legendas custom com números ao lado do gráfico */
-    .legend{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:8px; }
-    .legend-item{ display:inline-flex; align-items:center; gap:8px; color:#111; }
-    .legend-swatch{ width:18px; height:12px; border-radius:2px; border:1px solid rgba(0,0,0,.15); }
-    .legend-value{ font-weight:700; margin-left:2px; }
-
-    @media (max-width: 980px){
-      .app-header{ border-radius:0; }
-      .chart-box{ max-width:100%; min-width:280px; }
-    }
-  </style>
-
-  <!-- ===== Bibliotecas ===== -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard de Batimento de Estoque</title>
+  
+  <!-- Global Design System -->
+  <link rel="stylesheet" href="styles/global.css" />
+  
+  <!-- Bibliotecas -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    /* ========== Estilos específicos do Batimento ========== */
+    
+    .batimento-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .batimento-controls {
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-full);
+      color: white;
+      font-size: var(--font-size-sm);
+      white-space: nowrap;
+    }
+
+    .kpis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .chart-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chart-card__title {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-900);
+      margin-bottom: var(--spacing-md);
+      text-align: center;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 300px;
+    }
+
+    .legend {
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      margin-top: var(--spacing-md);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--color-gray-200);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: var(--font-size-sm);
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+    }
+
+    .status-ok {
+      background: var(--color-success-50);
+      color: var(--color-success-700);
+    }
+
+    .status-divergencia {
+      background: var(--color-danger-50);
+      color: var(--color-danger-700);
+    }
+
+    .filter-row {
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .filter-row label {
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-700);
+    }
+
+    .filter-row select {
+      padding: 8px 12px;
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      background: white;
+      cursor: pointer;
+    }
+
+    .filter-row select:focus {
+      outline: none;
+      border-color: var(--color-primary-500);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-xl);
+      color: var(--color-gray-500);
+    }
+
+    .empty-state__icon {
+      font-size: 48px;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .empty-state__text {
+      font-size: var(--font-size-base);
+    }
+
+    /* ========== Responsivo ========== */
+    @media (max-width: 1024px) {
+      .charts-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .batimento-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .batimento-controls {
+        width: 100%;
+        flex-direction: column;
+      }
+
+      .batimento-controls > * {
+        width: 100%;
+      }
+
+      .filter-row {
+        flex-direction: column;
+      }
+
+      .filter-row select,
+      .filter-row input {
+        width: 100%;
+      }
+
+      .kpis-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-wrapper {
+        height: 250px;
+      }
+
+      .legend {
+        flex-direction: column;
+      }
+    }
+
+    /* ========== Dark Mode ========== */
+    @media (prefers-color-scheme: dark) {
+      .chart-card {
+        background: var(--color-dark-950);
+      }
+
+      .chart-card__title {
+        color: var(--color-gray-50);
+      }
+
+      .legend {
+        border-top-color: var(--color-dark-700);
+      }
+
+      .filter-row select {
+        background: var(--color-dark-800);
+        color: var(--color-gray-50);
+        border-color: var(--color-dark-700);
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- ===== Cabeçalho ===== -->
-  <header class="app-header" aria-label="Cabeçalho">
-    <div class="left">
-      <div class="logo-wrap">
-        <!-- Deixe Imagem1.png na mesma pasta -->
-        <img src="Imagem1.png" alt="Logo">
+  <!-- ========== HEADER ========== -->
+  <header class="app-header">
+    <div class="app-header__content">
+      <div class="app-header__left">
+        <div class="app-header__logo">
+          <img src="Imagem1.png" alt="Logo Sesé" />
+        </div>
+        <div class="app-header__titles">
+          <h1 class="app-header__title">Dashboard de Batimento</h1>
+          <div class="app-header__subtitle" id="hdrClock">--/--/---- • --:--:--</div>
+        </div>
       </div>
-      <div class="title-block">
-        <div class="title">Dashboard de Batimento</div>
-        <div class="subtitle" id="hdrClock">--/--/---- • --:--:--</div>
+      <div class="app-header__right">
+        <span class="chip" id="hdrDataChip">Atualizado: --/--/----</span>
       </div>
-    </div>
-    <div class="right">
-      <span class="chip" id="hdrDataChip">Atualizado: --/--/----</span>
     </div>
   </header>
 
-  <div class="container">
-    <!-- Upload -->
-    <div class="box">
-      <h2>📁 Enviar arquivo (.xlsx)</h2>
-      <div class="row">
-        <input type="file" id="fileInput" accept=".xlsx" />
-        <span>Serão considerados apenas <b>7312ALM</b> e <b>7112ALM</b>.</span>
-        <!-- 🔹 Botão para limpar dados (NOVO) -->
-        <button class="btn secondary" id="btnClear">🧹 Limpar dados</button>
-      </div>
-    </div>
-
-    <!-- Gráficos -->
-    <div class="box">
-      <h2>📈 Gráficos (baseados no que está visível na tabela)</h2>
-      <div class="charts">
-        <div class="chart-box">
-          <h3>🥧 OK x Divergência</h3>
-          <canvas id="pizzaStatus" height="220"></canvas>
-          <div id="legendStatus" class="legend" aria-label="Legenda OK x Divergência"></div>
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="wrapper">
+    <div class="container">
+      <!-- Upload -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">📁 Enviar Arquivo (.xlsx)</h2>
         </div>
-        <div class="chart-box">
-          <h3>🍩 Distribuição por OBS</h3>
-          <canvas id="pizzaObs" height="220"></canvas>
-          <div id="legendObs" class="legend" aria-label="Legenda por OBS"></div>
+        <div class="card__body">
+          <div class="batimento-controls">
+            <input 
+              type="file" 
+              id="fileInput" 
+              accept=".xlsx"
+              class="form-group__input"
+              style="flex: 1; min-width: 200px;"
+              aria-label="Carregar arquivo Excel"
+            />
+            <span style="color: var(--color-gray-600); font-size: var(--font-size-sm);">
+              ℹ️ Serão considerados apenas <strong>7312ALM</strong> e <strong>7112ALM</strong>.
+            </span>
+            <button class="btn btn--secondary" id="btnClear" aria-label="Limpar dados">
+              🧹 Limpar dados
+            </button>
+          </div>
         </div>
       </div>
-      <div class="row" style="justify-content:center; margin-top:10px;">
-        <button class="btn" id="btnDownloadCharts">⬇️ Baixar gráficos (PNG único)</button>
+
+      <!-- KPIs -->
+      <div class="kpis-grid">
+        <div class="kpi kpi--success">
+          <div class="kpi__label">✅ Status OK</div>
+          <div class="kpi__value" id="kpiOk">0</div>
+        </div>
+        <div class="kpi kpi--danger">
+          <div class="kpi__label">⚠️ Divergências</div>
+          <div class="kpi__value" id="kpiDiverge">0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi__label">📦 Total de Itens</div>
+          <div class="kpi__value" id="kpiTotal">0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi__label">📅 Última Atualização</div>
+          <div class="kpi__value" id="kpiData" style="font-size: var(--font-size-lg);">-</div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">📈 Análise Visual</h2>
+        </div>
+        <div class="card__body">
+          <div class="charts-container">
+            <!-- Gráfico 1: OK x Divergência -->
+            <div class="chart-card">
+              <div class="chart-card__title">🥧 Proporção OK vs Divergência</div>
+              <div class="chart-wrapper">
+                <canvas id="pizzaStatus"></canvas>
+              </div>
+              <div id="legendStatus" class="legend" aria-label="Legenda: OK vs Divergência"></div>
+            </div>
+
+            <!-- Gráfico 2: Distribuição por OBS -->
+            <div class="chart-card">
+              <div class="chart-card__title">🍩 Distribuição por Causa</div>
+              <div class="chart-wrapper">
+                <canvas id="pizzaObs"></canvas>
+              </div>
+              <div id="legendObs" class="legend" aria-label="Legenda: Distribuição por OBS"></div>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: var(--spacing-lg);">
+            <button class="btn btn--primary" id="btnDownloadCharts">
+              ⬇️ Baixar Gráficos (PNG)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro e Tabela -->
+      <div class="card">
+        <div class="card__header">
+          <h2 class="card__title">📋 Dados Detalhados</h2>
+        </div>
+        <div class="card__body">
+          <div class="filter-row">
+            <label for="filtroObs">Filtrar por OBS:</label>
+            <select id="filtroObs" aria-label="Filtro de observações">
+              <option value="TODOS">Todos</option>
+              <option value="Falha interface">Falha interface</option>
+              <option value="Erro operacional">Erro operacional</option>
+              <option value="Perecível">Perecível</option>
+              <option value="__SEM_OBS__">Sem OBS</option>
+            </select>
+          </div>
+
+          <div id="tableContainer" class="table-wrapper">
+            <div class="empty-state">
+              <div class="empty-state__icon">📂</div>
+              <div class="empty-state__text">Nenhum dado carregado. Envie um arquivo para começar.</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+  </main>
 
-    <!-- Tabela + Filtro OBS -->
-    <div class="box">
-      <h2>📋 Tabela Final</h2>
-      <div class="row" style="margin-bottom:10px;">
-        <label for="filtroObs">Filtro OBS:</label>
-        <select id="filtroObs">
-          <option value="TODOS">Todos</option>
-          <option value="Falha interface">Falha interface</option>
-          <option value="Erro operacional">Erro operacional</option>
-          <option value="Perecível">Perecível</option>
-          <option value="__SEM_OBS__">Sem OBS</option>
-        </select>
-      </div>
-      <div id="tableContainer">Nenhum dado carregado.</div>
-    </div>
-  </div>
+  <script>
+    /* ========== INICIALIZAÇÃO ========== */
+    Chart.register(ChartDataLabels);
+    
+    let dataRows = [];
+    let headerMap = {};
+    let chartStatus = null;
+    let chartObs = null;
+    const LS_KEY = 'batimento_dashboard_v2';
 
-<script>
-/********** Relógio + chip “Atualizado” **********/
-function updateClock(){
-  const now = new Date();
-  const d = now.toLocaleDateString('pt-BR', { timeZone:'America/Sao_Paulo' });
-  const t = now.toLocaleTimeString('pt-BR', { timeZone:'America/Sao_Paulo', hour12:false });
-  const clk = document.getElementById('hdrClock');
-  const chip = document.getElementById('hdrDataChip');
-  if(clk) clk.textContent = `${d} • ${t}`;
-  if(chip) chip.textContent = `Atualizado: ${d}`;
-}
-updateClock(); setInterval(updateClock, 1000);
-
-/********** Estado e utilitários **********/
-let dataRows = []; // registros únicos por Item+Almox
-let headerMap = {}; // mapeamento de colunas detectadas
-let chartStatus = null; // OK x Divergência
-let chartObs = null;    // Distribuição OBS
-const LS_KEY = 'batimento_dashboard_v1';
-
-function norm(s){
-  return String(s ?? '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .toLowerCase().trim();
-}
-function findHeaderMap(sampleRow){
-  const keys = Object.keys(sampleRow || {});
-  const map = { data:null, item:null, almox:null, oracle:null, wms:null, difer:null };
-  for(const k of keys){
-    const nk = norm(k).replace(/[^a-z0-9]/g,'');
-    if(!map.data   && (nk.includes('apur') || nk.includes('data'))) map.data   = k; // Dt.Apuração / Data
-    if(!map.item   && (nk.includes('item')))                        map.item   = k; // Código do Item / Item
-    if(!map.almox  && (nk.includes('almox')))                       map.almox  = k; // Almoxarifado
-    if(!map.oracle && (nk.includes('oracle')))                      map.oracle = k; // Qtde.Oracle
-    if(!map.wms    && (nk.includes('wms')))                         map.wms    = k; // Qtde.WMS
-    if(!map.difer  && (nk.includes('difer') || nk.includes('diferen'))) map.difer = k; // Diferença
-  }
-  return map;
-}
-function uniqueByItemAlmox(rows){
-  const seen = new Map();
-  for(const r of rows){
-    const item = r[headerMap.item];
-    const alm  = r[headerMap.almox];
-    const key = `${item}__${alm}`;
-    if(!seen.has(key)) seen.set(key, r); // preserva 1ª ocorrência
-  }
-  return Array.from(seen.values());
-}
-function toRowObject(raw, rid){
-  const data = raw[headerMap.data] ?? '';
-  const item = raw[headerMap.item] ?? '';
-  const almox = raw[headerMap.almox] ?? '';
-  const oracle = Number(raw[headerMap.oracle] ?? 0);
-  const wms = Number(raw[headerMap.wms] ?? 0);
-  let difer = raw[headerMap.difer];
-  difer = (difer === '' || difer == null) ? (oracle - wms) : Number(difer);
-  const difSel = (difer === 0) ? 0 : 1; // inicial (editável)
-  return { rid, data, item, almox, oracle, wms, difer, difSel, obs: '__SEM_OBS__' };
-}
-function currentObsFilter(){ return document.getElementById('filtroObs').value; }
-function applyObsFilter(rows){
-  const f = currentObsFilter();
-  if(f === 'TODOS') return rows;
-  if(f === '__SEM_OBS__') return rows.filter(r => r.obs === '__SEM_OBS__');
-  return rows.filter(r => r.obs === f);
-}
-
-/********** Persistência **********/
-function saveState(){
-  try{
-    const state = { rows: dataRows, filtro: currentObsFilter() };
-    localStorage.setItem(LS_KEY, JSON.stringify(state));
-  }catch(e){ /* quota cheia ou indisponível */ }
-}
-function loadState(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw) return false;
-    const st = JSON.parse(raw);
-    if(Array.isArray(st?.rows) && st.rows.length > 0){
-      dataRows = st.rows;
-      if(st.filtro) document.getElementById('filtroObs').value = st.filtro;
-      renderTable();
-      return true;
+    /* ========== RELÓGIO ========== */
+    function updateClock() {
+      const now = new Date();
+      const d = now.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const t = now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
+      const clk = document.getElementById('hdrClock');
+      const chip = document.getElementById('hdrDataChip');
+      if (clk) clk.textContent = `${d} • ${t}`;
+      if (chip) chip.textContent = `Atualizado: ${d}`;
     }
-  }catch(e){ /* ignore */ }
-  return false;
-}
+    updateClock();
+    setInterval(updateClock, 1000);
 
-/********** Legendas custom **********/
-function renderLegend(containerId, items){
-  const el = document.getElementById(containerId);
-  el.innerHTML = items.map(it => `
-    <span class="legend-item">
-      <span class="legend-swatch" style="background:${it.color}"></span>
-      <span>${it.label} <span class="legend-value">${it.value}</span></span>
-    </span>
-  `).join('');
-}
+    /* ========== UTILITÁRIOS ========== */
+    function norm(s) {
+      return String(s ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
 
-/********** TABELA **********/
-function renderTable(){
-  const container = document.getElementById('tableContainer');
-  const rows = applyObsFilter(dataRows);
-  if(!rows.length){
-    container.innerHTML = "Nenhum dado encontrado para o filtro selecionado.";
-    updateCharts(rows);
-    return;
-  }
-  let html = `
-    <table aria-label="Tabela de Batimento (visual Sala Cofre)">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Item</th>
-          <th>Almoxarifado</th>
-          <th>Qtde Oracle</th>
-          <th>Qtde WMS</th>
-          <th>Diferença</th>
-          <th>DIF</th>
-          <th>OBS</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-  for(const r of rows){
-    const difClass = (r.difSel == 0) ? 'dif-green' : 'dif-red';
-    html += `
-      <tr data-rid="${r.rid}">
-        <td>${r.data}</td>
-        <td>${r.item}</td>
-        <td>${r.almox}</td>
-        <td>${r.oracle}</td>
-        <td>${r.wms}</td>
-        <td>${r.difer}</td>
-        <td class="${difClass}">
-          <select class="dif-select" aria-label="DIF">
-            <option value="0" ${r.difSel==0?'selected':''}>0</option>
-            <option value="1" ${r.difSel==1?'selected':''}>1</option>
-          </select>
-        </td>
-        <td>
-          <select class="obs-select" aria-label="OBS">
-            <option value="__SEM_OBS__" ${r.obs==='__SEM_OBS__'?'selected':''}>—</option>
-            <option value="Falha interface" ${r.obs==='Falha interface'?'selected':''}>Falha interface</option>
-            <option value="Erro operacional" ${r.obs==='Erro operacional'?'selected':''}>Erro operacional</option>
-            <option value="Perecível" ${r.obs==='Perecível'?'selected':''}>Perecível</option>
-          </select>
-        </td>
-      </tr>
-    `;
-  }
-  html += `</tbody></table>`;
-  container.innerHTML = html;
-  // Atualiza gráficos/legendas com as linhas visíveis
-  updateCharts(rows);
-}
+    function findHeaderMap(sampleRow) {
+      const keys = Object.keys(sampleRow || {});
+      const map = { data: null, item: null, almox: null, oracle: null, wms: null, difer: null };
+      
+      for (const k of keys) {
+        const nk = norm(k).replace(/[^a-z0-9]/g, '');
+        if (!map.data && (nk.includes('apur') || nk.includes('data'))) map.data = k;
+        if (!map.item && nk.includes('item')) map.item = k;
+        if (!map.almox && nk.includes('almox')) map.almox = k;
+        if (!map.oracle && (nk.includes('oracle') || nk.includes('sistema'))) map.oracle = k;
+        if (!map.wms && (nk.includes('wms') || nk.includes('contado'))) map.wms = k;
+        if (!map.difer && nk.includes('difer')) map.difer = k;
+      }
+      return map;
+    }
 
-/********** Plugin custom: linhas (callouts) **********/
-const calloutLines = {
-  id: 'calloutLines',
-  afterDatasetsDraw(chart, args, opts){
-    const meta = chart.getDatasetMeta(0);
-    if(!meta || !meta.data) return;
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.strokeStyle = opts?.color || 'rgba(0,0,0,.45)';
-    ctx.lineWidth = opts?.lineWidth || 1;
-    const offset = opts?.offset || 20; // prolongamento radial (ajustei levemente)
-    const hLen = opts?.hLength || 12;  // extensão horizontal
-    meta.data.forEach((arc, idx)=>{
-      // não desenha callout se o valor é 0
-      const v = chart.data?.datasets?.[0]?.data?.[idx] ?? 0;
-      if(!v) return;
-      const p = arc.getProps(['startAngle','endAngle','outerRadius','x','y'], true);
-      const mid = (p.startAngle + p.endAngle)/2;
-      const sx = p.x + Math.cos(mid) * (p.outerRadius - 1);
-      const sy = p.y + Math.sin(mid) * (p.outerRadius - 1);
-      const ex = p.x + Math.cos(mid) * (p.outerRadius + offset);
-      const ey = p.y + Math.sin(mid) * (p.outerRadius + offset);
-      const dir = (Math.cos(mid) >= 0) ? 1 : -1;
-      const hx = ex + dir * hLen;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(ex, ey);
-      ctx.lineTo(hx, ey);
-      ctx.stroke();
-    });
-    ctx.restore();
-  }
-};
+    /* ========== UPLOAD ========== */
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-/********** Gráficos **********/
-function pctFormatter(value, ctx){
-  const ds = ctx.chart.data.datasets[0];
-  const total = (ds?.data || []).reduce((a,b)=>a+Number(b||0), 0) || 1;
-  const pct = (value/total*100).toFixed(1) + '%';
-  return pct;
-}
-function basePieOptions(){
-  return {
-    responsive:true,
-    layout:{ padding: 12 }, /* espaço extra para labels externas */
-    plugins:{
-      legend:{ display:false },
-      tooltip:{ callbacks:{ label:(c)=> `${c.label}: ${c.parsed}` } },
-      datalabels:{
-        color:'#111',
-        backgroundColor:'#ffffff',   /* fundo branco para legibilidade */
-        borderColor:'rgba(0,0,0,.25)',
-        borderWidth:1,
-        borderRadius:4,
-        padding:4,
-        anchor:'end',
-        align:'end',
-        offset:14,                   /* rótulo mais afastado do arco */
-        clip:false,                  /* <— não cortar */
-        clamp:false,                 /* <— não prender nas bordas */
-        font:{ weight:'bold' },
-        formatter:(value, ctx)=>{
-          if(!value) return '';      /* não mostra % em fatia = 0 */
-          return pctFormatter(value, ctx);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const wb = XLSX.read(ev.target.result, { type: 'array' });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          dataRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          
+          if (dataRows.length === 0) {
+            showAlert('Nenhum dado encontrado no arquivo', 'warning');
+            return;
+          }
+
+          headerMap = findHeaderMap(dataRows[0]);
+          localStorage.setItem(LS_KEY, JSON.stringify(dataRows));
+          
+          render();
+          showAlert(`✅ ${dataRows.length} registros carregados!`, 'success');
+        } catch (err) {
+          showAlert(`❌ Erro ao ler arquivo: ${err.message}`, 'danger');
         }
-      },
-      calloutLines:{ color:'rgba(0,0,0,.45)', lineWidth:1, offset:20, hLength:12 }
-    }
-  };
-}
-
-function updateCharts(rows){
-  updateStatusChart(rows);
-  updateObsChart(rows);
-}
-function updateStatusChart(rows){
-  let ok = 0, div = 0;
-  for(const r of rows){ (Number(r.difSel) === 0) ? ok++ : div++; }
-  if(chartStatus) chartStatus.destroy();
-  const ctx = document.getElementById('pizzaStatus');
-  chartStatus = new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels:['OK','Divergência'],
-      datasets:[{
-        data:[ok,div],
-        backgroundColor:['#22c55e','#ef4444'],
-        borderColor:'#ffffff', borderWidth:2
-      }]
-    },
-    options: basePieOptions()
-  });
-  renderLegend('legendStatus', [
-    { label:'OK',          color:'#22c55e', value: ok },
-    { label:'Divergência', color:'#ef4444', value: div }
-  ]);
-}
-function updateObsChart(rows){
-  const labels = ['Falha interface','Erro operacional','Perecível','Sem OBS'];
-  const colors = ['#ef4444','#3b82f6','#10b981','#9ca3af'];
-  const counts = { 'Falha interface':0, 'Erro operacional':0, 'Perecível':0, '__SEM_OBS__':0 };
-  for(const r of rows){
-    if(r.obs === '__SEM_OBS__') counts['__SEM_OBS__']++;
-    else if(counts.hasOwnProperty(r.obs)) counts[r.obs]++;
-  }
-  const data = [ counts['Falha interface'], counts['Erro operacional'], counts['Perecível'], counts['__SEM_OBS__'] ];
-  if(chartObs) chartObs.destroy();
-  const ctx = document.getElementById('pizzaObs');
-  chartObs = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels, datasets:[{ data, backgroundColor:colors, borderColor:'#ffffff', borderWidth:2 }] },
-    options: Object.assign(basePieOptions(), { cutout:'55%' })
-  });
-  renderLegend('legendObs', [
-    { label:'Falha interface', color:colors[0], value:data[0] },
-    { label:'Erro operacional', color:colors[1], value:data[1] },
-    { label:'Perecível',       color:colors[2], value:data[2] },
-    { label:'Sem OBS',         color:colors[3], value:data[3] }
-  ]);
-}
-
-/********** Download combinado dos DOIS gráficos + LEGENDAS **********/
-function drawLegendOnCanvas(ctx, startY, title, legendDiv){
-  const gap = 8;
-  const sw = 14, sh = 10;
-  const padX = 16;
-  let x = padX, y = startY;
-
-  // Título da seção:
-  ctx.fillStyle = '#111'; ctx.font = 'bold 14px Arial';
-  ctx.fillText(title, x, y);
-  y += 18;
-
-  // Percorre itens renderizados no HTML da legenda:
-  // Estrutura esperada: .legend-item > .legend-swatch + texto com label e valor
-  const items = Array.from(legendDiv.querySelectorAll('.legend-item'));
-  ctx.font = '12px Arial';
-  items.forEach((it, idx)=>{
-    const swatch = it.querySelector('.legend-swatch');
-    const text   = it.textContent.trim(); // "Label Valor"
-    // Quebra linhas se ficar muito comprido
-    if(x > (ctx.canvas.width - 240)){ x = padX; y += 18; }
-
-    // quadradinho de cor
-    const color = window.getComputedStyle(swatch).backgroundColor;
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y - sh + 2, sw, sh);
-    ctx.strokeStyle = 'rgba(0,0,0,.15)';
-    ctx.strokeRect(x, y - sh + 2, sw, sh);
-
-    // texto
-    ctx.fillStyle = '#111';
-    ctx.fillText(' ' + text, x + sw + 6, y + 2);
-
-    // próximo bloco
-    x += 180;
-  });
-
-  y += 22;
-  return y; // retorna onde parou para continuar layout
-}
-
-function downloadBothCharts(){
-  const c1 = document.getElementById('pizzaStatus');
-  const c2 = document.getElementById('pizzaObs');
-  const legend1 = document.getElementById('legendStatus');
-  const legend2 = document.getElementById('legendObs');
-  if(!c1 || !c2) return;
-
-  // define dimensões do PNG final
-  const w = Math.max(c1.width, c2.width) + 40; // + padding horizontal
-  let h = 24; // espaço para títulos/legendas
-  h += c1.height;
-  h += 80; // área para legenda 1
-  h += 24; // espaçamento
-  h += c2.height;
-  h += 80; // área para legenda 2
-  h += 24; // padding inferior
-
-  const tmp = document.createElement('canvas');
-  tmp.width = w; tmp.height = h;
-  const ctx = tmp.getContext('2d');
-
-  // fundo branco
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0,0,w,h);
-
-  // centraliza cada gráfico
-  const padX = 20;
-  let cursorY = 20;
-
-  // Título geral opcional (comentado para manter "mexer em quase nada")
-  // ctx.fillStyle = '#111'; ctx.font = 'bold 16px Arial';
-  // ctx.fillText('Dashboard de Batimento - Gráficos', padX, cursorY);
-  // cursorY += 24;
-
-  const x1 = (w - c1.width)/2;
-  ctx.drawImage(c1, x1, cursorY);
-  cursorY += c1.height + 10;
-
-  // Desenha legenda 1
-  cursorY = drawLegendOnCanvas(ctx, cursorY, 'OK x Divergência', legend1);
-  cursorY += 10;
-
-  const x2 = (w - c2.width)/2;
-  ctx.drawImage(c2, x2, cursorY);
-  cursorY += c2.height + 10;
-
-  // Desenha legenda 2
-  cursorY = drawLegendOnCanvas(ctx, cursorY, 'Distribuição por OBS', legend2);
-
-  // salva
-  const now = new Date();
-  const d = now.toLocaleDateString('pt-BR').replaceAll('/','-');
-  const a = document.createElement('a');
-  a.href = tmp.toDataURL('image/png');
-  a.download = `Graficos_Batimento_${d}.png`;
-  a.click();
-}
-
-/********** Eventos **********/
-document.getElementById('tableContainer').addEventListener('change', (ev)=>{
-  const tr = ev.target.closest('tr'); if(!tr) return;
-  const rid = tr.getAttribute('data-rid');
-  const idx = dataRows.findIndex(r => String(r.rid) === String(rid)); if(idx < 0) return;
-  if(ev.target.classList.contains('dif-select')){
-    dataRows[idx].difSel = Number(ev.target.value);
-    renderTable();
-    saveState();
-  }
-  if(ev.target.classList.contains('obs-select')){
-    dataRows[idx].obs = ev.target.value;
-    renderTable();
-    saveState();
-  }
-});
-
-document.getElementById('filtroObs').addEventListener('change', ()=>{
-  renderTable(); saveState();
-});
-
-document.getElementById('fileInput').addEventListener('change', (e) => {
-  const file = e.target.files?.[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    const data = new Uint8Array(evt.target.result);
-    const wb = XLSX.read(data, { type:'array' });
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet, { defval:'', raw:false });
-    if(!json.length){
-      document.getElementById('tableContainer').innerHTML = 'Planilha vazia.';
-      if(chartStatus){ chartStatus.destroy(); chartStatus=null; }
-      if(chartObs){ chartObs.destroy(); chartObs=null; }
-      return;
-    }
-    // Detecta cabeçalhos reais
-    headerMap = findHeaderMap(json[0]);
-    // Filtra almox 7312ALM / 7112ALM
-    const filtrado = json.filter(r => {
-      const alm = r[headerMap.almox];
-      return alm === '7312ALM' || alm === '7112ALM';
+      };
+      reader.readAsArrayBuffer(file);
     });
-    // Remove duplicados por Item+Almox
-    const unicos = uniqueByItemAlmox(filtrado);
-    // Converte para formato interno
-    dataRows = unicos.map((r, i) => toRowObject(r, i));
-    // Render
-    renderTable();
-    saveState();
-  };
-  reader.readAsArrayBuffer(file);
-});
 
-// Botão único para baixar os dois gráficos (com legendas e %)
-const btn = document.getElementById('btnDownloadCharts');
-if(btn){ btn.addEventListener('click', downloadBothCharts); }
+    /* ========== LIMPAR DADOS ========== */
+    document.getElementById('btnClear').addEventListener('click', () => {
+      if (confirm('Tem certeza que deseja limpar todos os dados?')) {
+        dataRows = [];
+        localStorage.removeItem(LS_KEY);
+        render();
+        showAlert('Dados removidos', 'info');
+      }
+    });
 
-// 🔹 Botão "Limpar dados" (novo): zera storage e tela
-const btnClear = document.getElementById('btnClear');
-if(btnClear){
-  btnClear.addEventListener('click', ()=>{
-    try{ localStorage.removeItem(LS_KEY); }catch(e){}
-    dataRows = [];
-    document.getElementById('fileInput').value = '';
-    document.getElementById('tableContainer').innerHTML = 'Nenhum dado carregado.';
-    if(chartStatus){ chartStatus.destroy(); chartStatus=null; }
-    if(chartObs){ chartObs.destroy(); chartObs=null; }
-    // Limpa legendas visuais
-    document.getElementById('legendStatus').innerHTML = '';
-    document.getElementById('legendObs').innerHTML = '';
-  });
-}
+    /* ========== FILTRO OBS ========== */
+    document.getElementById('filtroObs').addEventListener('change', () => {
+      renderTable();
+    });
 
-// Registro de plugins
-Chart.register(ChartDataLabels, calloutLines);
+    /* ========== RENDER PRINCIPAL ========== */
+    function render() {
+      renderKpis();
+      renderCharts();
+      renderTable();
+    }
 
-// Restaura estado salvo ao iniciar
-window.addEventListener('DOMContentLoaded', ()=>{
-  const restored = loadState();
-  if(!restored){
-    // estado inicial sem dados -> apenas mantém placeholder
-    updateCharts([]);
-  }
-});
-</script>
-<div style="text-align:center;margin-top:40px;color:#000000;font-size:14px;">Desenvolvido por <b>Lucas Martinez</b>
+    /* ========== RENDER KPIs ========== */
+    function renderKpis() {
+      let ok = 0, diverge = 0, total = 0;
+      const datas = [];
+
+      dataRows.forEach((r) => {
+        const oracle = parseFloat(r[headerMap.oracle] || 0) || 0;
+        const wms = parseFloat(r[headerMap.wms] || 0) || 0;
+        const dif = oracle - wms;
+
+        if (dif === 0) ok++;
+        else diverge++;
+        total++;
+
+        if (r[headerMap.data]) datas.push(r[headerMap.data]);
+      });
+
+      document.getElementById('kpiOk').textContent = ok;
+      document.getElementById('kpiDiverge').textContent = diverge;
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiData').textContent = datas.length 
+        ? new Date(datas[datas.length - 1]).toLocaleDateString('pt-BR')
+        : '-';
+    }
+
+    /* ========== RENDER CHARTS ========== */
+    function renderCharts() {
+      // Contar OK vs Divergência
+      let ok = 0, diverge = 0;
+      const obsCounts = {};
+
+      dataRows.forEach((r) => {
+        const oracle = parseFloat(r[headerMap.oracle] || 0) || 0;
+        const wms = parseFloat(r[headerMap.wms] || 0) || 0;
+        const obs = r['OBS'] || r['Observacao'] || 'Sem OBS';
+
+        if (oracle === wms) ok++;
+        else {
+          diverge++;
+          obsCounts[obs] = (obsCounts[obs] || 0) + 1;
+        }
+      });
+
+      // Gráfico 1: OK vs Divergência
+      if (chartStatus) chartStatus.destroy();
+      chartStatus = new Chart(document.getElementById('pizzaStatus'), {
+        type: 'doughnut',
+        data: {
+          labels: ['✅ OK', '⚠️ Divergência'],
+          datasets: [{
+            data: [ok, diverge],
+            backgroundColor: [
+              'rgba(25, 135, 84, 0.8)',
+              'rgba(220, 53, 69, 0.8)'
+            ],
+            borderColor: ['rgb(25, 135, 84)', 'rgb(220, 53, 69)'],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: { color: '#fff', font: { weight: 'bold', size: 12 } }
+          }
+        }
+      });
+
+      renderLegend('legendStatus', ['✅ OK', '⚠️ Divergência'], 
+        ['rgba(25, 135, 84, 0.8)', 'rgba(220, 53, 69, 0.8)'],
+        [ok, diverge]);
+
+      // Gráfico 2: Distribuição OBS
+      const obsLabels = Object.keys(obsCounts);
+      const obsData = Object.values(obsCounts);
+      const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+
+      if (chartObs) chartObs.destroy();
+      chartObs = new Chart(document.getElementById('pizzaObs'), {
+        type: 'doughnut',
+        data: {
+          labels: obsLabels,
+          datasets: [{
+            data: obsData,
+            backgroundColor: colors.slice(0, obsLabels.length),
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: { color: '#fff', font: { weight: 'bold', size: 11 } }
+          }
+        }
+      });
+
+      renderLegend('legendObs', obsLabels, 
+        colors.slice(0, obsLabels.length), obsData);
+    }
+
+    /* ========== RENDER LEGEND ========== */
+    function renderLegend(elementId, labels, colors, values) {
+      const legend = document.getElementById(elementId);
+      legend.innerHTML = labels.map((label, i) => `
+        <div class="legend-item">
+          <div class="legend-swatch" style="background-color: ${colors[i]}"></div>
+          <span>${label}: <strong>${values[i]}</strong></span>
+        </div>
+      `).join('');
+    }
+
+    /* ========== RENDER TABLE ========== */
+    function renderTable() {
+      const filtro = document.getElementById('filtroObs').value;
+      let filtered = dataRows;
+
+      if (filtro !== 'TODOS') {
+        filtered = dataRows.filter((r) => {
+          const obs = r['OBS'] || r['Observacao'] || 'Sem OBS';
+          return filtro === '__SEM_OBS__' ? obs === 'Sem OBS' : obs === filtro;
+        });
+      }
+
+      if (filtered.length === 0) {
+        document.getElementById('tableContainer').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state__icon">🔍</div>
+            <div class="empty-state__text">Nenhum registro encontrado com esse filtro.</div>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `
+        <table class="table table--striped">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Almoxarifado</th>
+              <th>Oracle</th>
+              <th>WMS</th>
+              <th>Diferença</th>
+              <th>Status</th>
+              <th>OBS</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      filtered.forEach((r) => {
+        const oracle = parseFloat(r[headerMap.oracle] || 0) || 0;
+        const wms = parseFloat(r[headerMap.wms] || 0) || 0;
+        const dif = oracle - wms;
+        const status = dif === 0 ? 'OK' : 'Divergência';
+        const statusClass = dif === 0 ? 'status-ok' : 'status-divergencia';
+        const obs = r['OBS'] || r['Observacao'] || '-';
+
+        html += `
+          <tr>
+            <td class="font-mono">${r[headerMap.item] || '-'}</td>
+            <td>${r[headerMap.almox] || '-'}</td>
+            <td class="text-right">${oracle.toLocaleString('pt-BR')}</td>
+            <td class="text-right">${wms.toLocaleString('pt-BR')}</td>
+            <td class="text-right font-bold" style="color: ${dif > 0 ? 'var(--color-success-700)' : dif < 0 ? 'var(--color-danger-700)' : 'var(--color-gray-600)'}">
+              ${dif > 0 ? '+' : ''}${dif.toLocaleString('pt-BR')}
+            </td>
+            <td><span class="badge ${statusClass}">${status}</span></td>
+            <td>${obs}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+      document.getElementById('tableContainer').innerHTML = html;
+    }
+
+    /* ========== DOWNLOAD CHARTS ========== */
+    document.getElementById('btnDownloadCharts').addEventListener('click', () => {
+      const canvas = document.querySelector('canvas');
+      if (!canvas) {
+        showAlert('Nenhum gráfico para baixar', 'warning');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `batimento-${new Date().toISOString().slice(0, 10)}.png`;
+      link.click();
+    });
+
+    /* ========== ALERT ========== */
+    function showAlert(message, type = 'info') {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert--${type} show`;
+      alertDiv.textContent = message;
+      document.body.insertBefore(alertDiv, document.body.firstChild);
+      setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    /* ========== RESTAURAR DADOS ========== */
+    window.addEventListener('load', () => {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        try {
+          dataRows = JSON.parse(saved);
+          headerMap = findHeaderMap(dataRows[0]);
+          render();
+        } catch (err) {
+          console.error('Erro ao restaurar dados:', err);
+        }
+      }
+    });
+  </script>
+
+  <footer style="text-align: center; margin-top: var(--spacing-3xl); padding: var(--spacing-xl); color: var(--color-gray-500); font-size: var(--font-size-sm); border-top: 1px solid var(--color-gray-200);">
+    Desenvolvido por <strong>Lucas Martinez</strong>
+  </footer>
 </body>
 </html>
