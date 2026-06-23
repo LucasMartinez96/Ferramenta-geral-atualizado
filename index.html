@@ -8,19 +8,32 @@
   <script src="js/normalize-styles.js" defer></script>
 
 <style>
+:root{
+  --page-bg: var(--color-neutral-900);
+  --sidebar-bg: var(--color-neutral-900);
+  --sidebar-hover: var(--color-neutral-800);
+  --sidebar-active: var(--color-primary);
+  --topbar-start: var(--color-neutral-900);
+  --topbar-end: var(--color-primary-dark);
+  --panel-bg: var(--color-neutral-100);
+  --card-bg: var(--color-surface);
+  --border-soft: var(--color-border);
+  --text-on-dark: var(--color-neutral-50);
+}
+
 body{
   margin:0;
   display:flex;
   height:100vh;
   font-family:Segoe UI;
-  background:#0f172a;
+  background:var(--page-bg);
 }
 
 /* SIDEBAR */
 .sidebar{
   width:80px;
-  background:#020617;
-  color:#fff;
+  background:var(--sidebar-bg);
+  color:var(--text-on-dark);
   transition:.3s;
 }
 .sidebar:hover{width:260px;}
@@ -31,8 +44,8 @@ body{
   display:flex;
   gap:10px;
 }
-.item:hover{background:#1e293b;}
-.item.active{background:#2563eb;}
+.item:hover{background:var(--sidebar-hover);}
+.item.active{background:var(--sidebar-active);}
 
 .text{opacity:0;}
 .sidebar:hover .text{opacity:1;}
@@ -47,8 +60,8 @@ body{
 /* TOPO */
 .topbar{
   height:55px;
-  background:linear-gradient(90deg,#0f172a,#1e3a8a);
-  color:#fff;
+  background:linear-gradient(90deg,var(--topbar-start),var(--topbar-end));
+  color:var(--text-on-dark);
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -56,11 +69,11 @@ body{
 }
 
 .btnLogout{
-  background:#ef4444;
+  background:var(--color-danger);
   border:none;
   padding:6px 12px;
   border-radius:6px;
-  color:#fff;
+  color:var(--text-on-dark);
   cursor:pointer;
 }
 
@@ -86,13 +99,13 @@ iframe{
 .panel{
   display:none;
   padding:30px;
-  background:#e5e7eb;
+  background:var(--panel-bg);
   height:100%;
   overflow:auto;
 }
 
 .card{
-  background:#fff;
+  background:var(--card-bg);
   padding:20px;
   border-radius:10px;
 }
@@ -103,9 +116,9 @@ table{
 }
 td,th{
   padding:8px;
-  border-bottom:1px solid #ddd;
+  border-bottom:1px solid var(--border-soft);
 }
-th{background:#f1f5f9;}
+th{background:var(--color-neutral-100);}
 
 .btn{
   padding:8px;
@@ -113,8 +126,8 @@ th{background:#f1f5f9;}
   border-radius:6px;
   cursor:pointer;
 }
-.btn-primary{background:#2563eb;color:#fff;}
-.btn-danger{background:#ef4444;color:#fff;}
+.btn-primary{background:var(--color-primary);color:var(--text-on-dark);}
+.btn-danger{background:var(--color-danger);color:var(--text-on-dark);}
 </style>
 </head>
 
