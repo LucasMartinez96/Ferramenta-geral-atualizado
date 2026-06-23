@@ -53,10 +53,14 @@
     document.querySelectorAll('button').forEach(btn=>{
       if(!btn.classList.contains('btn')){
         btn.classList.add('btn');
-        // promote existing 'primary' and 'alt' to design system classes
-        if(btn.classList.contains('primary')) btn.classList.add('btn--primary');
-        if(btn.classList.contains('alt')) btn.classList.add('btn--alt');
       }
+
+      if(btn.classList.contains('primary')) btn.classList.add('btn-primary');
+      if(btn.classList.contains('alt')) btn.classList.add('btn-secondary');
+      if(btn.classList.contains('danger')) btn.classList.add('btn-danger');
+      if(btn.classList.contains('success')) btn.classList.add('btn-success');
+      if(btn.classList.contains('warning')) btn.classList.add('btn-warning');
+      if(btn.classList.contains('info')) btn.classList.add('btn-info');
     });
   }
 
