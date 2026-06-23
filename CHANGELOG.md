@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [1.1.1] - 2026-06-23
+
+### Refino Visual
+
+- Alinhamento das páginas principais com os tokens reais do design system.
+- Correção do `PORTA-PORTA.html` com fechamento de `head` duplicado.
+- Normalização de `Batimento de estoque.html` com aliases locais para tokens legados de espaçamento e cinza.
+- Redução de cores fixas em `index.html` e `ferramenta_de_inventario_travada.html`.
+
 ## [1.1.0] - 2026-06-23
 
 ### 🎨 Design System Refactoring
