@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <title>Sistema Logístico</title>
 
+  <link rel="stylesheet" href="css/design-system.css" />
+  <script src="js/normalize-styles.js" defer></script>
+
 <style>
 body{
   margin:0;
@@ -197,6 +200,18 @@ Criar
 <iframe id="frame"></iframe>
 
 </div>
+
+<script type="module">
+  import { initializeUtils, Toast } from './js/utils.js';
+
+  // Inicializa utilitários
+  initializeUtils();
+
+  const toast = new Toast();
+
+  // Exemplo: notificar que o design system foi carregado
+  toast.info('Design system carregado');
+</script>
 
 <script type="module">
 

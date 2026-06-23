@@ -4,8 +4,18 @@
 <meta charset="UTF-8" />
 <title>Inventário Cíclico — ALM51</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="css/design-system.css" />
+<script src="js/normalize-styles.js" defer></script>
 <style>
-:root{ --azul:#2fa8dc; --azul-escuro:#0a5d94; --borda:#b9c3cf; --borda-escura:#8ea0b2; --bg:#f6f8fb; }
+  /* Alias para variáveis locais */
+  :root{
+    --azul: var(--color-primary);
+    --azul-escuro: var(--color-primary-dark);
+    --borda: var(--color-border);
+    --borda-escura: var(--color-border);
+    --bg: var(--color-bg);
+  }
+
 *{ box-sizing:border-box; }
 body{ font-family: Arial, Helvetica, sans-serif; margin:16px; color:#222; background:var(--bg); }
 h2{ font-size:24px; font-weight:800; margin:0 0 12px; }
@@ -20,7 +30,7 @@ button{ cursor:pointer; border:none; }
 .secondary{ background:#e5eef6; color:#123; }
 .muted{ font-size:12px; color:#666; }
 /* tabela / impressão */
-table{ width:100%; border-collapse:collapse; }
+table{ width:100%2; border-collapse:collapse; }
 th,td{ border:1px solid #d8e1ea; padding:4px 6px; font-size:12px; line-height:1.1; }
 th{ background:#eef3f8; font-weight:700; }
 .grid{ border:1px solid #d8e1ea; }

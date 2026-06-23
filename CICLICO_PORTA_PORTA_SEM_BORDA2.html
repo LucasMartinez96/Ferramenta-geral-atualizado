@@ -5,7 +5,13 @@
   <title>Inventário Cíclico (printfit LPP21) — LogoFix</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{ --azul:#2fa8dc; --azul-escuro:#0a5d94; --borda:#b9c3cf; --borda-escura:#8ea0b2; --bg:#f6f8fb; }
+    :root{
+      --azul: var(--color-primary);
+      --azul-escuro: var(--color-primary-dark);
+      --borda: var(--color-border);
+      --borda-escura: var(--color-border);
+      --bg: var(--color-bg);
+    }
     *{ box-sizing:border-box; }
     body{ font-family: Arial, Helvetica, sans-serif; margin:16px; color:#222; background:var(--bg); }
     h2{ font-size:24px; font-weight:800; margin:0 0 12px; }
@@ -65,10 +71,13 @@
 
 </style>
 </style>
+<link rel="stylesheet" href="css/design-system.css" />
+<script src="js/normalize-styles.js" defer></script>
 </head>
 <body>
   <h2>Inventário Cíclico</h2>
   <div id="controles" class="card">
+ 
     <div class="row">
       <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
       <span class="muted">Carregue CSV, XLSX ou XLS.</span>

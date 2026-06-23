@@ -2,53 +2,37 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard de Batimento de Estoque</title>
-  
-  <!-- Global Design System -->
-  <link rel="stylesheet" href="styles/global.css" />
-  
-  <!-- Bibliotecas -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+  <title>Dashboard de Batimento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- ====== ESTILO no padrão SALA COFRE (somente aparência) ====== -->
   <style>
-    /* ========== Estilos específicos do Batimento ========== */
-    
-    .batimento-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--spacing-md);
-      flex-wrap: wrap;
+    :root{
+      /* Paleta/variáveis principais da Sala Cofre */
+      --azul:#003366;
+      --azul-escuro:#0b2545;
+      --azul-botao:#0a4aa6;
+      --cinza:#6b7280;
+      --bg:#f4f6f8;
+      --verde:#22c55e; /* OK */
+      --vermelho:#ef4444; /* Divergência */
+      /* Header */
+      --hdr-grad-start:#0b2545;
+      --hdr-grad-end:#0a4aa6;
+      --hdr-text:#ffffff;
+      --hdr-accent:#8ab4ff;
     }
+    body { font-family: Arial, sans-serif; background: var(--bg); margin:0; color:#222; }
 
-    .batimento-controls {
-      display: flex;
-      gap: var(--spacing-md);
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: var(--radius-full);
-      color: white;
-      font-size: var(--font-size-sm);
-      white-space: nowrap;
-    }
-
-    .kpis-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
+    /* ===== Header elegante (aparência Sala Cofre) ===== */
+    .app-header{
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; margin: 0 0 18px 0;
+      background: linear-gradient(135deg, var(--hdr-grad-start), var(--hdr-grad-end));
+      color: var(--hdr-text);
+      box-shadow: 0 10px 30px rgba(10,30,60,.25);
+      border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
 
     .charts-container {

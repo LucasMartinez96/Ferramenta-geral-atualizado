@@ -9,7 +9,13 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <style>
-    :root { --bg:#f4f6f8; --card:#ffffff; --ink:#1f2937; --muted:#6b7280; --shadow:0 2px 6px rgba(0,0,0,.1); }
+    :root {
+      --bg: var(--color-bg);
+      --card: var(--color-surface);
+      --ink: var(--color-text);
+      --muted: var(--color-text-muted);
+      --shadow: 0 2px 6px rgba(0,0,0,.06);
+    }
     *{box-sizing:border-box}
     body{font-family:Arial, Helvetica, sans-serif;background:var(--bg);padding:20px;color:#111827}
     .header{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
@@ -33,10 +39,13 @@
     tbody tr:hover{background:#f9fafb}
     .logo-fallback{font-size:.85rem;color:#b91c1c}
   </style>
+  <link rel="stylesheet" href="css/design-system.css" />
+  <script src="js/normalize-styles.js" defer></script>
 </head>
 <body>
   <div class="header">
     <div class="logo-wrap">
+ 
       <img src="Imagem1.png" alt="Logomarca Sese" title="Sese" class="logo"
            onerror="this.style.display='none';document.getElementById('logoErro').style.display='inline';"/>
       <span id="logoErro" class="logo-fallback" style="display:none;">⚠️ Não foi possível carregar a logo (Imagem1.png). Verifique se o arquivo está na mesma pasta.</span>

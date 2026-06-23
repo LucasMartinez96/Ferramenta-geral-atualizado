@@ -1,241 +1,677 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Login Sistema</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema Logístico - Acesso</title>
+  
+  <link rel="stylesheet" href="css/design-system.css" />
+  <script src="js/normalize-styles.js" defer></script>
+  
+  <style>
+    /* ===== LAYOUT ===== */
+    
+    body {
+      display: grid;
+      grid-template-columns: 1fr;
+      place-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a66c2 0%, #054a94 100%);
+      padding: var(--space-md);
+    }
 
-<style>
-body{
-  margin:0;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-family:Segoe UI, Arial;
-  background:linear-gradient(135deg,#0f172a,#1e3a8a);
-}
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
 
-/* CARD */
-.box{
-  background:white;
-  padding:40px;
-  border-radius:14px;
-  width:340px;
-  box-shadow:0 20px 50px rgba(0,0,0,0.25);
-  transition:0.3s;
-}
+    /* ===== CARD DE LOGIN ===== */
+    
+    .login-card {
+      background-color: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: var(--space-2xl);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.4s ease-out;
+    }
 
-.box:hover{
-  transform:translateY(-3px);
-}
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-/* TITULO */
-h2{
-  text-align:center;
-  color:#1e293b;
-  margin-bottom:25px;
-}
+    /* ===== HEADER ===== */
+    
+    .login-header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      text-align: center;
+      margin-bottom: var(--space-lg);
+    }
 
-/* INPUT */
-.input-group{
-  margin-bottom:15px;
-}
+    .login-logo {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a66c2, #054a94);
+      border-radius: var(--radius-xl);
+      color: white;
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-2xl);
+    }
 
-label{
-  font-size:13px;
-  color:#64748b;
-}
+    .login-header h1 {
+      font-size: var(--font-size-2xl);
+      color: var(--color-text);
+      margin: 0;
+    }
 
-input{
-  width:100%;
-  padding:12px;
-  margin-top:5px;
-  border:1px solid #cbd5f5;
-  border-radius:8px;
-  font-size:14px;
-  outline:none;
-  transition:0.3s;
-}
+    .login-header p {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      margin: 0;
+    }
 
-input:focus{
-  border-color:#2563eb;
-  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
-}
+    /* ===== FORMULÁRIO ===== */
+    
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
 
-/* BOTÕES */
-.btn{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  font-weight:600;
-  cursor:pointer;
-  transition:all 0.25s ease;
-}
+    /* ===== CAMPO COM TOGGLE DE SENHA ===== */
+    
+    .password-group {
+      position: relative;
+    }
 
-/* LOGIN */
-.login{
-  background:#2563eb;
-  color:white;
-  margin-top:10px;
-}
+    .password-group input {
+      padding-right: 40px;
+    }
 
-.login:hover{
-  background:#1d4ed8;
-  transform:translateY(-2px) scale(1.02);
-  box-shadow:0 8px 20px rgba(37,99,235,0.4);
-}
+    .password-toggle {
+      position: absolute;
+      right: var(--space-md);
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: var(--space-sm);
+      font-size: var(--font-size-lg);
+      color: var(--color-text-muted);
+      transition: var(--transition-base);
+      margin: calc(-1 * var(--space-sm));
+    }
 
-.login:active{
-  transform:scale(0.98);
-  box-shadow:0 4px 10px rgba(37,99,235,0.3);
-}
+    .password-toggle:hover {
+      color: var(--color-text);
+    }
 
-/* CADASTRO */
-.cadastro{
-  background:#f1f5f9;
-  color:#334155;
-  margin-top:8px;
-}
+    /* ===== BOTÕES ===== */
+    
+    .form-actions {
+      display: flex;
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+    }
 
-.cadastro:hover{
-  background:#e2e8f0;
-  transform:translateY(-2px);
-}
+    .btn-login,
+    .btn-register {
+      flex: 1;
+    }
 
-.cadastro:active{
-  transform:scale(0.98);
-}
+    @media (max-width: 480px) {
+      .form-actions {
+        flex-direction: column;
+      }
+    }
 
-/* MSG */
-#msg{
-  margin-top:15px;
-  text-align:center;
-  font-size:14px;
-}
-</style>
+    /* ===== ALERTAS ===== */
+    
+    .alert-container {
+      min-height: 0;
+      margin-bottom: var(--space-md);
+    }
+
+    .alert {
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== FOOTER ===== */
+    
+    .login-footer {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      text-align: center;
+      margin-top: var(--space-lg);
+      font-size: var(--font-size-sm);
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--color-border);
+    }
+
+    .login-footer a {
+      color: var(--color-primary);
+      text-decoration: none;
+      transition: var(--transition-base);
+    }
+
+    .login-footer a:hover {
+      text-decoration: underline;
+      color: var(--color-primary-dark);
+    }
+
+    /* ===== CHECKBOX ===== */
+    
+    .remember-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .remember-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .remember-group label {
+      cursor: pointer;
+      font-weight: var(--font-weight-normal);
+      margin: 0;
+      font-size: var(--font-size-sm);
+    }
+
+    /* ===== MOBILE ===== */
+    
+    @media (max-width: 480px) {
+      .login-card {
+        padding: var(--space-lg);
+      }
+
+      .login-header h1 {
+        font-size: var(--font-size-xl);
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <div class="login-container">
+    <div class="login-card">
+      <!-- Header -->
+      <div class="login-header">
+        <div class="login-logo">📦</div>
+        <h1>Sistema Logístico</h1>
+        <p>Acesse sua conta para continuar</p>
+      </div>
 
-<div class="box">
+      <!-- Alertas -->
+      <div id="alertContainer" class="alert-container" role="region" aria-live="polite" aria-atomic="true"></div>
 
-<h2>Acesso ao Sistema</h2>
+      <!-- Formulário -->
+      <form class="login-form" id="loginForm" novalidate>
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email" class="form-label required">Email</label>
+          <input 
+            id="email" 
+            type="email" 
+            class="form-control"
+            placeholder="seu@email.com"
+            required
+            aria-describedby="email-hint"
+            aria-invalid="false"
+            autocomplete="email"
+          />
+          <span id="email-hint" class="form-error"></span>
+        </div>
 
-<div class="input-group">
-<label>Email</label>
-<input id="email" placeholder="seu@email.com">
-</div>
+        <!-- Senha -->
+        <div class="form-group">
+          <label for="password" class="form-label required">Senha</label>
+          <div class="password-group">
+            <input 
+              id="password" 
+              type="password" 
+              class="form-control"
+              placeholder="••••••••"
+              required
+              aria-describedby="password-hint"
+              aria-invalid="false"
+              autocomplete="current-password"
+            />
+            <button 
+              type="button" 
+              class="password-toggle" 
+              id="passwordToggle"
+              aria-label="Mostrar ou ocultar senha"
+              aria-pressed="false"
+              title="Mostrar/ocultar senha"
+            >
+              👁️
+            </button>
+          </div>
+          <span id="password-hint" class="form-error"></span>
+        </div>
 
-<div class="input-group">
-<label>Senha</label>
-<input id="senha" type="password" placeholder="********">
-</div>
+        <!-- Lembrar-me -->
+        <div class="remember-group">
+          <input 
+            id="remember" 
+            type="checkbox"
+            aria-label="Lembrar-me nesta máquina"
+            autocomplete="off"
+          />
+          <label for="remember">Lembrar-me nesta máquina</label>
+        </div>
 
-<button class="btn login" id="login">Entrar</button>
-<button class="btn cadastro" id="cadastro">Criar conta</button>
+        <!-- Ações -->
+        <div class="form-actions" role="group" aria-label="Ações de autenticação">
+          <button 
+            type="submit" 
+            class="btn btn-primary btn-login"
+            id="submitBtn"
+          >
+            Entrar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary btn-register"
+            id="switchToRegister"
+          >
+            Criar Conta
+          </button>
+        </div>
+      </form>
 
-<div id="msg"></div>
+      <!-- Links -->
+      <div class="login-footer">
+        <a href="#" id="forgotPassword">Esqueci minha senha</a>
+      </div>
+    </div>
+  </div>
 
-</div>
+  <script type="module">
+    import {
+      validators,
+      storage,
+      Toast,
+      sleep,
+      format
+    } from './js/utils.js';
 
-<script type="module">
+    import {
+      initializeApp
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword }
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc }
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      sendPasswordResetEmail
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-// CONFIG FIREBASE
-const firebaseConfig = {
-  apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
-  authDomain: "meu-sistema-f83ab.firebaseapp.com",
-  projectId: "meu-sistema-f83ab",
-  storageBucket: "meu-sistema-f83ab.firebasestorage.app",
-  messagingSenderId: "33394533141",
-  appId: "1:33394533141:web:785b4b4e0f139589bdbf1c"
-};
+    /* ==================== CONFIGURAÇÃO ==================== */
 
-// INIT
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    const config = {
+      firebaseConfig: {
+        apiKey: 'AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs',
+        authDomain: 'meu-sistema-f83ab.firebaseapp.com',
+        projectId: 'meu-sistema-f83ab',
+        storageBucket: 'meu-sistema-f83ab.firebasestorage.app',
+        messagingSenderId: '33394533141',
+        appId: '1:33394533141:web:785b4b4e0f139589bdbf1c'
+      },
+      baseUrl: window.location.pathname.includes('Ferramenta-geral-atualizado')
+        ? '/Ferramenta-geral-atualizado/'
+        : '/'
+    };
 
-// BASE GITHUB
-const base = window.location.pathname.includes("Ferramenta-geral-atualizado")
-  ? "/Ferramenta-geral-atualizado/"
-  : "/";
+    /* ==================== ESTADO ==================== */
 
-// ELEMENTOS
-const email = document.getElementById("email");
-const senha = document.getElementById("senha");
-const msg = document.getElementById("msg");
+    const state = {
+      isLoading: false,
+      isRegistering: false,
+      currentMode: 'login'
+    };
 
-// LOGIN
-document.getElementById("login").onclick = async () => {
-  msg.innerText = "Entrando...";
-  msg.style.color = "#2563eb";
+    /* ==================== INICIALIZAÇÃO ==================== */
 
-  try {
-    await signInWithEmailAndPassword(auth, email.value, senha.value);
+    const app = initializeApp(config.firebaseConfig);
+    const auth = getAuth(app);
+    const toast = new Toast();
 
-    msg.innerText = "✅ Login realizado!";
-    location = base + "index.html";
+    // Elements
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const passwordToggle = document.getElementById('passwordToggle');
+    const submitBtn = document.getElementById('submitBtn');
+    const switchToRegister = document.getElementById('switchToRegister');
+    const alertContainer = document.getElementById('alertContainer');
+    const rememberCheckbox = document.getElementById('remember');
+    const forgotPasswordLink = document.getElementById('forgotPassword');
 
-  } catch(e){
-    tratarErro(e);
-  }
-};
+    /* ==================== PASSWORD TOGGLE ==================== */
 
-// CADASTRO
-document.getElementById("cadastro").onclick = async () => {
+    passwordToggle.addEventListener('click', (e) => {
+      e.preventDefault();
 
-  if(!email.value || !senha.value){
-    msg.innerText = "Preencha todos os campos";
-    msg.style.color = "orange";
-    return;
-  }
-
-  try {
-
-    const cred = await createUserWithEmailAndPassword(
-      auth, email.value, senha.value
-    );
-
-    await setDoc(doc(db,"usuarios",cred.user.uid), {
-      email: email.value,
-      tipo: "user"
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      passwordToggle.textContent = isPassword ? '🙈' : '👁️';
+      passwordToggle.setAttribute('aria-pressed', !isPassword);
     });
 
-    msg.innerText = "✅ Conta criada!";
-    msg.style.color = "green";
+    /* ==================== VALIDAÇÃO ==================== */
 
-  } catch(e){
-    tratarErro(e);
-  }
-};
+    function setFieldError(input, errorId, message) {
+      input.setAttribute('aria-invalid', !!message);
+      const errorEl = document.getElementById(errorId);
 
-// ERROS
-function tratarErro(e){
+      if (message) {
+        errorEl.textContent = message;
+      } else {
+        errorEl.textContent = '';
+      }
+    }
 
-  if(e.code === "auth/user-not-found"){
-    msg.innerText = "Usuário não encontrado";
-  }
-  else if(e.code === "auth/wrong-password"){
-    msg.innerText = "Senha incorreta";
-  }
-  else if(e.code === "auth/email-already-in-use"){
-    msg.innerText = "Email já cadastrado";
-  }
-  else{
-    msg.innerText = e.message;
-  }
+    /* ==================== ALERTAS ==================== */
 
-  msg.style.color = "#dc2626";
-}
+    function showAlert(message, type = 'info') {
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.setAttribute('role', 'alert');
+      alert.textContent = message;
 
-</script>
+      alertContainer.innerHTML = '';
+      alertContainer.appendChild(alert);
 
+      // Auto-hide (exceto erros)
+      if (type !== 'error') {
+        setTimeout(() => alert.remove(), 5000);
+      }
+    }
+
+    function clearAlerts() {
+      alertContainer.innerHTML = '';
+    }
+
+    /* ==================== LOADING STATE ==================== */
+
+    function setLoading(loading) {
+      state.isLoading = loading;
+      submitBtn.disabled = loading;
+
+      if (loading) {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.textContent = 'Processando...';
+      } else {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.textContent = state.isRegistering ? 'Criar Conta' : 'Entrar';
+      }
+    }
+
+    /* ==================== PREFERÊNCIAS ==================== */
+
+    function savePreferences() {
+      try {
+        storage.set('loginPreferences', {
+          email: rememberCheckbox.checked ? emailInput.value : '',
+          remember: rememberCheckbox.checked
+        });
+      } catch (e) {
+        console.warn('Falha ao salvar preferências:', e);
+      }
+    }
+
+    function loadPreferences() {
+      try {
+        const prefs = storage.get('loginPreferences') || {};
+        if (prefs.email) {
+          emailInput.value = prefs.email;
+          rememberCheckbox.checked = true;
+        }
+      } catch (e) {
+        console.warn('Falha ao carregar preferências:', e);
+      }
+    }
+
+    /* ==================== LOGIN ==================== */
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      clearAlerts();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      // Validação
+      let hasError = false;
+
+      if (!email) {
+        setFieldError(emailInput, 'email-hint', 'Email obrigatório');
+        hasError = true;
+      } else if (!validators.email(email)) {
+        setFieldError(emailInput, 'email-hint', 'Email inválido');
+        hasError = true;
+      } else {
+        setFieldError(emailInput, 'email-hint', '');
+      }
+
+      if (!password) {
+        setFieldError(passwordInput, 'password-hint', 'Senha obrigatória');
+        hasError = true;
+      } else if (!validators.password(password)) {
+        setFieldError(passwordInput, 'password-hint', 'Mínimo 6 caracteres');
+        hasError = true;
+      } else {
+        setFieldError(passwordInput, 'password-hint', '');
+      }
+
+      if (hasError) return;
+
+      // Login
+      setLoading(true);
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+
+        savePreferences();
+        showAlert('✅ Login realizado com sucesso!', 'success');
+        toast.success('Bem-vindo de volta!');
+
+        // Redirect após 1.5 segundos
+        await sleep(1500);
+        window.location.href = config.baseUrl + 'index.html';
+      } catch (error) {
+        setLoading(false);
+
+        // Tratamento de erros específicos
+        const errors = {
+          'auth/user-not-found': 'Usuário não encontrado',
+          'auth/wrong-password': 'Senha incorreta',
+          'auth/invalid-email': 'Email inválido',
+          'auth/user-disabled': 'Usuário desativado',
+          'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.'
+        };
+
+        const message = errors[error.code] || error.message;
+        showAlert(message, 'error');
+        toast.error(message);
+      }
+    }
+
+    /* ==================== CADASTRO ==================== */
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      clearAlerts();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      // Validação
+      let hasError = false;
+
+      if (!email) {
+        setFieldError(emailInput, 'email-hint', 'Email obrigatório');
+        hasError = true;
+      } else if (!validators.email(email)) {
+        setFieldError(emailInput, 'email-hint', 'Email inválido');
+        hasError = true;
+      } else {
+        setFieldError(emailInput, 'email-hint', '');
+      }
+
+      if (!password) {
+        setFieldError(passwordInput, 'password-hint', 'Senha obrigatória');
+        hasError = true;
+      } else if (!validators.password(password)) {
+        setFieldError(passwordInput, 'password-hint', 'Mínimo 6 caracteres');
+        hasError = true;
+      } else {
+        setFieldError(passwordInput, 'password-hint', '');
+      }
+
+      if (hasError) return;
+
+      // Registro
+      setLoading(true);
+
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+
+        savePreferences();
+        showAlert('✅ Conta criada com sucesso! Redirecionando...', 'success');
+        toast.success('Bem-vindo! Sua conta foi criada.');
+
+        await sleep(1500);
+        window.location.href = config.baseUrl + 'index.html';
+      } catch (error) {
+        setLoading(false);
+
+        const errors = {
+          'auth/email-already-in-use': 'Este email já está registrado',
+          'auth/weak-password': 'Senha deve ter pelo menos 6 caracteres',
+          'auth/invalid-email': 'Email inválido',
+          'auth/operation-not-allowed': 'Operação não permitida'
+        };
+
+        const message = errors[error.code] || error.message;
+        showAlert(message, 'error');
+        toast.error(message);
+      }
+    }
+
+    /* ==================== RECUPERAR SENHA ==================== */
+
+    forgotPasswordLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      const email = emailInput.value.trim();
+
+      if (!email || !validators.email(email)) {
+        showAlert('⚠️ Digite um email válido no campo acima', 'warning');
+        emailInput.focus();
+        return;
+      }
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showAlert('✅ Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+        toast.success('Email enviado com sucesso!');
+      } catch (error) {
+        showAlert('❌ Erro ao enviar email. Verifique se o email está correto.', 'error');
+        toast.error('Falha ao enviar email de recuperação');
+      }
+    });
+
+    /* ==================== SWITCH LOGIN/REGISTRO ==================== */
+
+    switchToRegister.addEventListener('click', () => {
+      state.isRegistering = !state.isRegistering;
+
+      const headerTitle = document.querySelector('.login-header h1');
+      const headerSubtitle = document.querySelector('.login-header p');
+
+      if (state.isRegistering) {
+        headerTitle.textContent = 'Criar Conta';
+        headerSubtitle.textContent = 'Preencha os dados abaixo';
+        submitBtn.textContent = 'Criar Conta';
+        switchToRegister.textContent = 'Voltar para Login';
+        form.onsubmit = handleRegister;
+        forgotPasswordLink.style.display = 'none';
+      } else {
+        headerTitle.textContent = 'Sistema Logístico';
+        headerSubtitle.textContent = 'Acesse sua conta para continuar';
+        submitBtn.textContent = 'Entrar';
+        switchToRegister.textContent = 'Criar Conta';
+        form.onsubmit = handleLogin;
+        forgotPasswordLink.style.display = 'block';
+      }
+
+      clearAlerts();
+      form.reset();
+      emailInput.focus();
+    });
+
+    /* ==================== EVENTOS ==================== */
+
+    form.addEventListener('submit', handleLogin);
+
+    // Valida em tempo real (opcional)
+    emailInput.addEventListener('blur', () => {
+      const email = emailInput.value.trim();
+      if (email && !validators.email(email)) {
+        setFieldError(emailInput, 'email-hint', 'Email inválido');
+      } else {
+        setFieldError(emailInput, 'email-hint', '');
+      }
+    });
+
+    passwordInput.addEventListener('blur', () => {
+      const password = passwordInput.value;
+      if (password && !validators.password(password)) {
+        setFieldError(passwordInput, 'password-hint', 'Mínimo 6 caracteres');
+      } else {
+        setFieldError(passwordInput, 'password-hint', '');
+      }
+    });
+
+    /* ==================== INICIALIZAÇÃO ==================== */
+
+    loadPreferences();
+    emailInput.focus();
+  </script>
 </body>
 </html>

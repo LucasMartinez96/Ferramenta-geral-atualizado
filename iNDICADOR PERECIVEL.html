@@ -9,16 +9,32 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.cdnfonts.com/css/ds-digital" rel="stylesheet">
 <style>
-  /* ===== Paleta Dark Premium ===== */
-  :root{ --bg:#0b1320; --card:#101b2d; --border:#1d2a3c; --ink:#e6efff; --muted:#bcd0ff; --ok:#81c784; --d60:#fff176; --d30:#ffb74d; --venc:#e57373;
-         /* NOVO: cor para "Em falta" */
-         --falt:#b388ff;
+  /* ===== Paleta Dark Premium (alias para design-system) ===== */
+  :root{
+    --bg: var(--color-neutral-900);
+    --card: var(--color-neutral-800);
+    --border: var(--color-border);
+    --ink: var(--color-neutral-50);
+    --muted: var(--color-text-muted);
+    --ok: var(--color-success);
+    --d60: var(--color-warning);
+    --d30: var(--color-warning);
+    --venc: var(--color-danger);
+    --falt: var(--color-primary-light);
   }
   body{font-family:Segoe UI, Arial, system-ui, -apple-system; background:var(--bg); margin:20px; color:var(--ink)}
   .container{max-width:1260px; margin:auto}
 
-  /* ===== Cabeçalho estilizado ===== */
-  :root{ --hdr-bg-1:#0d2547; --hdr-bg-2:#173a74; --hdr-ring:#ffffff1f; --pill-bg:#ffffff12; --pill-border:#7aa2ff66; --hdr-text:#e6efff; --hdr-text-dim:#cfe0ff; }
+  /* ===== Cabeçalho estilizado (aliases) ===== */
+  :root{
+    --hdr-bg-1: var(--color-primary-dark);
+    --hdr-bg-2: var(--color-primary);
+    --hdr-ring: rgba(255,255,255,0.12);
+    --pill-bg: rgba(255,255,255,0.07);
+    --pill-border: rgba(122,162,255,0.4);
+    --hdr-text: var(--color-neutral-50);
+    --hdr-text-dim: var(--color-text-muted);
+  }
   .app-header{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 20px; border-radius:16px;
     background:linear-gradient(90deg,var(--hdr-bg-1),var(--hdr-bg-2));
     box-shadow: inset 0 0 0 1px #ffffff0d, 0 6px 20px #000a; margin-bottom:14px; color:var(--hdr-text); }

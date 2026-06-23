@@ -11,20 +11,21 @@
 
   <style>
     :root{
-      --azul:#003366;
-      --azul-escuro:#0b2545;
-      --azul-botao:#0a4aa6;
-      --cinza:#6b7280;
-      --bg:#f4f6f8;
-      --verde:#2e7d32;
-      --vermelho:#c62828;
-      --perigo:#b91c1c;
-
-      /* Header */
-      --hdr-grad-start:#0b2545;
-      --hdr-grad-end:#0a4aa6;
-      --hdr-text:#ffffff;
-      --hdr-accent:#8ab4ff;
+      --azul: var(--color-primary);
+      --azul-escuro: var(--color-primary-dark);
+      --azul-botao: var(--color-primary-600);
+      --cinza: var(--color-text-muted);
+      --bg: var(--color-bg);
+      --verde: var(--color-success);
+      --vermelho: var(--color-danger);
+      --perigo: var(--color-danger);
+      --hdr-grad-start: var(--color-primary-dark);
+      --hdr-grad-end: var(--color-primary);
+      --hdr-text: var(--color-surface);
+      --hdr-accent: var(--color-info);
+      --card: var(--color-surface);
+      --muted: var(--color-text-muted);
+      --border: var(--color-border);
     }
     body { font-family: Arial, sans-serif; background: var(--bg); padding: 20px; color: #222; }
     h1 { margin-bottom: 10px; text-align: center; }
@@ -114,8 +115,7 @@
   </style>
 </head>
 <body>
-
-  <!-- ====== Cabeçalho com relógio + botões principais ====== -->
+    <!-- ====== Cabeçalho com relógio + botões principais ====== -->
   <header class="app-header" aria-label="Cabeçalho da aplicação">
     <div class="left">
       <div class="logo-wrap">

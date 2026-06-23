@@ -9,8 +9,14 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     :root {
-      --bg: #f4f6f9; --card: #fff; --text: #2c3e50; --accent: #1e88e5;
-      --good: #2e7d32; --bad: #c62828; --neutral: #555; --border: #ddd;
+      --bg: var(--color-bg);
+      --card: var(--color-surface);
+      --text: var(--color-text);
+      --accent: var(--color-primary);
+      --good: var(--color-success);
+      --bad: var(--color-danger);
+      --neutral: var(--color-text-muted);
+      --border: var(--color-border);
     }
     body { font-family: Arial, sans-serif; background: var(--bg); padding: 20px; color: var(--text); }
     h1 { text-align: center; margin-bottom: 10px; }
@@ -38,6 +44,7 @@
 <body>
   <div class="container">
     <h1>📊 Dashboard de Inventário (Leve)</h1>
+    
 
     <!-- Upload e seleção de aba -->
     <div class="card">
