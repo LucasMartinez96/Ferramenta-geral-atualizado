@@ -253,7 +253,8 @@ td.num { text-align: right; }
 
 <!-- Bibliotecas externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js"      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="js/toast.js"></script>
 
 <script>
 'use strict';
@@ -640,7 +641,7 @@ function gerarPortaPorta() {
       numerarGrupo('poslivre');
     } catch (err) {
       console.error('Erro gerarPosicoesLivres:', err);
-      alert('Erro ao gerar Posições Livres: ' + (err?.message || err));
+      showToast('Erro ao gerar Posições Livres: ' + (err?.message || err));
     }
   }
 
@@ -694,30 +695,30 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
       if (typeof Papa !== 'undefined') {
         Papa.parse(file, {
           header: true, skipEmptyLines: true,
-          complete : (res) => { dados = res.data; alert('Arquivo carregado! Linhas: ' + dados.length); },
-          error    : (err) => alert('Erro ao ler CSV: ' + (err?.message || err))
+          complete : (res) => { dados = res.data; showToast('Arquivo carregado! Linhas: ' + dados.length); },
+          error    : (err) => showToast('Erro ao ler CSV: ' + (err?.message || err))
         });
       } else if (typeof XLSX !== 'undefined') {
         const text = await file.text();
         const wb   = XLSX.read(text, { type: 'string' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         dados = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
-        alert('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
+        showToast('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
       } else {
-        alert('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.');
+        showToast('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.');
       }
     } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
-      if (typeof XLSX === 'undefined') { alert('SheetJS não carregou.'); return; }
+      if (typeof XLSX === 'undefined') { showToast('SheetJS não carregou.'); return; }
       const buf   = await file.arrayBuffer();
       const wb    = XLSX.read(buf, { type: 'array' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       dados = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      alert('Arquivo carregado! Linhas: ' + dados.length);
+      showToast('Arquivo carregado! Linhas: ' + dados.length);
     } else {
-      alert('Formato não suportado. Use CSV, XLSX ou XLS.');
+      showToast('Formato não suportado. Use CSV, XLSX ou XLS.');
     }
   } catch (err) {
-    alert('Erro ao carregar: ' + (err?.message || err));
+    showToast('Erro ao carregar: ' + (err?.message || err));
   }
 });
 

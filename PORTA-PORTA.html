@@ -7,6 +7,7 @@
 <title>Inventário com Divergências — Tabelas por Item (Corrigido)</title>
 <link rel='preconnect' href='https://cdnjs.cloudflare.com'>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'></script>
+<script src='js/toast.js'></script>
 <style>
  body { font-family: Arial, sans-serif; background:#eef1f5; padding:25px; }
  .container { background:white; padding:25px; border-radius:14px; max-width:900px; margin:auto; box-shadow:0 4px 16px rgba(0,0,0,0.15); }
@@ -114,7 +115,7 @@ function novoGrupoManual(){
  const item=$('#item').value.trim();
  if(item){
    const idx=findGroupIndexByItem(item);
-   if(idx!==-1){ render(); setTimeout(()=>document.getElementById('capture_'+idx).scrollIntoView({behavior:'smooth'}),50); alert('Item já existe.'); return; }
+   if(idx!==-1){ render(); setTimeout(()=>document.getElementById('capture_'+idx).scrollIntoView({behavior:'smooth'}),50); showToast('Item já existe.'); return; }
    g.push({item,rows:[]});
  } else {
    g.push({item:'NOVO-ITEM',rows:[]});
@@ -140,9 +141,9 @@ function adicionar(){
  const sub=$('#sub').value.trim();
  const fStr=$('#fisica').value.trim();
  const sStr=$('#sistema').value.trim();
- if(!item||!sub||!fStr||!sStr){ alert('Preencha todos os campos!'); return; }
+ if(!item||!sub||!fStr||!sStr){ showToast('Preencha todos os campos!'); return; }
  const f=toNumber(fStr); const s=toNumber(sStr);
- if(isNaN(f)||isNaN(s)){ alert('Valores inválidos'); return; }
+ if(isNaN(f)||isNaN(s)){ showToast('Valores inválidos'); return; }
  const idx=garantirGrupoParaItem(item);
  let g=getGrupos(); g[idx].rows.push([sub,f,s]); setGrupos(g);
  render(); $('#sub').value=''; $('#fisica').value=''; $('#sistema').value=''; $('#sub').focus();
