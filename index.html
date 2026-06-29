@@ -248,6 +248,8 @@ const panel = document.getElementById("panel");
 const loading = document.getElementById("loading");
 const items = document.querySelectorAll(".item");
 
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
 /* LOGIN */
 onAuthStateChanged(auth, async(user)=>{
 
@@ -329,18 +331,20 @@ carregarUsuarios();
 
 async function carregarUsuarios(){
 const query = await getDocs(collection(db,"usuarios"));
-listaUsuarios.innerHTML="";
 
+const linhas = [];
 query.forEach(docu=>{
   const u = docu.data();
 
-  listaUsuarios.innerHTML += `
+  linhas.push(`
   <tr>
-  <td>${u.email}</td>
-  <td>${u.tipo}</td>
-  <td><button class="btn btn-danger" onclick="remover('${docu.id}')">Excluir</button></td>
-  </tr>`;
+  <td>${escHtml(u.email)}</td>
+  <td>${escHtml(u.tipo)}</td>
+  <td><button class="btn btn-danger" onclick="remover('${escHtml(docu.id)}')">Excluir</button></td>
+  </tr>`);
 });
+
+listaUsuarios.innerHTML = linhas.join("");
 }
 
 window.remover = async(id)=>{

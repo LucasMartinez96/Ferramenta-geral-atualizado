@@ -141,6 +141,7 @@
 
   <script>
     let dados = {};
+    const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
     /* Conversão robusta: aceita "1.234,56" ou "1,234.56" */
     function toNumberFlexible(v) {
@@ -366,10 +367,10 @@
           const cls = dif > 0 ? 'diff-pos' : (dif < 0 ? 'diff-neg' : 'diff-zero');
           subTabela.innerHTML += `
             <tr>
-              <td>${sub}</td>
-              <td>${contado}</td>
-              <td>${sistema}</td>
-              <td class="${cls}">${dif}</td>
+              <td>${escHtml(sub)}</td>
+              <td>${escHtml(contado)}</td>
+              <td>${escHtml(sistema)}</td>
+              <td class="${cls}">${escHtml(dif)}</td>
             </tr>`;
         });
       }

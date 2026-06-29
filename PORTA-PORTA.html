@@ -60,6 +60,7 @@
 
 <script>
 const KEY='inventario_grupos_corrigido';
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 function getGrupos(){ try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return [];} }
 function setGrupos(a){ localStorage.setItem(KEY,JSON.stringify(a)); }
 function $(s,c=document){ return c.querySelector(s); }
@@ -75,7 +76,7 @@ function render(){
  grupos.forEach((g,idx)=>{
    const card=document.createElement('div'); card.className='groupCard';
    const header=document.createElement('div'); header.className='itemHeader';
-   header.innerHTML = `<div class='itemTitle'>Item: ${g.item}</div>
+   header.innerHTML = `<div class='itemTitle'>Item: ${escHtml(g.item)}</div>
    <button class='btn success' onclick='baixarPNG(${idx})'>Baixar PNG</button>`;
 
    const capture=document.createElement('div'); capture.id='capture_'+idx;
@@ -93,7 +94,7 @@ function render(){
       const diff=toNumber(f)-toNumber(s);
       total+=diff;
       const tr=document.createElement('tr'); tr.className=classeDiff(diff);
-      tr.innerHTML=`<td>${g.item}</td><td>${sub}</td><td>${f}</td><td>${s}</td><td>${diff}</td>`;
+      tr.innerHTML=`<td>${escHtml(g.item)}</td><td>${escHtml(sub)}</td><td>${escHtml(f)}</td><td>${escHtml(s)}</td><td>${escHtml(diff)}</td>`;
       tbody.appendChild(tr);
    });
 

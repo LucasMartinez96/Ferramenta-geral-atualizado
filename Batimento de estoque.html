@@ -361,6 +361,8 @@
     /* ========== INICIALIZAÇÃO ========== */
     Chart.register(ChartDataLabels);
     
+    const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
     let dataRows = [];
     let headerMap = {};
     let chartStatus = null;
@@ -566,7 +568,7 @@
       legend.innerHTML = labels.map((label, i) => `
         <div class="legend-item">
           <div class="legend-swatch" style="background-color: ${colors[i]}"></div>
-          <span>${label}: <strong>${values[i]}</strong></span>
+          <span>${escHtml(label)}: <strong>${escHtml(values[i])}</strong></span>
         </div>
       `).join('');
     }
@@ -619,15 +621,15 @@
 
         html += `
           <tr>
-            <td class="font-mono">${r[headerMap.item] || '-'}</td>
-            <td>${r[headerMap.almox] || '-'}</td>
+            <td class="font-mono">${escHtml(r[headerMap.item] || '-')}</td>
+            <td>${escHtml(r[headerMap.almox] || '-')}</td>
             <td class="text-right">${oracle.toLocaleString('pt-BR')}</td>
             <td class="text-right">${wms.toLocaleString('pt-BR')}</td>
             <td class="text-right font-bold" style="color: ${dif > 0 ? 'var(--color-success-700)' : dif < 0 ? 'var(--color-danger-700)' : 'var(--color-gray-600)'}">
               ${dif > 0 ? '+' : ''}${dif.toLocaleString('pt-BR')}
             </td>
             <td><span class="badge ${statusClass}">${status}</span></td>
-            <td>${obs}</td>
+            <td>${escHtml(obs)}</td>
           </tr>
         `;
       });

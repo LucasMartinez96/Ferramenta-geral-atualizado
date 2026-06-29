@@ -258,6 +258,8 @@ td.num { text-align: right; }
 <script>
 'use strict';
 
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
 const LPP = 21;
 let dados = [];
 let ultimoFiltro = [];
@@ -390,12 +392,12 @@ function tabelaHTML(linhas, mostrarQtd) {
     const tdObs = mostrarQtd ? '<td></td>' : '';
 
     return `<tr>
-      <td title="${ubi}">${ubi}</td>
-      <td title="${pieza}">${pieza}</td>
-      <td title="${desc}">${desc}</td>
-      <td title="${lbl}">${lbl}</td>
-      <td title="${orig}">${orig}</td>
-      <td class="num" title="${qtd}">${qtd}</td>
+      <td title="${escHtml(ubi)}">${escHtml(ubi)}</td>
+      <td title="${escHtml(pieza)}">${escHtml(pieza)}</td>
+      <td title="${escHtml(desc)}">${escHtml(desc)}</td>
+      <td title="${escHtml(lbl)}">${escHtml(lbl)}</td>
+      <td title="${escHtml(orig)}">${escHtml(orig)}</td>
+      <td class="num" title="${escHtml(qtd)}">${escHtml(qtd)}</td>
       ${tdObs}
     </tr>`;
   }).join('');
@@ -414,10 +416,10 @@ function tabelaHTML(linhas, mostrarQtd) {
 function tabelaEmbalagemHTML(linhas) {
   const linhasHTML = linhas.map(l =>
     `<tr>
-       <td title="${l.Ubicacion}">${l.Ubicacion}</td>
-       <td title="${l.Pieza}">${l.Pieza}</td>
-       <td title="${l.Descripcion1}">${l.Descripcion1}</td>
-       <td class="num">${l.QtdEmbalagem}</td>
+       <td title="${escHtml(l.Ubicacion)}">${escHtml(l.Ubicacion)}</td>
+       <td title="${escHtml(l.Pieza)}">${escHtml(l.Pieza)}</td>
+       <td title="${escHtml(l.Descripcion1)}">${escHtml(l.Descripcion1)}</td>
+       <td class="num">${escHtml(l.QtdEmbalagem)}</td>
      </tr>`
   ).join('');
 
@@ -593,7 +595,7 @@ function gerarPortaPorta() {
       <table class="grid">
         <colgroup><col style="width:100%"></colgroup>
         <thead><tr><th>Endereço</th></tr></thead>
-        <tbody>${linhas.map(l => `<tr><td>${l.name ?? ''}</td></tr>`).join('')}</tbody>
+        <tbody>${linhas.map(l => `<tr><td>${escHtml(l.name)}</td></tr>`).join('')}</tbody>
       </table>
     </div>`;
   }

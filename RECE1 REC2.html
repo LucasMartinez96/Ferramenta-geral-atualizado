@@ -82,6 +82,7 @@ h1{padding:20px;}
 <script>
 let dados = {};
 let chart;
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
 function parseData(v){
   if(typeof v==="number"){
@@ -155,7 +156,7 @@ function carregarMes(){
   s.innerHTML="";
 
   Object.keys(dados).forEach(m=>{
-    s.innerHTML += `<option>${m}</option>`;
+    s.innerHTML += `<option>${escHtml(m)}</option>`;
   });
 
   s.onchange=()=> atualizar(s.value);
