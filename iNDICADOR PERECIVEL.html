@@ -5,11 +5,12 @@
 <meta charset="UTF-8">
 <title>Dashboard de Perecíveis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.cdnfonts.com/css/ds-digital" rel="stylesheet">
 <link rel="stylesheet" href="css/design-system.css" />
 <script src="js/normalize-styles.js" defer></script>
+<script src="js/toast.js"></script>
 <style>
   /* ===== Paleta Dark Premium (alias para design-system) ===== */
   :root{
@@ -187,7 +188,7 @@ function attachReader(fileInput){
         const temp = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' });
         if (temp.length > 0){ rows = temp; break; }
       }
-      if (!rows || rows.length === 0){ alert('❌ Nenhuma aba com dados encontrada no Excel'); return; }
+      if (!rows || rows.length === 0){ showToast('❌ Nenhuma aba com dados encontrada no Excel'); return; }
       process(rows);
     };
     reader.readAsArrayBuffer(e.target.files[0]);
@@ -228,7 +229,7 @@ function process(data){
 
   // Coluna de validade (como no seu original)
   const expCol = headers.find(h => h.toLowerCase().includes('exp') || h.toLowerCase().includes('valid'));
-  if(!expCol){ alert('❌ Coluna de validade não encontrada'); return; }
+  if(!expCol){ showToast('❌ Coluna de validade não encontrada'); return; }
 
   // Produto e Quantidade total (sua lógica + nosso foco na quantidade)
   const pieceCol = detectColumn(headers,['peças','pecas','peça','peca','produto','código','codigo','material','item','part']) || headers[0];
