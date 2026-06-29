@@ -5,11 +5,12 @@
 <meta charset="UTF-8">
 <title>Dashboard de Perecíveis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.cdnfonts.com/css/ds-digital" rel="stylesheet">
 <link rel="stylesheet" href="css/design-system.css" />
 <script src="js/normalize-styles.js" defer></script>
+<script src="js/toast.js"></script>
 <style>
   /* ===== Paleta Dark Premium (alias para design-system) ===== */
   :root{
@@ -158,6 +159,7 @@
 
 <script>
 let chart;
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 // Ponte do botão do cabeçalho para o FileReader
 const headerInput = document.getElementById('fileInputHeader');
 headerInput.addEventListener('change', e => {
@@ -186,7 +188,7 @@ function attachReader(fileInput){
         const temp = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' });
         if (temp.length > 0){ rows = temp; break; }
       }
-      if (!rows || rows.length === 0){ alert('❌ Nenhuma aba com dados encontrada no Excel'); return; }
+      if (!rows || rows.length === 0){ showToast('❌ Nenhuma aba com dados encontrada no Excel'); return; }
       process(rows);
     };
     reader.readAsArrayBuffer(e.target.files[0]);
@@ -227,7 +229,7 @@ function process(data){
 
   // Coluna de validade (como no seu original)
   const expCol = headers.find(h => h.toLowerCase().includes('exp') || h.toLowerCase().includes('valid'));
-  if(!expCol){ alert('❌ Coluna de validade não encontrada'); return; }
+  if(!expCol){ showToast('❌ Coluna de validade não encontrada'); return; }
 
   // Produto e Quantidade total (sua lógica + nosso foco na quantidade)
   const pieceCol = detectColumn(headers,['peças','pecas','peça','peca','produto','código','codigo','material','item','part']) || headers[0];
@@ -308,11 +310,11 @@ function process(data){
     const diasTxt = (r.days === null) ? '—' : formatNumber(r.days);
     const expTxt  = r.exp ? r.exp.toLocaleDateString('pt-BR') : '—';
     sbody.innerHTML += `<tr class="${r.cls}">
-      <td class="mono col-prod">${r.piece}</td>
-      <td class="col-venc">${expTxt}</td>
-      <td class="num col-qtd">${formatNumber(r.qty)}</td>
-      <td class="num col-dias">${diasTxt}</td>
-      <td class="col-faixa">${r.faixa}</td>
+      <td class="mono col-prod">${escHtml(r.piece)}</td>
+      <td class="col-venc">${escHtml(expTxt)}</td>
+      <td class="num col-qtd">${escHtml(formatNumber(r.qty))}</td>
+      <td class="num col-dias">${escHtml(diasTxt)}</td>
+      <td class="col-faixa">${escHtml(r.faixa)}</td>
     </tr>`;
   }
 

@@ -647,7 +647,7 @@
 
     /* ==================== EVENTOS ==================== */
 
-    form.addEventListener('submit', handleLogin);
+    form.onsubmit = handleLogin;
 
     // Valida em tempo real (opcional)
     emailInput.addEventListener('blur', () => {

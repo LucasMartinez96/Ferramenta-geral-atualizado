@@ -7,7 +7,8 @@
 
   <!-- Bibliotecas -->
   <script src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.js"></script>
-  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="js/toast.js"></script>
 
   <link rel="stylesheet" href="css/design-system.css" />
   <script src="js/normalize-styles.js" defer></script>
@@ -658,7 +659,7 @@ function exportarTabelaCSV(){
 }
 function exportarHistoricoExcel(){
   const hist = carregarInventarios();
-  if(!hist.length){ alert("Não há histórico para exportar."); return; }
+  if(!hist.length){ showToast("Não há histórico para exportar."); return; }
   const dados = hist.map(h=>({ Data: h.data.split("-").reverse().join("/"), Acuracidade: h.acuracia.toFixed(2)+"%", Horário: h.timestamp ? new Date(h.timestamp).toLocaleString("pt-BR") : "" }));
   const ws = XLSX.utils.json_to_sheet(dados);
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Histórico");
@@ -711,7 +712,7 @@ document.getElementById('btnModalSalvar').onclick = ()=>{
     } catch(e){ console.error(e); }
   } catch(err){
     console.error('Erro ao salvar inventário:', err);
-    alert('Ocorreu um erro ao salvar o inventário.');
+    showToast('Ocorreu um erro ao salvar o inventário.');
   } finally {
     fecharModal(); // SEMPRE fecha
   }
@@ -722,7 +723,7 @@ document.getElementById('btnModalSalvar').onclick = ()=>{
 ============================================================ */
 function processarWMS(dados){
   const headers = Object.keys(dados[0] || {});
-  if (!headers.length) { alert('A planilha está vazia.'); return; }
+  if (!headers.length) { showToast('A planilha está vazia.'); return; }
 
   const colQtd = detectarColunaQuantidade(headers, dados) || 'Quantidade';
 
@@ -809,10 +810,10 @@ document.getElementById('fileInput').addEventListener('change', function(e){
       const workbook = XLSX.read(data, { type:'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const dados = XLSX.utils.sheet_to_json(sheet,{defval:''});
-      if(!dados.length){ alert('A planilha está vazia.'); return; }
+      if(!dados.length){ showToast('A planilha está vazia.'); return; }
       processarWMS(dados);
     }catch(err){
-      alert('Erro ao ler o arquivo.');
+      showToast('Erro ao ler o arquivo.');
       console.error(err);
     }
   };
@@ -831,7 +832,7 @@ document.getElementById('btnSalvarSnapshot').onclick = () => {
   const iso = (sel && sel.value) ? sel.value : yesterdayISO();
 
   if (!TBL_HEADERS.length || !TBL_ROWS.length) {
-    alert('Não há dados carregados para salvar. Importe um Excel primeiro.');
+    showToast('Não há dados carregados para salvar. Importe um Excel primeiro.');
     return;
   }
 
@@ -839,14 +840,14 @@ document.getElementById('btnSalvarSnapshot').onclick = () => {
   if (!tentativa.ok && tentativa.reason === 'exists') {
     if (confirm(`Já existe snapshot para ${iso}. Deseja substituir?`)) {
       const res2 = salvarSnapshot(iso, TBL_HEADERS, TBL_ROWS, { overwrite:true });
-      alert(res2.ok ? `Snapshot atualizado para ${iso}.` : 'Não foi possível atualizar o snapshot.');
+      showToast(res2.ok ? `Snapshot atualizado para ${iso}.` : 'Não foi possível atualizar o snapshot.');
     } else {
-      alert('Operação cancelada. O snapshot existente foi mantido.');
+      showToast('Operação cancelada. O snapshot existente foi mantido.');
     }
   } else if (tentativa.ok) {
-    alert(`Snapshot salvo para ${iso}.`);
+    showToast(`Snapshot salvo para ${iso}.`);
   } else {
-    alert('Não foi possível salvar o snapshot.');
+    showToast('Não foi possível salvar o snapshot.');
   }
 };
 

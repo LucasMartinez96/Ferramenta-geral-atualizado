@@ -5,7 +5,7 @@
 <title>Painel de Embalagens</title>
 
 <!-- ✅ BIBLIOTECAS CORRETAS -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -82,6 +82,7 @@ h1{padding:20px;}
 <script>
 let dados = {};
 let chart;
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
 function parseData(v){
   if(typeof v==="number"){
@@ -155,7 +156,7 @@ function carregarMes(){
   s.innerHTML="";
 
   Object.keys(dados).forEach(m=>{
-    s.innerHTML += `<option>${m}</option>`;
+    s.innerHTML += `<option>${escHtml(m)}</option>`;
   });
 
   s.onchange=()=> atualizar(s.value);
