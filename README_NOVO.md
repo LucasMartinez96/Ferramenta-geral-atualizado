@@ -4,7 +4,7 @@
 
 # ✅ O QUE VOCÊ RECEBEU
 
-Análise profissional de Front-end com **6 arquivos + documentação completa**.
+Análise profissional de Front-end com **7 arquivos + documentação completa**.
 
 ---
 
@@ -186,7 +186,7 @@ Análise profissional de Front-end com **6 arquivos + documentação completa**.
 │   ├── index.html
 │   ├── login.html                  (Manter backup)
 │   ├── Batimento de estoque.html
-│   ├── Dashbord de produção.html
+│   ├── Dashboard de produção.html
 │   ├── BACKLOG.html
 │   └── ... (outros dashboards)
 │
@@ -462,3 +462,13 @@ Para dúvidas, sempre consulte:
 2. GUIA_IMPLEMENTACAO.md (step-by-step)
 3. CHECKLIST.md (acompanhar dia-a-dia)
 4. ANALISE_COMPLETA.md (referência técnica)
+
+---
+
+## 🧪 Testes automatizados
+
+Execute o teste do validador de datas com:
+
+```bash
+node tests/utils-date.test.mjs
+```

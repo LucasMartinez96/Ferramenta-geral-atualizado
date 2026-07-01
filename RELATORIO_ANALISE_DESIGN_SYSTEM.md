@@ -28,7 +28,7 @@ Todos os **16 arquivos HTML** foram analisados e atualizados com sucesso para in
 | 3 | `login-novo.html` | ✅ | ✅ | ✅ | Completo |
 | 4 | `CICLICO ALM51.html` | ✅ | ✅ | ✅ | Completo |
 | 5 | `PORTA-PORTA.html` | ✅ | ✅ | ✅ | Completo |
-| 6 | `Dashbord de produção.html` | ✅ | ✅ | ✅ | Completo |
+| 6 | `Dashboard de produção.html` | ✅ | ✅ | ✅ | Completo |
 | 7 | `Contencão atualizada.html` | ✅ | ✅ | ✅ | Completo |
 | 8 | `BACKLOG.html` | ✅ | ✅ | ✅ | Completo |
 | 9 | `Indicador_SALA_COFRE_atualizado.html` | ✅ | ✅ | ✅ | Completo |
