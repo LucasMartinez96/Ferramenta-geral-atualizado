@@ -8,78 +8,97 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<link rel="stylesheet" href="css/design-system.css" />
 
 <style>
  :root{
- --bg:#0b1120;
- --card:#111827;
- --chart:#111827;
- --text:#f0f4ff;
- --muted:#8899bb;
+ --bg:#f8fafc;
+ --card:#ffffff;
+ --chart:#ffffff;
+ --text:#1e293b;
+ --muted:#64748b;
+ --line:#e2e8f0;
+ --primary:#2563eb;
+ --primary-dark:#1e40af;
  }
  *{box-sizing:border-box;margin:0;padding:0}
  body{
- background:var(--bg);
+ background:linear-gradient(180deg,#f8fafc 0%,#eef4ff 100%);
  color:var(--text);
- font-family:Segoe UI,Arial,sans-serif;
+ font-family:Inter,Roboto,Segoe UI,Arial,sans-serif;
  min-height:100vh;
  }
  .wrap{max-width:1200px;margin:18px auto;padding:0 16px}
  .card{
  background:var(--card);
- padding:16px;
- border-radius:14px;
- box-shadow:0 0 18px #0d6efd44;
+ padding:24px;
+ border:1px solid var(--line);
+ border-radius:16px;
+ box-shadow:0 18px 45px rgba(15,23,42,.08);
  }
  .header{
  display:flex;
  justify-content:space-between;
  align-items:center;
- margin-bottom:10px;
+ gap:14px;
+ margin-bottom:20px;
  }
- .header h2{font-size:20px;font-weight:800}
- .clock{font-size:14px;color:var(--muted)}
- .controls{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+ .header h2{font-size:22px;font-weight:800;color:#0f172a}
+ .clock{font-size:14px;color:#475569;font-variant-numeric:tabular-nums}
+ .controls{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
  input[type=file],button{
- padding:8px 12px;
- border-radius:8px;
- border:1px solid #2c3f63;
- background:#1a2235;
- color:#fff;
+ padding:10px 14px;
+ border-radius:10px;
+ border:1px solid var(--line);
+ background:#fff;
+ color:var(--text);
  font-size:13px;
+ box-shadow:0 1px 2px rgba(15,23,42,.05);
  }
- button{cursor:pointer;transition:background .2s}
- .btn-clear{background:#913030;border-color:#913030}
- .btn-clear:hover{background:#b33}
+ input[type=file]{background:#f8fafc;max-width:100%}
+ button{cursor:pointer;transition:background .2s,transform .2s,box-shadow .2s}
+ .btn-clear{background:#dc2626;border-color:#dc2626;color:#fff;font-weight:700}
+ .btn-clear:hover{background:#b91c1c;transform:translateY(-1px);box-shadow:0 8px 18px rgba(220,38,38,.22)}
  .kpis{
  display:grid;
  grid-template-columns:repeat(5,1fr);
- gap:10px;
- margin:14px 0;
+ gap:12px;
+ margin:16px 0;
  }
- @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
- .kpi{background:#0f162b;padding:10px;border-radius:10px}
- .kpi .label{font-size:11px;color:var(--muted);margin-bottom:2px}
- .kpi .value{font-size:18px;font-weight:800}
- .pills{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+ @media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}}
+ @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}.header{align-items:flex-start;flex-direction:column}}
+ @media(max-width:480px){.kpis{grid-template-columns:1fr}.card{padding:16px}.wrap{padding:0 10px}}
+ .kpi{
+ background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:14px;
+ box-shadow:0 10px 24px rgba(15,23,42,.06);
+ }
+ .kpi .label{font-size:11px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+ .kpi .value{font-size:24px;font-weight:900;color:#0f172a;line-height:1.1;font-variant-numeric:tabular-nums}
+ .pills{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
  .pill{
- background:#0f162b;
- padding:6px 12px;
+ background:#eff6ff;
+ padding:8px 13px;
  border-radius:999px;
  font-size:12px;
- border:1px solid #2c3f63;
- color:var(--text);
+ border:1px solid #bfdbfe;
+ color:#1e3a8a;
+ font-weight:800;
+ box-shadow:0 1px 2px rgba(37,99,235,.08);
  }
- .chart-box{height:220px;margin-top:10px;position:relative}
+ .chart-box{height:250px;margin-top:10px;position:relative;border:1px solid var(--line);border-radius:16px;background:var(--chart);padding:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
  .chart-box canvas{
  width:100%!important;
  height:100%!important;
  background:var(--chart);
  border-radius:12px;
  }
- .sub{margin-top:14px;font-weight:700;color:var(--muted);font-size:14px}
- .footer{text-align:center;margin-top:40px;color:#fff;font-size:14px}
+ .sub{margin-top:16px;font-weight:800;color:#334155;font-size:14px}
+ .footer{text-align:center;margin-top:40px;color:#64748b;font-size:14px}
  </style>
+<script src="js/normalize-styles.js" defer></script>
  </head>
 
 <body>
@@ -246,27 +265,27 @@ if(g1) g1.destroy();
  {
  type:'bar', label:'Embalagens',
  data: sortedLabels.map(d=>dataMap[d].emb),
- backgroundColor:'#0d6efd', yAxisID:'y', order:1,
+ backgroundColor:'#2563eb', yAxisID:'y', order:1,
  datalabels:{color:'#fff',anchor:'center',align:'center',font:{weight:'bold'}}
  },
  {
  type:'line', label:'Peças',
  data: sortedLabels.map(d=>dataMap[d].pec),
- borderColor:'#00c853', backgroundColor:'transparent',
- pointBackgroundColor:'#00c853',
+ borderColor:'#16a34a', backgroundColor:'transparent',
+ pointBackgroundColor:'#16a34a',
  yAxisID:'y1', order:0,
- datalabels:{color:'#00c853',anchor:'end',align:'top',offset:6,font:{size:11}}
+ datalabels:{color:'#16a34a',anchor:'end',align:'top',offset:6,font:{size:11}}
  }
  ]
  },
  options:{
  maintainAspectRatio:false,
- plugins:{legend:{labels:{color:'#fff'}}},
+ plugins:{legend:{labels:{color:'#1e293b'}}},
  scales:{
- x:{ticks:{color:'#fff',maxRotation:45,minRotation:45},grid:{color:'#2c3f63'}},
- y:{beginAtZero:true, max:yMax, ticks:{color:'#fff'}, grid:{color:'#2c3f63'}},
+ x:{ticks:{color:'#334155',maxRotation:45,minRotation:45},grid:{color:'#e2e8f0'}},
+ y:{beginAtZero:true, max:yMax, ticks:{color:'#334155'}, grid:{color:'#e2e8f0'}},
  y1:{beginAtZero:true, max:y1Max, position:'right',
- ticks:{color:'#00c853'}, grid:{drawOnChartArea:false}}
+ ticks:{color:'#16a34a'}, grid:{drawOnChartArea:false}}
  },
  /* ── CHECK-OUT: Chart.js v4 → (event, elements) ── */
  onClick: function(event, elements){
@@ -300,27 +319,27 @@ if(g2) g2.destroy();
  {
  type:'bar', label:'Embalagens',
  data:[o.f1.e, o.f3.e],
- backgroundColor:'#0d6efd', yAxisID:'y',
+ backgroundColor:'#2563eb', yAxisID:'y',
  datalabels:{color:'#fff',anchor:'center',align:'center',font:{weight:'bold'}}
  },
  {
  type:'line', label:'Peças',
  data:[o.f1.p, o.f3.p],
- borderColor:'#00c853', backgroundColor:'transparent',
- pointBackgroundColor:'#00c853',
+ borderColor:'#16a34a', backgroundColor:'transparent',
+ pointBackgroundColor:'#16a34a',
  yAxisID:'y1',
- datalabels:{color:'#00c853',anchor:'end',align:'top',offset:6,font:{size:11}}
+ datalabels:{color:'#16a34a',anchor:'end',align:'top',offset:6,font:{size:11}}
  }
  ]
  },
  options:{
  maintainAspectRatio:false,
- plugins:{legend:{labels:{color:'#fff'}}},
+ plugins:{legend:{labels:{color:'#1e293b'}}},
  scales:{
- x:{ticks:{color:'#fff'},grid:{color:'#2c3f63'}},
- y:{beginAtZero:true, max:yMax, ticks:{color:'#fff'}, grid:{color:'#2c3f63'}},
+ x:{ticks:{color:'#334155'},grid:{color:'#e2e8f0'}},
+ y:{beginAtZero:true, max:yMax, ticks:{color:'#334155'}, grid:{color:'#e2e8f0'}},
  y1:{beginAtZero:true, max:y1Max, position:'right',
- ticks:{color:'#00c853'}, grid:{drawOnChartArea:false}}
+ ticks:{color:'#16a34a'}, grid:{drawOnChartArea:false}}
  }
  }
  });

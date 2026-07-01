@@ -13,65 +13,78 @@
   /* ===== CORES ===== */
   
   /* Primary: Azul profissional */
-  --color-primary: #0a66c2;
-  --color-primary-light: #4a90e2;
-  --color-primary-dark: #054a94;
-  --color-primary-50: #f0f6ff;
-  --color-primary-100: #e0ecff;
-  --color-primary-500: #0a66c2;
-  --color-primary-600: #0854a0;
+  --color-primary: #2563EB;
+  --color-primary-light: #60A5FA;
+  --color-primary-dark: #1E40AF;
+  --color-primary-50: #EFF6FF;
+  --color-primary-100: #DBEAFE;
+  --color-primary-500: #2563EB;
+  --color-primary-600: #1D4ED8;
+  --color-primary-700: #1E40AF;
   
   /* Success: Verde sucesso */
-  --color-success: #16a34a;
+  --color-success: #22C55E;
   --color-success-light: #86efac;
-  --color-success-dark: #15803d;
+  --color-success-dark: #16A34A;
   --color-success-50: #f0fdf4;
   --color-success-100: #dcfce7;
   
   /* Danger: Vermelho alertas */
-  --color-danger: #dc2626;
+  --color-danger: #EF4444;
   --color-danger-light: #fecaca;
-  --color-danger-dark: #991b1b;
+  --color-danger-dark: #B91C1C;
   --color-danger-50: #fef2f2;
   --color-danger-100: #fee2e2;
   
   /* Warning: Laranja avisos */
   --color-warning: #f59e0b;
   --color-warning-light: #fcd34d;
-  --color-warning-dark: #d97706;
+  --color-warning-dark: #D97706;
   --color-warning-50: #fffbeb;
   --color-warning-100: #fef3c7;
   
   /* Info: Azul claro informativo */
-  --color-info: #0ea5e9;
+  --color-info: #0EA5E9;
   --color-info-light: #7dd3fc;
   --color-info-dark: #0284c7;
   --color-info-50: #f0f9ff;
   --color-info-100: #e0f2fe;
   
   /* Neutral: Escala de cinza */
-  --color-neutral-50: #f9fafb;
+  --color-neutral-50: #F8FAFC;
   --color-neutral-100: #f3f4f6;
-  --color-neutral-200: #e5e7eb;
+  --color-neutral-200: #E2E8F0;
   --color-neutral-300: #d1d5db;
   --color-neutral-400: #9ca3af;
   --color-neutral-500: #6b7280;
-  --color-neutral-600: #4b5563;
+  --color-neutral-600: #64748B;
   --color-neutral-700: #374151;
-  --color-neutral-800: #1f2937;
-  --color-neutral-900: #111827;
+  --color-neutral-800: #1E293B;
+  --color-neutral-900: #1E293B;
   
   /* Semantic */
   --color-bg: var(--color-neutral-50);
-  --color-surface: #ffffff;
+  --color-surface: #FFFFFF;
   --color-text: var(--color-neutral-900);
-  --color-text-secondary: var(--color-neutral-700);
-  --color-text-muted: var(--color-neutral-600);
+  --color-text-secondary: #64748B;
+  --color-text-muted: #64748B;
   --color-text-light: var(--color-neutral-500);
   --color-border: var(--color-neutral-200);
   --color-border-light: var(--color-neutral-100);
   --color-divider: var(--color-neutral-200);
   --color-disabled: var(--color-neutral-300);
+
+  /* Aliases legados usados pelas páginas existentes */
+  --bg: var(--color-bg);
+  --card: var(--color-surface);
+  --ink: var(--color-text);
+  --muted: var(--color-text-muted);
+  --border: var(--color-border);
+  --azul: var(--color-primary);
+  --hdr-bg: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  --hdr-accent: #DBEAFE;
+  --hdr-text-dim: #DBEAFE;
+  --color-foreground: var(--color-text);
   
   /* ===== SPACING (8px base) ===== */
   
@@ -100,7 +113,7 @@
   
   /* ===== TYPOGRAPHY ===== */
   
-  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-family-base: 'Inter', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-family-mono: 'Monaco', 'Courier New', monospace;
   --font-family-serif: Georgia, serif;
   
@@ -930,19 +943,141 @@ select.form-control {
 .border-top { border-top: 1px solid var(--color-border); }
 .border-bottom { border-bottom: 1px solid var(--color-border); }
 
+
 /* ============================================================
-   MODO DARK (Opcional)
+   NORMALIZAÇÃO VISUAL PARA PÁGINAS LEGADAS
 ============================================================ */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #1a1a1a;
-    --color-surface: #2a2a2a;
-    --color-text: #f5f5f5;
-    --color-text-secondary: #d0d0d0;
-    --color-text-muted: #999999;
-    --color-border: #404040;
-    --color-border-light: #333333;
+body {
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:not(.btn),
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn {
+  min-height: 40px;
+  border-radius: var(--radius-lg);
+}
+
+button:not(.btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid transparent;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+button:not(.btn):hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea,
+.form-control {
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: var(--space-sm) var(--space-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+input[type="file"] {
+  max-width: 100%;
+  color: var(--color-text-muted);
+}
+
+input[type="file"]::file-selector-button {
+  min-height: 40px;
+  margin-right: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--color-primary-dark);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(14, 165, 233, 0.35);
+  outline-offset: 2px;
+}
+
+table:not(.no-design-system) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+table:not(.no-design-system) th {
+  background: var(--color-primary-50);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+table:not(.no-design-system) th,
+table:not(.no-design-system) td {
+  border-color: var(--color-border);
+}
+
+table:not(.no-design-system) tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, 0.72);
+}
+
+table:not(.no-design-system) tbody tr:hover {
+  background: #EFF6FF;
+}
+
+canvas {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  body { padding: var(--space-md); }
+  .row, .controls, .toolbar, .actions { flex-wrap: wrap; }
+  button, .btn, input, select, textarea { max-width: 100%; }
+  table:not(.no-design-system) { font-size: var(--font-size-xs); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
