@@ -30,7 +30,7 @@
 - ✅ `login.html`
 - ✅ `Batimento de estoque.html`
 - ✅ `PORTA-PORTA.html`
-- ✅ `Dashbord de produção.html`
+- ✅ `Dashboard de produção.html`
 - ✅ `Contencão atualizada.html`
 - ✅ `BACKLOG.html`
 - ✅ `Indicador_SALA_COFRE_atualizado.html`

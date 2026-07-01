@@ -103,7 +103,7 @@
   - [ ] Sem erros de console
   - [ ] Responsivo em mobile
 
-#### Dashboard 2: Dashbord de produção.html
+#### Dashboard 2: Dashboard de produção.html
 - [ ] **Adicionar CSS**
   - [ ] Adicionar link design-system
   - [ ] Remover CSS conflitante
