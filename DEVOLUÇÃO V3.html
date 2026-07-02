@@ -1,330 +1,473 @@
 <!DOCTYPE html>
- <html lang="pt-BR">
- <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1">
- <title>Painel Diário de Devoluções</title>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Diário de Devoluções</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
- :root{
- --bg:#0b1120;
- --card:#111827;
- --chart:#111827;
- --text:#f0f4ff;
- --muted:#8899bb;
- }
- *{box-sizing:border-box;margin:0;padding:0}
- body{
- background:var(--bg);
- color:var(--text);
- font-family:Segoe UI,Arial,sans-serif;
- min-height:100vh;
- }
- .wrap{max-width:1200px;margin:18px auto;padding:0 16px}
- .card{
- background:var(--card);
- padding:16px;
- border-radius:14px;
- box-shadow:0 0 18px #0d6efd44;
- }
- .header{
- display:flex;
- justify-content:space-between;
- align-items:center;
- margin-bottom:10px;
- }
- .header h2{font-size:20px;font-weight:800}
- .clock{font-size:14px;color:var(--muted)}
- .controls{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
- input[type=file],button{
- padding:8px 12px;
- border-radius:8px;
- border:1px solid #2c3f63;
- background:#1a2235;
- color:#fff;
- font-size:13px;
- }
- button{cursor:pointer;transition:background .2s}
- .btn-clear{background:#913030;border-color:#913030}
- .btn-clear:hover{background:#b33}
- .kpis{
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:10px;
- margin:14px 0;
- }
- @media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
- .kpi{background:#0f162b;padding:10px;border-radius:10px}
- .kpi .label{font-size:11px;color:var(--muted);margin-bottom:2px}
- .kpi .value{font-size:18px;font-weight:800}
- .pills{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
- .pill{
- background:#0f162b;
- padding:6px 12px;
- border-radius:999px;
- font-size:12px;
- border:1px solid #2c3f63;
- color:var(--text);
- }
- .chart-box{height:220px;margin-top:10px;position:relative}
- .chart-box canvas{
- width:100%!important;
- height:100%!important;
- background:var(--chart);
- border-radius:12px;
- }
- .sub{margin-top:14px;font-weight:700;color:var(--muted);font-size:14px}
- .footer{text-align:center;margin-top:40px;color:#fff;font-size:14px}
- </style>
- </head>
+:root{
+  --bg:#090c13;
+  --surface:#121826;
+  --surface-2:#1a2233;
+  --border:#293351;
+  --border-soft:#1f2740;
+  --text:#eef1fa;
+  --muted:#8894b3;
+  --cyan:#2dd4e8;
+  --cyan-dim:#1a4a55;
+  --amber:#ffb454;
+  --amber-dim:#5a4020;
+  --danger:#e5484d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:
+    radial-gradient(circle at 15% 0%, #101a2e 0%, transparent 45%),
+    radial-gradient(circle at 100% 100%, #12202a 0%, transparent 40%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Inter',Segoe UI,Arial,sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1200px;margin:28px auto;padding:0 16px}
+.card{
+  background:var(--surface);
+  padding:22px 24px;
+  border-radius:16px;
+  border:1px solid var(--border-soft);
+  box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+}
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border-soft);
+}
+.header h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:21px;
+  font-weight:700;
+  letter-spacing:.3px;
+}
+.header .eyebrow{
+  display:block;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--cyan);
+  margin-bottom:4px;
+}
+.clock{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;
+  color:var(--muted);
+  letter-spacing:.5px;
+}
+.controls{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+input[type=file]{
+  padding:9px 12px;
+  border-radius:9px;
+  border:1px solid var(--border);
+  background:var(--surface-2);
+  color:var(--text);
+  font-size:13px;
+  font-family:'Inter',sans-serif;
+}
+input[type=file]::file-selector-button{
+  background:var(--cyan-dim);
+  color:var(--cyan);
+  border:none;
+  border-radius:6px;
+  padding:6px 10px;
+  margin-right:10px;
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:12px;
+  cursor:pointer;
+}
+button{
+  padding:9px 16px;
+  border-radius:9px;
+  border:1px solid var(--border);
+  background:var(--surface-2);
+  color:var(--text);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:filter .15s, transform .15s;
+  font-family:'Inter',sans-serif;
+}
+button:hover{filter:brightness(1.15)}
+button:active{transform:translateY(1px)}
+.btn-clear{
+  background:rgba(229,72,77,.12);
+  border-color:rgba(229,72,77,.35);
+  color:#ff9296;
+}
+.btn-clear:hover{background:rgba(229,72,77,.22)}
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:12px;
+  margin:4px 0 20px;
+}
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{
+  background:var(--surface-2);
+  padding:14px 14px 12px;
+  border-radius:12px;
+  border:1px solid var(--border-soft);
+  border-top:2px solid var(--cyan);
+  position:relative;
+  overflow:hidden;
+}
+.kpi.amber{border-top-color:var(--amber)}
+.kpi.neutral{border-top-color:var(--border)}
+.kpi .label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  letter-spacing:1.3px;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+.kpi .value{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:22px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.2px;
+}
+
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.pill{
+  background:var(--surface-2);
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-family:'IBM Plex Mono',monospace;
+  border:1px solid var(--border-soft);
+  color:var(--text);
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+.pill::before{
+  content:'';
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--cyan);
+  flex:0 0 auto;
+}
+.pill.amber::before{background:var(--amber)}
+.pill.neutral::before{background:var(--muted)}
+
+.chart-box{
+  height:230px;
+  margin-top:10px;
+  position:relative;
+  background:var(--surface-2);
+  border:1px solid var(--border-soft);
+  border-radius:12px;
+  padding:12px;
+}
+.chart-box canvas{
+  width:100%!important;
+  height:100%!important;
+}
+
+.sub{
+  margin-top:22px;
+  margin-bottom:2px;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  color:var(--text);
+  font-size:14.5px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.sub::before{
+  content:'';
+  width:3px;height:14px;
+  background:var(--cyan);
+  border-radius:2px;
+  display:inline-block;
+}
+
+.footer{
+  text-align:center;
+  margin-top:36px;
+  color:var(--muted);
+  font-size:13px;
+  font-family:'Inter',sans-serif;
+}
+.footer b{color:var(--text)}
+</style>
+</head>
 
 <body>
- <div class="wrap">
- <div class="card">
+<div class="wrap">
+<div class="card">
 
 <div class="header">
- <h2>Painel Diário de Devoluções</h2>
- <div class="clock" id="clock"></div>
- </div>
+  <div>
+    <span class="eyebrow">Logística · Devoluções</span>
+    <h2>Painel Diário de Devoluções</h2>
+  </div>
+  <div class="clock" id="clock"></div>
+</div>
 
 <div class="controls">
- <input type="file" id="fileInput" accept=".xlsx,.xls">
- <button class="btn-clear" id="btnClear">Limpar Dados</button>
- </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls">
+  <button class="btn-clear" id="btnClear">Limpar Dados</button>
+</div>
 
 <div class="kpis">
- <div class="kpi"><div class="label">Total Embalagens</div><div class="value" id="kEmb">0</div></div>
- <div class="kpi"><div class="label">Total Peças</div><div class="value" id="kPec">0</div></div>
- <div class="kpi"><div class="label">Maior Dia</div><div class="value" id="kMaior">-</div></div>
- <div class="kpi"><div class="label">Média Diária</div><div class="value" id="kMedia">0</div></div>
- <div class="kpi"><div class="label">Dias</div><div class="value" id="kDias">0</div></div>
- </div>
+  <div class="kpi"><div class="label">Total Embalagens</div><div class="value" id="kEmb">0</div></div>
+  <div class="kpi amber"><div class="label">Total Peças</div><div class="value" id="kPec">0</div></div>
+  <div class="kpi neutral"><div class="label">Maior Dia</div><div class="value" id="kMaior">-</div></div>
+  <div class="kpi neutral"><div class="label">Média Diária</div><div class="value" id="kMedia">0</div></div>
+  <div class="kpi neutral"><div class="label">Dias</div><div class="value" id="kDias">0</div></div>
+</div>
 
 <div class="pills">
- <span class="pill" id="totFab1">Fábrica 1 (MO1) • -</span>
- <span class="pill" id="totFab3">Fábrica 3 (MO3) • -</span>
- </div>
+  <span class="pill" id="totFab1">Fábrica 1 (MO1) • -</span>
+  <span class="pill amber" id="totFab3">Fábrica 3 (MO3) • -</span>
+</div>
 
 <div class="chart-box">
- <canvas id="graficoPrincipal"></canvas>
- </div>
+  <canvas id="graficoPrincipal"></canvas>
+</div>
 
 <div class="sub">Detalhe do dia selecionado</div>
 
 <div class="pills">
- <span class="pill" id="dDia">Dia: -</span>
- <span class="pill" id="dEmb">Embalagens: -</span>
- <span class="pill" id="dPec">Peças: -</span>
- </div>
+  <span class="pill neutral" id="dDia">Dia: -</span>
+  <span class="pill" id="dEmb">Embalagens: -</span>
+  <span class="pill amber" id="dPec">Peças: -</span>
+</div>
 
 <div class="chart-box">
- <canvas id="graficoDia"></canvas>
- </div>
+  <canvas id="graficoDia"></canvas>
+</div>
 
 </div>
- </div>
+</div>
 
 <div class="footer">Desenvolvido por <b>Lucas Martinez</b></div>
 
 <script>
- Chart.register(ChartDataLabels);
+Chart.register(ChartDataLabels);
 
 /* ── estado ── */
- let dataMap = {}, sortedLabels = [], g1 = null, g2 = null;
+let dataMap = {}, sortedLabels = [], g1 = null, g2 = null;
 
 /* ── relógio ── */
- function atualizarRelogio(){
- const n = new Date();
- document.getElementById('clock').innerText =
- n.toLocaleTimeString('pt-BR') + ' – ' + n.toLocaleDateString('pt-BR');
- }
- setInterval(atualizarRelogio, 1000);
- atualizarRelogio();
+function atualizarRelogio(){
+  const n = new Date();
+  document.getElementById('clock').innerText =
+    n.toLocaleTimeString('pt-BR') + ' – ' + n.toLocaleDateString('pt-BR');
+}
+setInterval(atualizarRelogio, 1000);
+atualizarRelogio();
 
 /* ── leitura do arquivo ── */
- document.getElementById('fileInput').onchange = function(e){
- const file = e.target.files[0];
- if(!file) return;
- const r = new FileReader();
- r.onload = function(x){
- const wb = XLSX.read(x.target.result, {type:'binary'});
- const sh = wb.Sheets[wb.SheetNames[0]];
- process(XLSX.utils.sheet_to_json(sh, {raw:true}));
- };
- r.readAsBinaryString(file);
- };
+document.getElementById('fileInput').onchange = function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = function(x){
+    const wb = XLSX.read(x.target.result, {type:'binary'});
+    const sh = wb.Sheets[wb.SheetNames[0]];
+    process(XLSX.utils.sheet_to_json(sh, {raw:true}));
+  };
+  r.readAsBinaryString(file);
+};
 
 document.getElementById('btnClear').onclick = () => location.reload();
 
 /* ── formata data serial do Excel ou string ── */
- function fmt(v){
- if(typeof v === 'number'){
- const d = XLSX.SSF.parse_date_code(v);
- return String(d.d).padStart(2,'0') + '/' +
- String(d.m).padStart(2,'0') + '/' + d.y;
- }
- /* string: aceita dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy */
- const s = String(v).trim();
- /* já no formato dd/mm/yyyy */
- if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
- /* yyyy-mm-dd */
- const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
- if(iso) return iso[3]+'/'+iso[2]+'/'+iso[1];
- /* fallback: pega só a primeira parte */
- return s.split(' ')[0];
- }
+function fmt(v){
+  if(typeof v === 'number'){
+    const d = XLSX.SSF.parse_date_code(v);
+    return String(d.d).padStart(2,'0') + '/' +
+      String(d.m).padStart(2,'0') + '/' + d.y;
+  }
+  /* string: aceita dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy */
+  const s = String(v).trim();
+  /* já no formato dd/mm/yyyy */
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  /* yyyy-mm-dd */
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return iso[3]+'/'+iso[2]+'/'+iso[1];
+  /* fallback: pega só a primeira parte */
+  return s.split(' ')[0];
+}
 
 /* ── processa linhas do XLSX ── */
- function process(rows){
- dataMap = {};
- rows.forEach(function(r){
- if(!r['Data Inserção'] && !r['Data Insercao']) return;
- const raw = r['Data Inserção'] || r['Data Insercao'];
- const d = fmt(raw);
- if(!d) return;
+function process(rows){
+  dataMap = {};
+  rows.forEach(function(r){
+    if(!r['Data Inserção'] && !r['Data Insercao']) return;
+    const raw = r['Data Inserção'] || r['Data Insercao'];
+    const d = fmt(raw);
+    if(!d) return;
 
- const q = Number(r['Qtde']) || 0;
- const z = String(r['Zona de origem'] || '').trim();
+    const q = Number(r['Qtde']) || 0;
+    const z = String(r['Zona de origem'] || '').trim();
 
- if(!dataMap[d]) dataMap[d] = {emb:0, pec:0, f1:{e:0,p:0}, f3:{e:0,p:0}};
- dataMap[d].emb++;
- dataMap[d].pec += q;
+    if(!dataMap[d]) dataMap[d] = {emb:0, pec:0, f1:{e:0,p:0}, f3:{e:0,p:0}};
+    dataMap[d].emb++;
+    dataMap[d].pec += q;
 
- if(z === 'MO1'){ dataMap[d].f1.e++; dataMap[d].f1.p += q; }
- if(z === 'MO3'){ dataMap[d].f3.e++; dataMap[d].f3.p += q; }
- });
+    if(z === 'MO1'){ dataMap[d].f1.e++; dataMap[d].f1.p += q; }
+    if(z === 'MO3'){ dataMap[d].f3.e++; dataMap[d].f3.p += q; }
+  });
 
-render();
- }
+  render();
+}
 
 /* ── ordenação dd/mm/yyyy ── */
- function sortDates(labels){
- return labels.slice().sort(function(a,b){
- const [da,ma,ya] = a.split('/').map(Number);
- const [db,mb,yb] = b.split('/').map(Number);
- return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
- });
- }
+function sortDates(labels){
+  return labels.slice().sort(function(a,b){
+    const [da,ma,ya] = a.split('/').map(Number);
+    const [db,mb,yb] = b.split('/').map(Number);
+    return new Date(ya,ma-1,da) - new Date(yb,mb-1,db);
+  });
+}
 
 /* ── render gráfico principal ── */
- function render(){
- sortedLabels = sortDates(Object.keys(dataMap));
- if(!sortedLabels.length) return;
+function render(){
+  sortedLabels = sortDates(Object.keys(dataMap));
+  if(!sortedLabels.length) return;
 
-let te=0, tp=0, md='-', mx=0, f1e=0, f1p=0, f3e=0, f3p=0;
- sortedLabels.forEach(function(d){
- const o = dataMap[d];
- te += o.emb; tp += o.pec;
- f1e += o.f1.e; f1p += o.f1.p;
- f3e += o.f3.e; f3p += o.f3.p;
- if(o.emb > mx){ mx = o.emb; md = d; }
- });
+  let te=0, tp=0, md='-', mx=0, f1e=0, f1p=0, f3e=0, f3p=0;
+  sortedLabels.forEach(function(d){
+    const o = dataMap[d];
+    te += o.emb; tp += o.pec;
+    f1e += o.f1.e; f1p += o.f1.p;
+    f3e += o.f3.e; f3p += o.f3.p;
+    if(o.emb > mx){ mx = o.emb; md = d; }
+  });
 
-document.getElementById('kEmb').innerText = te;
- document.getElementById('kPec').innerText = tp;
- document.getElementById('kMaior').innerText = md;
- document.getElementById('kMedia').innerText = (te/sortedLabels.length).toFixed(1);
- document.getElementById('kDias').innerText = sortedLabels.length;
- document.getElementById('totFab1').innerText = 'Fábrica 1 (MO1) • Emb: '+f1e+' • Peças: '+f1p;
- document.getElementById('totFab3').innerText = 'Fábrica 3 (MO3) • Emb: '+f3e+' • Peças: '+f3p;
+  document.getElementById('kEmb').innerText = te;
+  document.getElementById('kPec').innerText = tp;
+  document.getElementById('kMaior').innerText = md;
+  document.getElementById('kMedia').innerText = (te/sortedLabels.length).toFixed(1);
+  document.getElementById('kDias').innerText = sortedLabels.length;
+  document.getElementById('totFab1').innerText = 'Fábrica 1 (MO1) • Emb: '+f1e+' • Peças: '+f1p;
+  document.getElementById('totFab3').innerText = 'Fábrica 3 (MO3) • Emb: '+f3e+' • Peças: '+f3p;
 
-/* max dinâmico — nunca corta dados */
- const maxEmb = Math.max(...sortedLabels.map(d=>dataMap[d].emb));
- const yMax = Math.ceil(maxEmb * 1.2 / 10) * 10 || 10;
- const maxPec = Math.max(...sortedLabels.map(d=>dataMap[d].pec));
- const y1Max = Math.ceil(maxPec * 1.2 / 10) * 10 || 10;
+  /* max dinâmico — nunca corta dados */
+  const maxEmb = Math.max(...sortedLabels.map(d=>dataMap[d].emb));
+  const yMax = Math.ceil(maxEmb * 1.2 / 10) * 10 || 10;
+  const maxPec = Math.max(...sortedLabels.map(d=>dataMap[d].pec));
+  const y1Max = Math.ceil(maxPec * 1.2 / 10) * 10 || 10;
 
-if(g1) g1.destroy();
- g1 = new Chart(document.getElementById('graficoPrincipal'), {
- data:{
- labels: sortedLabels,
- datasets:[
- {
- type:'bar', label:'Embalagens',
- data: sortedLabels.map(d=>dataMap[d].emb),
- backgroundColor:'#0d6efd', yAxisID:'y', order:1,
- datalabels:{color:'#fff',anchor:'center',align:'center',font:{weight:'bold'}}
- },
- {
- type:'line', label:'Peças',
- data: sortedLabels.map(d=>dataMap[d].pec),
- borderColor:'#00c853', backgroundColor:'transparent',
- pointBackgroundColor:'#00c853',
- yAxisID:'y1', order:0,
- datalabels:{color:'#00c853',anchor:'end',align:'top',offset:6,font:{size:11}}
- }
- ]
- },
- options:{
- maintainAspectRatio:false,
- plugins:{legend:{labels:{color:'#fff'}}},
- scales:{
- x:{ticks:{color:'#fff',maxRotation:45,minRotation:45},grid:{color:'#2c3f63'}},
- y:{beginAtZero:true, max:yMax, ticks:{color:'#fff'}, grid:{color:'#2c3f63'}},
- y1:{beginAtZero:true, max:y1Max, position:'right',
- ticks:{color:'#00c853'}, grid:{drawOnChartArea:false}}
- },
- /* ── CHECK-OUT: Chart.js v4 → (event, elements) ── */
- onClick: function(event, elements){
- if(elements && elements.length > 0){
- det(sortedLabels[elements[0].index]);
- }
- }
- }
- });
- }
+  if(g1) g1.destroy();
+  g1 = new Chart(document.getElementById('graficoPrincipal'), {
+    data:{
+      labels: sortedLabels,
+      datasets:[
+        {
+          type:'bar', label:'Embalagens',
+          data: sortedLabels.map(d=>dataMap[d].emb),
+          backgroundColor:'#2dd4e8', yAxisID:'y', order:1,
+          borderRadius:4,
+          datalabels:{color:'#0a0d14',anchor:'center',align:'center',font:{weight:'bold',family:'IBM Plex Mono'}}
+        },
+        {
+          type:'line', label:'Peças',
+          data: sortedLabels.map(d=>dataMap[d].pec),
+          borderColor:'#ffb454', backgroundColor:'transparent',
+          pointBackgroundColor:'#ffb454', pointBorderColor:'#0a0d14', pointBorderWidth:1.5, pointRadius:4,
+          borderWidth:2,
+          yAxisID:'y1', order:0,
+          datalabels:{color:'#ffb454',anchor:'end',align:'top',offset:6,font:{size:11,family:'IBM Plex Mono'}}
+        }
+      ]
+    },
+    options:{
+      maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#eef1fa',font:{family:'Inter',size:12}}}},
+      scales:{
+        x:{ticks:{color:'#8894b3',maxRotation:45,minRotation:45,font:{family:'IBM Plex Mono',size:10.5}},grid:{color:'#1f2740'}},
+        y:{beginAtZero:true, max:yMax, ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:10.5}}, grid:{color:'#1f2740'}},
+        y1:{beginAtZero:true, max:y1Max, position:'right',
+          ticks:{color:'#ffb454',font:{family:'IBM Plex Mono',size:10.5}}, grid:{drawOnChartArea:false}}
+      },
+      /* ── CHECK-OUT: Chart.js v4 → (event, elements) ── */
+      onClick: function(event, elements){
+        if(elements && elements.length > 0){
+          det(sortedLabels[elements[0].index]);
+        }
+      }
+    }
+  });
+}
 
 /* ── detalhe do dia (check-out) ── */
- function det(d){
- const o = dataMap[d];
- if(!o) return;
+function det(d){
+  const o = dataMap[d];
+  if(!o) return;
 
-document.getElementById('dDia').innerText = 'Dia: ' + d;
- document.getElementById('dEmb').innerText = 'Embalagens: ' + o.emb;
- document.getElementById('dPec').innerText = 'Peças: ' + o.pec;
+  document.getElementById('dDia').innerText = 'Dia: ' + d;
+  document.getElementById('dEmb').innerText = 'Embalagens: ' + o.emb;
+  document.getElementById('dPec').innerText = 'Peças: ' + o.pec;
 
-const maxE = Math.max(o.f1.e, o.f3.e);
- const yMax = Math.ceil(maxE * 1.3 / 5) * 5 || 5;
- const maxP = Math.max(o.f1.p, o.f3.p);
- const y1Max = Math.ceil(maxP * 1.3 / 5) * 5 || 5;
+  const maxE = Math.max(o.f1.e, o.f3.e);
+  const yMax = Math.ceil(maxE * 1.3 / 5) * 5 || 5;
+  const maxP = Math.max(o.f1.p, o.f3.p);
+  const y1Max = Math.ceil(maxP * 1.3 / 5) * 5 || 5;
 
-if(g2) g2.destroy();
- g2 = new Chart(document.getElementById('graficoDia'), {
- data:{
- labels:['Fábrica 1','Fábrica 3'],
- datasets:[
- {
- type:'bar', label:'Embalagens',
- data:[o.f1.e, o.f3.e],
- backgroundColor:'#0d6efd', yAxisID:'y',
- datalabels:{color:'#fff',anchor:'center',align:'center',font:{weight:'bold'}}
- },
- {
- type:'line', label:'Peças',
- data:[o.f1.p, o.f3.p],
- borderColor:'#00c853', backgroundColor:'transparent',
- pointBackgroundColor:'#00c853',
- yAxisID:'y1',
- datalabels:{color:'#00c853',anchor:'end',align:'top',offset:6,font:{size:11}}
- }
- ]
- },
- options:{
- maintainAspectRatio:false,
- plugins:{legend:{labels:{color:'#fff'}}},
- scales:{
- x:{ticks:{color:'#fff'},grid:{color:'#2c3f63'}},
- y:{beginAtZero:true, max:yMax, ticks:{color:'#fff'}, grid:{color:'#2c3f63'}},
- y1:{beginAtZero:true, max:y1Max, position:'right',
- ticks:{color:'#00c853'}, grid:{drawOnChartArea:false}}
- }
- }
- });
- }
- </script>
- </body>
- </html>
+  if(g2) g2.destroy();
+  g2 = new Chart(document.getElementById('graficoDia'), {
+    data:{
+      labels:['Fábrica 1','Fábrica 3'],
+      datasets:[
+        {
+          type:'bar', label:'Embalagens',
+          data:[o.f1.e, o.f3.e],
+          backgroundColor:'#2dd4e8', yAxisID:'y',
+          borderRadius:4,
+          datalabels:{color:'#0a0d14',anchor:'center',align:'center',font:{weight:'bold',family:'IBM Plex Mono'}}
+        },
+        {
+          type:'line', label:'Peças',
+          data:[o.f1.p, o.f3.p],
+          borderColor:'#ffb454', backgroundColor:'transparent',
+          pointBackgroundColor:'#ffb454', pointBorderColor:'#0a0d14', pointBorderWidth:1.5, pointRadius:4,
+          borderWidth:2,
+          yAxisID:'y1',
+          datalabels:{color:'#ffb454',anchor:'end',align:'top',offset:6,font:{size:11,family:'IBM Plex Mono'}}
+        }
+      ]
+    },
+    options:{
+      maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#eef1fa',font:{family:'Inter',size:12}}}},
+      scales:{
+        x:{ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:11}},grid:{color:'#1f2740'}},
+        y:{beginAtZero:true, max:yMax, ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:10.5}}, grid:{color:'#1f2740'}},
+        y1:{beginAtZero:true, max:y1Max, position:'right',
+          ticks:{color:'#ffb454',font:{family:'IBM Plex Mono',size:10.5}}, grid:{drawOnChartArea:false}}
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
