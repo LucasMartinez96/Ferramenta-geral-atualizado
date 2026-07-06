@@ -396,7 +396,7 @@ function tabelaHTML(linhas, mostrarQtd) {
       <td title="${escHtml(desc)}">${escHtml(desc)}</td>
       <td title="${escHtml(lbl)}">${escHtml(lbl)}</td>
       <td title="${escHtml(orig)}">${escHtml(orig)}</td>
-      <td class="num" title="${escHtml(qtd)}">${escHtml(qtd)}</td>
+      ${tdQtd}
       ${tdObs}
     </tr>`;
   }).join('');
