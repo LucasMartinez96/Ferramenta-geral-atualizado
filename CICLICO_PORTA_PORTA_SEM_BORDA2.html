@@ -201,8 +201,6 @@ td.num { text-align: right; }
   img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
-<link rel="stylesheet" href="css/design-system.css" />
-<script src="js/normalize-styles.js" defer></script>
 </head>
 <body>
 <h2>Inventário Cíclico</h2>
@@ -255,13 +253,10 @@ td.num { text-align: right; }
 
 <!-- Bibliotecas externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="js/toast.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js"      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
 'use strict';
-
-const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
 const LPP = 21;
 let dados = [];
@@ -401,7 +396,7 @@ function tabelaHTML(linhas, mostrarQtd) {
       <td title="${escHtml(desc)}">${escHtml(desc)}</td>
       <td title="${escHtml(lbl)}">${escHtml(lbl)}</td>
       <td title="${escHtml(orig)}">${escHtml(orig)}</td>
-      ${tdQtd}
+      <td class="num" title="${escHtml(qtd)}">${escHtml(qtd)}</td>
       ${tdObs}
     </tr>`;
   }).join('');
@@ -420,10 +415,10 @@ function tabelaHTML(linhas, mostrarQtd) {
 function tabelaEmbalagemHTML(linhas) {
   const linhasHTML = linhas.map(l =>
     `<tr>
-       <td title="${escHtml(l.Ubicacion)}">${escHtml(l.Ubicacion)}</td>
-       <td title="${escHtml(l.Pieza)}">${escHtml(l.Pieza)}</td>
-       <td title="${escHtml(l.Descripcion1)}">${escHtml(l.Descripcion1)}</td>
-       <td class="num">${escHtml(l.QtdEmbalagem)}</td>
+       <td title="${l.Ubicacion}">${l.Ubicacion}</td>
+       <td title="${l.Pieza}">${l.Pieza}</td>
+       <td title="${l.Descripcion1}">${l.Descripcion1}</td>
+       <td class="num">${l.QtdEmbalagem}</td>
      </tr>`
   ).join('');
 
@@ -599,7 +594,7 @@ function gerarPortaPorta() {
       <table class="grid">
         <colgroup><col style="width:100%"></colgroup>
         <thead><tr><th>Endereço</th></tr></thead>
-        <tbody>${linhas.map(l => `<tr><td>${escHtml(l.name)}</td></tr>`).join('')}</tbody>
+        <tbody>${linhas.map(l => `<tr><td>${l.name ?? ''}</td></tr>`).join('')}</tbody>
       </table>
     </div>`;
   }
@@ -644,7 +639,7 @@ function gerarPortaPorta() {
       numerarGrupo('poslivre');
     } catch (err) {
       console.error('Erro gerarPosicoesLivres:', err);
-      showToast('Erro ao gerar Posições Livres: ' + (err?.message || err));
+      alert('Erro ao gerar Posições Livres: ' + (err?.message || err));
     }
   }
 
@@ -698,30 +693,30 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
       if (typeof Papa !== 'undefined') {
         Papa.parse(file, {
           header: true, skipEmptyLines: true,
-          complete : (res) => { dados = res.data; showToast('Arquivo carregado! Linhas: ' + dados.length); },
-          error    : (err) => showToast('Erro ao ler CSV: ' + (err?.message || err))
+          complete : (res) => { dados = res.data; alert('Arquivo carregado! Linhas: ' + dados.length); },
+          error    : (err) => alert('Erro ao ler CSV: ' + (err?.message || err))
         });
       } else if (typeof XLSX !== 'undefined') {
         const text = await file.text();
         const wb   = XLSX.read(text, { type: 'string' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         dados = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
-        showToast('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
+        alert('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
       } else {
-        showToast('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.');
+        alert('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.');
       }
     } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
-      if (typeof XLSX === 'undefined') { showToast('SheetJS não carregou.'); return; }
+      if (typeof XLSX === 'undefined') { alert('SheetJS não carregou.'); return; }
       const buf   = await file.arrayBuffer();
       const wb    = XLSX.read(buf, { type: 'array' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       dados = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      showToast('Arquivo carregado! Linhas: ' + dados.length);
+      alert('Arquivo carregado! Linhas: ' + dados.length);
     } else {
-      showToast('Formato não suportado. Use CSV, XLSX ou XLS.');
+      alert('Formato não suportado. Use CSV, XLSX ou XLS.');
     }
   } catch (err) {
-    showToast('Erro ao carregar: ' + (err?.message || err));
+    alert('Erro ao carregar: ' + (err?.message || err));
   }
 });
 
