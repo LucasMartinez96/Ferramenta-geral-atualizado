@@ -142,11 +142,21 @@ export const validators = {
    * Valida data (DD/MM/YYYY ou YYYY-MM-DD)
    */
   date: (dateString) => {
-    const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$|^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(dateString)) return false;
+    const value = String(dateString || '').trim();
+    const brMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
-    const date = new Date(dateString);
-    return date instanceof Date && !isNaN(date);
+    if (!brMatch && !isoMatch) return false;
+
+    const [, first, second, third] = brMatch || isoMatch;
+    const day = brMatch ? Number(first) : Number(third);
+    const month = Number(second);
+    const year = brMatch ? Number(third) : Number(first);
+    const date = new Date(year, month - 1, day);
+
+    return date.getFullYear() === year &&
+           date.getMonth() === month - 1 &&
+           date.getDate() === day;
   },
 
   /**
@@ -633,7 +643,7 @@ export function observeLazyLoad(selector = '[data-lazy]') {
  * Gera um ID único
  */
 export function generateId(prefix = 'id') {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**

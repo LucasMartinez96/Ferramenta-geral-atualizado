@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="css/design-system.css" />
 <script src="js/normalize-styles.js" defer></script>
+<script src="js/toast.js"></script>
 <style>
   /* Alias para variáveis locais */
   :root{
@@ -204,7 +205,7 @@ function injectSheetJS(code){ try{ (0, eval)(code); }catch(e){ setSJStatus('Falh
 (function bootInline(){ const el=document.getElementById('sheetjs-inline'); if(!el) return; const code = el.textContent.trim(); if(code && code.length>1000){ injectSheetJS(code); }})();
 $('#sheetjsFile').addEventListener('change', async (ev)=>{ const f=ev.target.files[0]; if(!f) return; const txt = await f.text(); if(injectSheetJS(txt)){ try{ localStorage.setItem('ciclico_sheetjs', txt); }catch{} }
 });
-$('#btnDownloadSelf').addEventListener('click', ()=>{ const inline=document.getElementById('sheetjs-inline'); const code=__SHEETJS_CODE||inline.textContent; if(!code||code.length<1000){ alert('Carregue o xlsx.full.min.js primeiro.'); return; } const html=document.documentElement.outerHTML.replace(/(<script id="sheetjs-inline"[^>]*>)([\s\S]*?)(<\/script>)/, (m,a,b,c)=> a+'\n'+code.replace(/<\//g,'<\\/')+'\n'+c); const blob=new Blob([html],{type:'text/html;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='IMPRESSAO_CICLICO_LABELORIGIN_CLEAN_EMBUTIDO.html'; document.body.appendChild(a); a.click(); a.remove(); });
+$('#btnDownloadSelf').addEventListener('click', ()=>{ const inline=document.getElementById('sheetjs-inline'); const code=__SHEETJS_CODE||inline.textContent; if(!code||code.length<1000){ showToast('Carregue o xlsx.full.min.js primeiro.'); return; } const html=document.documentElement.outerHTML.replace(/(<script id="sheetjs-inline"[^>]*>)([\s\S]*?)(<\/script>)/, (m,a,b,c)=> a+'\n'+code.replace(/<\//g,'<\\/')+'\n'+c); const blob=new Blob([html],{type:'text/html;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='IMPRESSAO_CICLICO_LABELORIGIN_CLEAN_EMBUTIDO.html'; document.body.appendChild(a); a.click(); a.remove(); });
 // ===== mapeamento de colunas =====
 function buildMappingUI(){ const selects = {item:$('#col_item'),desc:$('#col_desc'),loc:$('#col_loc'),qty:$('#col_qty')}; for(const k in selects){ selects[k].innerHTML=''; }
  headers.forEach((h,idx)=>{ const opt = new Option(String(h||`Coluna ${idx+1}`), idx); for(const k in selects){ selects[k].add(opt.cloneNode(true)); } });
@@ -229,20 +230,21 @@ function getField(row, role){ const idx = mapping[role]; if(idx==null||idx<0) re
  }catch(e){ console.warn('Restauração falhou', e); }
 })();
 // ===== cabeçalho e tabelas (layout base) =====
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 function cabecalho(titulo){ const d=new Date(); const data=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}); const hora=d.toLocaleTimeString('pt-BR'); const src='Imagem1.png'; return `<div class="page-header"><div class="hdr"><div class="hdr-left"><div class="titulo">${titulo}</div><div class="dh">${data} • ${hora}</div></div><div class="hdr-right"><img src="${src}" alt="Logo"></div></div><div class="inventariante">Inventariante: <span class="line"></span></div></div>`; }
-function tabelaHTML(linhas, mostrarQtd){ const thObs = mostrarQtd ? '<th>Observação</th>' : ''; return `<div class="grid-wrap"><table class="grid"><thead><tr><th>Posição</th><th>Item</th><th>Descrição</th><th>Quantidade</th>${thObs}</tr></thead><tbody>${linhas.map(l=>`<tr><td>${getField(l,'loc')??''}</td><td>${getField(l,'item')??''}</td><td>${getField(l,'desc')??''}</td><td style="text-align:right">${ mostrarQtd ? (getField(l,'qty')??'') : '' }</td>${ mostrarQtd ? '<td></td>' : '' }</tr>`).join('')}</tbody></table></div>`; }
+function tabelaHTML(linhas, mostrarQtd){ const thObs = mostrarQtd ? '<th>Observação</th>' : ''; return `<div class="grid-wrap"><table class="grid"><thead><tr><th>Posição</th><th>Item</th><th>Descrição</th><th>Quantidade</th>${thObs}</tr></thead><tbody>${linhas.map(l=>`<tr><td>${escHtml(getField(l,'loc'))}</td><td>${escHtml(getField(l,'item'))}</td><td>${escHtml(getField(l,'desc'))}</td><td style="text-align:right">${ mostrarQtd ? escHtml(getField(l,'qty')) : '' }</td>${ mostrarQtd ? '<td></td>' : '' }</tr>`).join('')}</tbody></table></div>`; }
 function numerarGrupo(grupo){ const sheets=[...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)]; const total=sheets.length; sheets.forEach((sheet,idx)=>{ let footer = sheet.querySelector('.page-footer'); if(!footer){ footer=document.createElement('div'); footer.className='page-footer'; sheet.appendChild(footer);} footer.textContent = `Página ${idx+1} de ${total}`; }); }
 // ===== carregamento =====
 $('#fileInput').addEventListener('change', async (e)=>{
  const file = e.target.files[0]; if(!file) return; const nome = file.name.toLowerCase();
  try{
  if (nome.endsWith('.csv')){
- const text = await file.text(); const lines=text.split(/\r?\n/).filter(l=>l.trim()!==''); const sep = (lines[0]&&lines[0].includes(';'))? ';' : ','; const cols=(lines[0]||'').split(sep).map(s=>s.trim()); headers=cols; const arr = lines.slice(1).map(l=>{ const c=l.split(sep); const obj={}; cols.forEach((h,i)=> obj[h]=c[i]||''); return obj; }); dados=arr; buildMappingUI(); try{ localStorage.setItem('ciclico_dados', JSON.stringify(dados)); localStorage.setItem('ciclico_headers', JSON.stringify(headers)); localStorage.setItem('ciclico_mapping', JSON.stringify(mapping)); }catch{} alert('CSV lido e salvo! Linhas: '+dados.length); return;
+ const text = await file.text(); const lines=text.split(/\r?\n/).filter(l=>l.trim()!==''); const sep = (lines[0]&&lines[0].includes(';'))? ';' : ','; const cols=(lines[0]||'').split(sep).map(s=>s.trim()); headers=cols; const arr = lines.slice(1).map(l=>{ const c=l.split(sep); const obj={}; cols.forEach((h,i)=> obj[h]=c[i]||''); return obj; }); dados=arr; buildMappingUI(); try{ localStorage.setItem('ciclico_dados', JSON.stringify(dados)); localStorage.setItem('ciclico_headers', JSON.stringify(headers)); localStorage.setItem('ciclico_mapping', JSON.stringify(mapping)); }catch{} showToast('CSV lido e salvo! Linhas: '+dados.length); return;
  } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')){
- if(!window.XLSX){ alert('SheetJS não está carregado. Use o bloco embutido acima.'); return; }
- const buf = await file.arrayBuffer(); const wb = XLSX.read(buf, {type:'array'}); const ws = wb.Sheets[wb.SheetNames[0]]; dados = XLSX.utils.sheet_to_json(ws, {defval:''}); headers = Object.keys(dados[0]||{}); buildMappingUI(); try{ localStorage.setItem('ciclico_dados', JSON.stringify(dados)); localStorage.setItem('ciclico_headers', JSON.stringify(headers)); localStorage.setItem('ciclico_mapping', JSON.stringify(mapping)); }catch{} alert('Arquivo lido e salvo! Linhas: '+dados.length);
- } else { alert('Formato não suportado. Use CSV, XLSX ou XLS.'); }
- }catch(err){ alert('Erro ao carregar: ' + (err?.message || err)); }
+ if(!window.XLSX){ showToast('SheetJS não está carregado. Use o bloco embutido acima.'); return; }
+ const buf = await file.arrayBuffer(); const wb = XLSX.read(buf, {type:'array'}); const ws = wb.Sheets[wb.SheetNames[0]]; dados = XLSX.utils.sheet_to_json(ws, {defval:''}); headers = Object.keys(dados[0]||{}); buildMappingUI(); try{ localStorage.setItem('ciclico_dados', JSON.stringify(dados)); localStorage.setItem('ciclico_headers', JSON.stringify(headers)); localStorage.setItem('ciclico_mapping', JSON.stringify(mapping)); }catch{} showToast('Arquivo lido e salvo! Linhas: '+dados.length);
+ } else { showToast('Formato não suportado. Use CSV, XLSX ou XLS.'); }
+ }catch(err){ showToast('Erro ao carregar: ' + (err?.message || err)); }
 });
 // ===== busca e filtros =====
 $('#btnBuscar').addEventListener('click', montarTabela);
@@ -300,14 +302,14 @@ function loadFixedItems(){
 function saveFixedItemsFromTextarea(){
   const txt = ($('#fixedItemsInput')?.value || '');
   const items = Array.from(new Set(txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean)));
-  if(items.length===0){ alert('Digite pelo menos um item.'); return; }
-  try{ localStorage.setItem('ciclico_itens_fixos', JSON.stringify(items)); alert(items.length+' itens fixos salvos!'); }
-  catch(e){ alert('Falha ao salvar: '+(e?.message||e)); }
+  if(items.length===0){ showToast('Digite pelo menos um item.'); return; }
+  try{ localStorage.setItem('ciclico_itens_fixos', JSON.stringify(items)); showToast(items.length+' itens fixos salvos!'); }
+  catch(e){ showToast('Falha ao salvar: '+(e?.message||e)); }
 }
 function clearFixedItems(){
   localStorage.removeItem('ciclico_itens_fixos');
   if($('#fixedItemsInput')) $('#fixedItemsInput').value='';
-  alert('Itens fixos removidos.');
+  showToast('Itens fixos removidos.');
 }
 function viewFixedItems(){
   const items = loadFixedItems();
@@ -338,7 +340,7 @@ function syncFixedLockUI(){
 
 const __saveFixedItemsFromTextarea = saveFixedItemsFromTextarea;
 saveFixedItemsFromTextarea = function(){
-  if(isFixedLocked()){ alert('Lista bloqueada. Desbloqueie para salvar em massa. Use os botões Adicionar/Renomear/Remover.'); return; }
+  if(isFixedLocked()){ showToast('Lista bloqueada. Desbloqueie para salvar em massa. Use os botões Adicionar/Renomear/Remover.'); return; }
   __saveFixedItemsFromTextarea();
 }
 
@@ -346,24 +348,24 @@ function saveFixedArray(arr){ localStorage.setItem('ciclico_itens_fixos', JSON.s
 function addFixedItem(){
   const cur = loadFixedItems();
   const v = prompt('Adicionar item (código exato):');
-  if(!v) return; const code = String(v).trim(); if(!code){ alert('Código inválido.'); return; }
-  if(cur.includes(code)){ alert('Item já existe.'); return; }
-  cur.push(code); saveFixedArray(cur); alert('Item adicionado.'); viewFixedItems(); prefillFixedApply();
+  if(!v) return; const code = String(v).trim(); if(!code){ showToast('Código inválido.'); return; }
+  if(cur.includes(code)){ showToast('Item já existe.'); return; }
+  cur.push(code); saveFixedArray(cur); showToast('Item adicionado.'); viewFixedItems(); prefillFixedApply();
 }
 function renameFixedItem(){
-  const cur = loadFixedItems(); if(cur.length===0){ alert('Nenhum item fixo salvo.'); return; }
-  const from = prompt('Renomear: digite o item atual (código exato)'); if(!from) return; if(!cur.includes(from)){ alert('Item não encontrado.'); return; }
-  const to = prompt('Novo código para "'+from+'":'); if(!to) return; const code = String(to).trim(); if(!code){ alert('Código inválido.'); return; }
-  if(from===code){ alert('Não há alteração.'); return; }
-  if(cur.includes(code)){ alert('Já existe um item com esse código.'); return; }
-  const idx = cur.indexOf(from); cur[idx]=code; saveFixedArray(cur); alert('Item renomeado.'); viewFixedItems(); prefillFixedApply();
+  const cur = loadFixedItems(); if(cur.length===0){ showToast('Nenhum item fixo salvo.'); return; }
+  const from = prompt('Renomear: digite o item atual (código exato)'); if(!from) return; if(!cur.includes(from)){ showToast('Item não encontrado.'); return; }
+  const to = prompt('Novo código para "'+from+'":'); if(!to) return; const code = String(to).trim(); if(!code){ showToast('Código inválido.'); return; }
+  if(from===code){ showToast('Não há alteração.'); return; }
+  if(cur.includes(code)){ showToast('Já existe um item com esse código.'); return; }
+  const idx = cur.indexOf(from); cur[idx]=code; saveFixedArray(cur); showToast('Item renomeado.'); viewFixedItems(); prefillFixedApply();
 }
 function removeFixedItem(){
-  const cur = loadFixedItems(); if(cur.length===0){ alert('Nenhum item fixo salvo.'); return; }
+  const cur = loadFixedItems(); if(cur.length===0){ showToast('Nenhum item fixo salvo.'); return; }
   const it = prompt('Remover: digite o item (código exato)'); if(!it) return; const code = String(it).trim();
-  const idx = cur.indexOf(code); if(idx<0){ alert('Item não encontrado.'); return; }
+  const idx = cur.indexOf(code); if(idx<0){ showToast('Item não encontrado.'); return; }
   if(!confirm('Tem certeza que deseja remover "'+code+'"?')) return;
-  cur.splice(idx,1); saveFixedArray(cur); alert('Item removido.'); viewFixedItems(); prefillFixedApply();
+  cur.splice(idx,1); saveFixedArray(cur); showToast('Item removido.'); viewFixedItems(); prefillFixedApply();
 }
 function prefillFixedApply(){ const items = loadFixedItems(); if($('#fixedItemsInput')) $('#fixedItemsInput').value = items.join('\n'); }
 $('#btnLockFixed')?.addEventListener('click', ()=> setFixedLocked(!isFixedLocked()));
@@ -377,12 +379,12 @@ function hash(str){ let h=5381; for(let i=0;i<str.length;i++){ h=((h<<5)+h)+str.
 
 function buildPlan(){
   const codes = loadFixedItems();
-  if(!codes || codes.length===0){ alert('Defina os itens fixos (abaixo) antes de gerar o cronograma.'); return; }
+  if(!codes || codes.length===0){ showToast('Defina os itens fixos (abaixo) antes de gerar o cronograma.'); return; }
   const sd=new Date($('#startDate').value||new Date(new Date().getFullYear(),0,1));
   const ed=new Date($('#endDate').value||new Date(new Date().getFullYear(),11,31));
   const onlyBiz=$('#businessDays').value==='1';
   const dates=daysBetween(sd,ed,onlyBiz);
-  if(dates.length===0){ alert('Período sem dias válidos.'); return; }
+  if(dates.length===0){ showToast('Período sem dias válidos.'); return; }
   const custom=parseInt($('#itemsPerDay').value,10);
   const perDay=isNaN(custom)? Math.ceil(codes.length/dates.length) : Math.max(1, custom);
   const map={}; let p=0;
@@ -395,12 +397,12 @@ function buildPlan(){
 }
 $('#btnBuildPlan').addEventListener('click', buildPlan);
 
-function itensDoDia(dateStr){ if(!plan){ alert('Gere o cronograma primeiro.'); return []; } return plan.map[dateStr]||[]; }
-$('#btnTodayPlan').addEventListener('click', ()=>{ if(!plan){ alert('Gere o cronograma primeiro.'); return; } const key = fmtISO(new Date()); const lst = itensDoDia(key); if(lst.length===0){ alert('Sem itens planejados para hoje.'); return; } const tabela=$('#tabela'); tabela.innerHTML=''; const header = tabela.insertRow(); ['Item do dia (Plano)'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; header.appendChild(th); }); lst.forEach(c=>{ const tr=tabela.insertRow(); tr.insertCell().textContent=c; }); const subject=encodeURIComponent(`Inventário cíclico — Itens do dia ${fmtBR(new Date())}`); const body=encodeURIComponent(lst.map(c=>`• ${c}`).join('\n')); $('#btnMailPlan').href = `mailto:?subject=${subject}&body=${body}`; });
-function imprimirPlano(mostrarQtd){ if(!plan){ alert('Gere o cronograma primeiro.'); return; } const dateStr = fmtISO(new Date()); const codes = itensDoDia(dateStr); if(codes.length===0){ alert('Sem itens no plano para hoje.'); return; } const printArea = $('#printArea'); printArea.innerHTML=''; for(const cod of codes){ const linhas = dados.filter(r=> String(getField(r,'item')||'').trim()===cod).sort(byPosAZ); if(linhas.length===0) continue; const partes = chunkArray(linhas, LPP); partes.forEach((bloco)=>{ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo', mostrarQtd? 'plan-qtd':'plan-sqtd'); const titulo=`Inventário Cíclico (${mostrarQtd? 'QTD':'SQTD'}) – Item: ${cod}`; section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, mostrarQtd)}<div class="page-footer"></div>`; printArea.appendChild(section); }); } numerarGrupo(mostrarQtd? 'plan-qtd':'plan-sqtd'); window.print(); }
+function itensDoDia(dateStr){ if(!plan){ showToast('Gere o cronograma primeiro.'); return []; } return plan.map[dateStr]||[]; }
+$('#btnTodayPlan').addEventListener('click', ()=>{ if(!plan){ showToast('Gere o cronograma primeiro.'); return; } const key = fmtISO(new Date()); const lst = itensDoDia(key); if(lst.length===0){ showToast('Sem itens planejados para hoje.'); return; } const tabela=$('#tabela'); tabela.innerHTML=''; const header = tabela.insertRow(); ['Item do dia (Plano)'].forEach(t=>{ const th=document.createElement('th'); th.textContent=t; header.appendChild(th); }); lst.forEach(c=>{ const tr=tabela.insertRow(); tr.insertCell().textContent=c; }); const subject=encodeURIComponent(`Inventário cíclico — Itens do dia ${fmtBR(new Date())}`); const body=encodeURIComponent(lst.map(c=>`• ${c}`).join('\n')); $('#btnMailPlan').href = `mailto:?subject=${subject}&body=${body}`; });
+function imprimirPlano(mostrarQtd){ if(!plan){ showToast('Gere o cronograma primeiro.'); return; } const dateStr = fmtISO(new Date()); const codes = itensDoDia(dateStr); if(codes.length===0){ showToast('Sem itens no plano para hoje.'); return; } const printArea = $('#printArea'); printArea.innerHTML=''; for(const cod of codes){ const linhas = dados.filter(r=> String(getField(r,'item')||'').trim()===cod).sort(byPosAZ); if(linhas.length===0) continue; const partes = chunkArray(linhas, LPP); partes.forEach((bloco)=>{ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo', mostrarQtd? 'plan-qtd':'plan-sqtd'); const titulo=`Inventário Cíclico (${mostrarQtd? 'QTD':'SQTD'}) – Item: ${cod}`; section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, mostrarQtd)}<div class="page-footer"></div>`; printArea.appendChild(section); }); } numerarGrupo(mostrarQtd? 'plan-qtd':'plan-sqtd'); window.print(); }
 $('#btnPrintPlanQtd').addEventListener('click', ()=> imprimirPlano(true));
 $('#btnPrintPlanSqtd').addEventListener('click', ()=> imprimirPlano(false));
-$('#btnCsvPlan').addEventListener('click', ()=>{ if(!plan){ alert('Gere o cronograma primeiro.'); return; } const lines = ['data;item']; for(const d of plan.dates){ for(const c of plan.map[d]) lines.push(`${d};"${c.replaceAll('"','""')}"`); } const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `cronograma_${(new Date($('#startDate').value||new Date()).getFullYear())}.csv`; document.body.appendChild(a); a.click(); a.remove(); });
+$('#btnCsvPlan').addEventListener('click', ()=>{ if(!plan){ showToast('Gere o cronograma primeiro.'); return; } const lines = ['data;item']; for(const d of plan.dates){ for(const c of plan.map[d]) lines.push(`${d};"${c.replaceAll('"','""')}"`); } const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `cronograma_${(new Date($('#startDate').value||new Date()).getFullYear())}.csv`; document.body.appendChild(a); a.click(); a.remove(); });
 // botão limpar dados
 $('#btnLimpar').addEventListener('click', ()=>{
  try{

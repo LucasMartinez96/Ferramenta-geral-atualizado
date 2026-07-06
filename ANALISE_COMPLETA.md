@@ -38,7 +38,7 @@ background: linear-gradient(135deg, #0f172a, #1e3a8a);
 --vermelho: #ef4444;
 ```
 
-**Dashbord de produção.html**
+**Dashboard de produção.html**
 ```css
 --neon-blue: #2b8aff;
 --neon-cyan: #00eaff;
@@ -82,7 +82,7 @@ button { background: var(--ink); }
 - Tabela: sem horizontal scroll
 - Botões: pequenos demais em mobile
 
-**Dashbord de produção.html**
+**Dashboard de produção.html**
 ```css
 @media (max-width: 980px){
   .chart-row { flex-direction: column; }
@@ -166,7 +166,7 @@ Login.html:
 // Sem relógio
 ```
 
-Dashbord de produção.html:
+Dashboard de produção.html:
 ```javascript
 setInterval(()=>{
   const el = document.getElementById('clock');

@@ -142,7 +142,7 @@ cp index.html index-backup.html
 #### 6. Atualizar 3 dashboards principais
 Escolher:
 - Batimento de estoque.html
-- Dashbord de produção.html
+- Dashboard de produção.html
 - BACKLOG.html
 
 Para cada um:

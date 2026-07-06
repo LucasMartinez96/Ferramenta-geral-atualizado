@@ -1,475 +1,740 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Inventário Cíclico (printfit LPP21) — LogoFix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    /* ── Reset & base ── */
-    *, *::before, *::after { box-sizing: border-box; }
+<meta charset="UTF-8" />
+<title>Inventário Cíclico (printfit LPP21) — LogoFix</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; }
 
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      margin: 16px;
-      color: #222;
-      background: #f4f7fa;
-    }
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 16px;
+  color: #222;
+  background: #f4f7fa;
+}
 
-    h2 { font-size: 24px; font-weight: 800; margin: 0 0 12px; }
+h2 { font-size: 24px; font-weight: 800; margin: 0 0 12px; }
 
-    /* ── Cards / controles ── */
-    .card {
-      background: #fff;
-      border: 1px solid #d1dae3;
-      border-radius: 10px;
-      padding: 12px;
-      margin: 14px 0;
-    }
+/* ── Cards / controles ── */
+.card {
+  background: #fff;
+  border: 1px solid #d1dae3;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 14px 0;
+}
 
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
 
-    input, button, select {
-      padding: 8px 12px;
-      border: 1px solid #c8d2dd;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    input[type="file"] { padding: 6px; }
-    button { cursor: pointer; border: none; }
+input, button, select {
+  padding: 8px 12px;
+  border: 1px solid #c8d2dd;
+  border-radius: 6px;
+  font-size: 13px;
+}
+input[type="file"] { padding: 6px; }
+button { cursor: pointer; border: none; }
 
-    .btn-lg {
-      min-width: 180px;
-      padding: 10px 16px;
-      font-weight: 800;
-      border-radius: 8px;
-      font-size: 13px;
-    }
-    .alt   { background: #e9f6ff; border: 2px dashed #1a73e8; color: #1a73e8; }
-    .primary { background: #1a73e8; color: #fff; }
+.btn-lg {
+  min-width: 180px;
+  padding: 10px 16px;
+  font-weight: 800;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.alt     { background: #e9f6ff; border: 2px dashed #1a73e8; color: #1a73e8; }
+.primary { background: #1a73e8; color: #fff; }
 
-    /* ── Segmented control ── */
-    .segmented {
-      display: inline-flex;
-      border: 1px solid #c8d2dd;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-    }
-    .segmented label  { padding: 8px 10px; cursor: pointer; font-size: 12px; }
-    .segmented input  { display: none; }
-    .segmented input:checked + span { background: #1a73e8; color: #fff; }
+/* ── Segmented control ── */
+.segmented {
+  display: inline-flex;
+  border: 1px solid #c8d2dd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.segmented label { padding: 8px 10px; cursor: pointer; font-size: 12px; }
+.segmented input { display: none; }
+.segmented input:checked + span { background: #1a73e8; color: #fff; }
 
-    .muted { font-size: 12px; color: #666; }
+.muted { font-size: 12px; color: #666; }
 
-    /* ════════════════════════════════════════
-       TABELA — layout fixo e alinhado
-       Proporções por coluna (7 colunas):
-         Endereço     14%
-         Codpro       10%
-         Descrição    30%  ← controlada
-         Label        12%
-         Label Origin 12%
-         Quantidade    8%
-         Observação   14%
-    ════════════════════════════════════════ */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;   /* ← chave: força as larguras definidas */
-    }
+/* ══════════════════════════════════════════════════════
+   TABELA — regras gerais
+   Larguras são definidas SOMENTE via <col> inline no HTML
+   gerado pelo JS (evita conflito CSS × atributo).
+   O CSS aqui só cuida de aparência, não de largura.
+══════════════════════════════════════════════════════ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;   /* obrigatório para respeitar as larguras dos <col> */
+}
 
-    /* Colgroup para a tabela principal (7 colunas) */
-    table.grid colgroup col:nth-child(1) { width: 14%; }
-    table.grid colgroup col:nth-child(2) { width: 10%; }
-    table.grid colgroup col:nth-child(3) { width: 30%; }
-    table.grid colgroup col:nth-child(4) { width: 12%; }
-    table.grid colgroup col:nth-child(5) { width: 12%; }
-    table.grid colgroup col:nth-child(6) { width:  8%; }
-    table.grid colgroup col:nth-child(7) { width: 14%; }
+th, td {
+  border: 1px solid #d8e1ea;
+  padding: 5px 7px;
+  font-size: 12px;
+  line-height: 1.35;
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
-    /* Colgroup para tabela de prévia (#tabela) — 6 colunas, sem Observação */
-    table#tabela colgroup col:nth-child(1) { width: 16%; }
-    table#tabela colgroup col:nth-child(2) { width: 12%; }
-    table#tabela colgroup col:nth-child(3) { width: 32%; }
-    table#tabela colgroup col:nth-child(4) { width: 14%; }
-    table#tabela colgroup col:nth-child(5) { width: 14%; }
-    table#tabela colgroup col:nth-child(6) { width: 12%; }
+th {
+  background: #eef3f8;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
 
-    th, td {
-      border: 1px solid #d8e1ea;
-      padding: 5px 7px;
-      font-size: 12px;
-      line-height: 1.25;
-      vertical-align: middle;
-      /* Texto longo: ellipsis — evita quebra de layout */
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
+/* Alinhamento à direita apenas para células explicitamente marcadas */
+td.num { text-align: right; }
 
-    th {
-      background: #eef3f8;
-      font-weight: 700;
-      text-align: left;
-      white-space: nowrap;
-    }
+.grid { border: 1px solid #d8e1ea; }
+#printArea { background: #fff; }
 
-    td:nth-child(6) { text-align: right; } /* Quantidade alinhada à direita */
+/* ── Sheet (folha de impressão) ── */
+.sheet {
+  border: 3px double #aab4c0;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: #fff;
+  page-break-inside: avoid;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  row-gap: 4px;
+}
+.sheet + .sheet { page-break-before: always; }
 
-    .grid { border: 1px solid #d8e1ea; }
-    #printArea { background: #fff; }
+/* Sem borda para porta-porta */
+.sheet[data-grupo='porta'] {
+  border: none !important;
+  box-shadow: none !important;
+  display: block !important;
+}
 
-    /* ── Sheet (folha de impressão) ── */
-    .sheet {
-      border: 3px double #aab4c0;
-      padding: 12px;
-      margin-bottom: 20px;
-      background: #fff;
-      page-break-inside: avoid;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      row-gap: 4px;
-    }
-    .sheet + .sheet { page-break-before: always; }
+/* ── Cabeçalho da folha ── */
+.hdr {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.hdr-left { line-height: 1.2; }
+.hdr-left .titulo { font-size: 16px; font-weight: 800; margin: 0 0 2px; }
+.hdr-left .dh     { font-size: 12px; color: #333; }
+.hdr-right img {
+  display: block;
+  height: auto;
+  max-height: 18mm;
+  max-width: 60mm;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+}
 
-    /* Sem borda para porta-porta */
-    .sheet[data-grupo='porta'] {
-      border: none !important;
-      box-shadow: none !important;
-      display: block !important;
-      grid-template-rows: auto auto auto !important;
-    }
+.page-header   { margin-bottom: 4px; }
+.inventariante { font-size: 12px; margin: 4px 0 0; }
+.inventariante .line {
+  display: inline-block;
+  width: 260px;
+  border-bottom: 1px solid #666;
+  height: 12px;
+}
 
-    /* ── Cabeçalho da folha ── */
-    .hdr {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: center;
-      gap: 10px;
-    }
-    .hdr-left { line-height: 1.2; }
-    .hdr-left .titulo { font-size: 16px; font-weight: 800; margin: 0 0 2px; }
-    .hdr-left .dh     { font-size: 12px; color: #333; }
-    .hdr-right img {
-      display: block;
-      height: auto;
-      max-height: 18mm;
-      max-width: 60mm;
-      object-fit: contain;
-      image-rendering: -webkit-optimize-contrast;
-    }
+.grid-wrap    { min-height: 0; overflow-x: auto; }
+.page-footer  { margin-top: 4px; font-size: 12px; text-align: right; align-self: end; }
 
-    .page-header { margin-bottom: 4px; }
-    .inventariante { font-size: 12px; margin: 4px 0 0; }
-    .inventariante .line {
-      display: inline-block;
-      width: 260px;
-      border-bottom: 1px solid #666;
-      height: 12px;
-    }
+/* ── Impressão ── */
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }
 
-    .grid-wrap { min-height: 0; overflow-x: auto; }
-    .page-footer { margin-top: 4px; font-size: 12px; text-align: right; align-self: end; }
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
 
-    /* ── Impressão ── */
-    @media print {
-      @page { size: A4 landscape; margin: 8mm; }
+  h2, #controles, #resultados { display: none !important; }
 
-      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  .card {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
 
-      h2, #controles, #resultados { display: none !important; }
+  #printArea { padding: 0 !important; margin: 0 auto !important; background: #fff !important; }
 
-      .card {
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-      }
+  .sheet {
+    width: 281mm;
+    min-height: 194mm;
+    height: auto;
+    margin: 0 auto;
+    page-break-inside: avoid;
+  }
 
-      #printArea { padding: 0 !important; margin: 0 auto !important; background: #fff !important; }
+  .sheet[data-grupo='porta'] { border: none !important; box-shadow: none !important; }
 
-      .sheet {
-        width: 281mm;
-        min-height: 194mm;
-        height: auto;
-        margin: 0 auto;
-      }
+  /* Na impressão permite quebra dentro da tabela para não cortar linhas */
+  table { page-break-inside: auto; }
+  tr    { page-break-inside: avoid; page-break-after: auto; }
 
-      .sheet[data-grupo='porta'] { border: none !important; box-shadow: none !important; }
+  th, td {
+    border-color: #cfd6de;
+    border-width: 0.5pt;
+    padding: 4px 6px;
+    /* Impressão: permite quebra de linha para não truncar conteúdo */
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
 
-      th, td {
-        border-color: #cfd6de;
-        border-width: 0.5pt;
-        padding: 4px 6px;
-      }
+  .grid { border-width: 0.75pt; border-color: #cfd6de; }
 
-      .grid { border-width: 0.75pt; border-color: #cfd6de; }
-      table { page-break-inside: auto; }
-      tr    { page-break-inside: avoid; }
-      img   { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
-  </style>
-  <link rel="stylesheet" href="css/design-system.css" />
-  <script src="js/normalize-styles.js" defer></script>
+  img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+<link rel="stylesheet" href="css/design-system.css" />
+<script src="js/normalize-styles.js" defer></script>
 </head>
 <body>
-  <h2>Inventário Cíclico</h2>
+<h2>Inventário Cíclico</h2>
 
-  <div id="controles" class="card">
-    <div class="row">
-      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
-      <span class="muted">Carregue CSV, XLSX ou XLS.</span>
+<div id="controles" class="card">
+  <div class="row">
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+    <span class="muted">Carregue CSV, XLSX ou XLS.</span>
+  </div>
+  <div class="row">
+    <input id="search" type="text" placeholder="Buscar por Código (Pieza) ou Descrição" />
+    <button class="primary" id="btnBuscar">Buscar</button>
+    <input id="searchPos" type="text" placeholder="Buscar por Posição (ex.: 1-200-0001-00 ou 1-200)" style="min-width:280px" />
+    <div class="segmented" title="Filtrar lado da posição (Ubicacion)">
+      <label><input type="radio" name="lado" value="todos" checked><span>Todos</span></label>
+      <label><input type="radio" name="lado" value="par"><span>Par</span></label>
+      <label><input type="radio" name="lado" value="impar"><span>Ímpar</span></label>
     </div>
-    <div class="row">
-      <input id="search" type="text" placeholder="Buscar por Código (Pieza) ou Descrição" />
-      <button class="primary" id="btnBuscar">Buscar</button>
-      <input id="searchPos" type="text" placeholder="Buscar por Posição (ex.: 1-200-0001-00 ou 1-200)" style="min-width:280px" />
-      <div class="segmented" title="Filtrar lado da posição (Ubicacion)">
-        <label><input type="radio" name="lado" value="todos" checked><span>Todos</span></label>
-        <label><input type="radio" name="lado" value="par"><span>Par</span></label>
-        <label><input type="radio" name="lado" value="impar"><span>Ímpar</span></label>
+  </div>
+  <div class="row" style="margin-top:4px;">
+    <button class="btn-lg alt"     id="btnCiclicoQtd">Cíclico QTD</button>
+    <button class="btn-lg primary" id="btnCiclicoSqtd">Cíclico SQTD</button>
+    <button class="btn-lg primary" id="btnAmbos">Imprimir QTD + SQTD</button>
+    <button class="btn-lg primary" id="btnEmbalagemPosicao">Embalagem Posição</button>
+    <button class="btn-lg primary" id="btnPortaPorta">Inventário Porta-Porta</button>
+    <button class="btn-lg alt"     id="btnPosicoesLivres">Posições Livres</button>
+    <button class="btn-lg primary" onclick="window.print()">🖨️ Imprimir</button>
+  </div>
+</div>
+
+<div id="resultados" class="card">
+  <strong>Prévia dos resultados filtrados</strong>
+  <!--
+    Colgroup da tabela de prévia (6 colunas, sem Observação):
+    Endereço | Codpro | Descrição | Label | Label Origin | Quantidade
+  -->
+  <table id="tabela">
+    <colgroup>
+      <col style="width:16%">
+      <col style="width:12%">
+      <col style="width:32%">
+      <col style="width:14%">
+      <col style="width:14%">
+      <col style="width:12%">
+    </colgroup>
+  </table>
+</div>
+
+<div id="printArea" class="card"></div>
+
+<!-- Bibliotecas externas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="js/toast.js"></script>
+
+<script>
+'use strict';
+
+const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+const LPP = 21;
+let dados = [];
+let ultimoFiltro = [];
+
+/* ── Utilitários gerais ── */
+function chunkArray(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+function dataHora() {
+  const d = new Date();
+  return {
+    data: d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }),
+    hora: d.toLocaleTimeString('pt-BR')
+  };
+}
+
+function getLogo() { return 'Imagem1.png'; }
+
+function numeroFinal(ubi) {
+  if (!ubi) return null;
+  const partes = String(ubi).split('-');
+  if (partes.length < 3) return null;
+  const n = parseInt(partes[2], 10);
+  return isNaN(n) ? null : n;
+}
+
+function ladoSelecionado() {
+  const el = document.querySelector('input[name="lado"]:checked');
+  return el?.value || 'todos';
+}
+
+function filtraPorLado(arr) {
+  const lado = ladoSelecionado();
+  if (lado === 'todos') return arr;
+  return arr.filter(l => {
+    const n = numeroFinal(l.Ubicacion);
+    if (n == null || Number.isNaN(n)) return false;
+    return lado === 'par' ? (n % 2 === 0) : (n % 2 !== 0);
+  });
+}
+
+/* ── Cabeçalho da folha ── */
+function cabecalho(titulo) {
+  const { data, hora } = dataHora();
+  const src = getLogo();
+  return `
+  <div class="page-header">
+    <div class="hdr">
+      <div class="hdr-left">
+        <div class="titulo">${titulo}</div>
+        <div class="dh">${data} • ${hora}</div>
       </div>
+      <div class="hdr-right"><img src="${src}" alt="Logo"></div>
     </div>
-    <div class="row" style="margin-top:4px;">
-      <button class="btn-lg alt"     id="btnCiclicoQtd">Cíclico QTD</button>
-      <button class="btn-lg primary" id="btnCiclicoSqtd">Cíclico SQTD</button>
-      <button class="btn-lg primary" id="btnAmbos">Imprimir QTD + SQTD</button>
-      <button class="btn-lg primary" id="btnEmbalagemPosicao">Embalagem Posição</button>
-      <button class="btn-lg primary" id="btnPortaPorta">Inventário Porta-Porta</button>
-      <button class="btn-lg alt"     id="btnPosicoesLivres">Posições Livres</button>
-      <button class="btn-lg primary" onclick="window.print()">🖨️ Imprimir</button>
-    </div>
-  </div>
+    <div class="inventariante">Inventariante: <span class="line"></span></div>
+  </div>`;
+}
 
-  <div id="resultados" class="card">
-    <strong>Prévia dos resultados filtrados</strong>
-    <!--
-      colgroup da tabela de prévia (6 colunas, sem Observação):
-      Endereço | Codpro | Descrição | Label | Label Origin | Quantidade
-    -->
-    <table id="tabela">
-      <colgroup>
-        <col style="width:16%">
-        <col style="width:12%">
-        <col style="width:32%">
-        <col style="width:14%">
-        <col style="width:14%">
-        <col style="width:12%">
-      </colgroup>
+/* ════════════════════════════════════════════════════════
+   tabelaHTML — tabela principal de inventário
+   
+   CORREÇÕES aplicadas:
+   1. colgroup gerado INTEIRAMENTE no JS com larguras que
+      somam exatamente 100% nos dois modos (QTD e SQTD).
+   2. Alinhamento à direita feito com class="num" na <td>,
+      não com seletor nth-child (que errava a coluna no
+      modo sem Observação).
+   3. Quando mostrarQtd=false a coluna Quantidade some e
+      a tabela passa a ter 5 colunas (sem Obs e sem Qtd
+      visíveis) — compatível com o cabeçalho gerado.
+
+   Larguras com Observação  (mostrarQtd = true,  7 col):
+     Endereço  14% | Codpro 10% | Descrição 28%
+     Label 12% | Label Origin 12% | Qtd 8% | Obs 16%
+     Total = 100%
+
+   Larguras sem Observação  (mostrarQtd = false, 6 col):
+     Endereço  16% | Codpro 11% | Descrição 33%
+     Label 14% | Label Origin 14% | Qtd 12%
+     Total = 100%
+════════════════════════════════════════════════════════ */
+function tabelaHTML(linhas, mostrarQtd) {
+
+  /* --- colgroup dinâmico -------------------------------- */
+  const colgroup = mostrarQtd
+    ? `<colgroup>
+         <col style="width:14%">
+         <col style="width:10%">
+         <col style="width:28%">
+         <col style="width:12%">
+         <col style="width:12%">
+         <col style="width: 8%">
+         <col style="width:16%">
+       </colgroup>`
+    : `<colgroup>
+         <col style="width:16%">
+         <col style="width:11%">
+         <col style="width:33%">
+         <col style="width:14%">
+         <col style="width:14%">
+         <col style="width:12%">
+       </colgroup>`;
+
+  /* --- cabeçalho da tabela ----------------------------- */
+  const thObs = mostrarQtd ? '<th>Observação</th>' : '';
+  const thead = `
+    <thead>
+      <tr>
+        <th>Endereço</th>
+        <th>Codpro</th>
+        <th>Descrição</th>
+        <th>Label</th>
+        <th>Label Origin</th>
+        <th>Quantidade</th>
+        ${thObs}
+      </tr>
+    </thead>`;
+
+  /* --- linhas de dados --------------------------------- */
+  const tbody = linhas.map(l => {
+    const ubi   = l.Ubicacion  ?? '';
+    const pieza = l.Pieza      ?? '';
+    const desc  = l.Descripcion1 ?? '';
+    const lbl   = l.label      ?? '';
+    const orig  = l.labelorigin ?? '';
+    const qtd   = l.CantidadTotal ?? '';
+    const tdObs = mostrarQtd ? '<td></td>' : '';
+
+    return `<tr>
+      <td title="${escHtml(ubi)}">${escHtml(ubi)}</td>
+      <td title="${escHtml(pieza)}">${escHtml(pieza)}</td>
+      <td title="${escHtml(desc)}">${escHtml(desc)}</td>
+      <td title="${escHtml(lbl)}">${escHtml(lbl)}</td>
+      <td title="${escHtml(orig)}">${escHtml(orig)}</td>
+      <td class="num" title="${escHtml(qtd)}">${escHtml(qtd)}</td>
+      ${tdObs}
+    </tr>`;
+  }).join('');
+
+  return `
+  <div class="grid-wrap">
+    <table class="grid">
+      ${colgroup}
+      ${thead}
+      <tbody>${tbody}</tbody>
     </table>
-  </div>
+  </div>`;
+}
 
-  <div id="printArea" class="card"></div>
+/* ── Tabela Embalagem por Posição ── */
+function tabelaEmbalagemHTML(linhas) {
+  const linhasHTML = linhas.map(l =>
+    `<tr>
+       <td title="${escHtml(l.Ubicacion)}">${escHtml(l.Ubicacion)}</td>
+       <td title="${escHtml(l.Pieza)}">${escHtml(l.Pieza)}</td>
+       <td title="${escHtml(l.Descripcion1)}">${escHtml(l.Descripcion1)}</td>
+       <td class="num">${escHtml(l.QtdEmbalagem)}</td>
+     </tr>`
+  ).join('');
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
-// ===== Inventário Porta-Porta =====
-function gerarPortaPorta(){
-  if(ultimoFiltro.length===0){document.getElementById('printArea').innerHTML='Pesquise primeiro.';return;}
-  const ordenado=[...ultimoFiltro].sort((a,b)=>String(a.Ubicacion||'').localeCompare(String(b.Ubicacion||''),'pt-BR',{numeric:true}));
-  const partes=chunkArray(ordenado, LPP);
-  const printArea=document.getElementById('printArea');printArea.innerHTML='';
-  partes.forEach(bloco=>{
-    const section=document.createElement('section');section.className='sheet';section.setAttribute('data-grupo','porta');
-    const titulo='Inventário Porta-Porta (QTD)';
-    const linhaContada='<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
-    const assinaturas='<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
-    section.innerHTML = `${cabecalho(titulo)}${linhaContada}${tabelaHTML(bloco,true)}${assinaturas}<div class="page-footer"></div>`;
+  return `
+  <div class="grid-wrap">
+    <table class="grid">
+      <colgroup>
+        <col style="width:20%">
+        <col style="width:15%">
+        <col style="width:45%">
+        <col style="width:20%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Endereço</th>
+          <th>Codpro</th>
+          <th>Descrição</th>
+          <th>Qtd Embalagens (labels únicos)</th>
+        </tr>
+      </thead>
+      <tbody>${linhasHTML}</tbody>
+    </table>
+  </div>`;
+}
+
+/* ── Numeração de páginas ── */
+function numerarGrupo(grupo) {
+  const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)];
+  const total  = sheets.length;
+  sheets.forEach((sheet, idx) => {
+    let footer = sheet.querySelector('.page-footer');
+    if (!footer) {
+      footer = document.createElement('div');
+      footer.className = 'page-footer';
+      sheet.appendChild(footer);
+    }
+    footer.textContent = `Página ${idx + 1} de ${total}`;
+  });
+}
+
+const byUbicacionAZ = (a, b) =>
+  String(a.Ubicacion ?? '').localeCompare(String(b.Ubicacion ?? ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+
+/* ── Gerar cadernos QTD / SQTD ── */
+function gerarCadernos(tipo) {
+  if (ultimoFiltro.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
+    return;
+  }
+  const ordenado = [...ultimoFiltro].sort(byUbicacionAZ);
+  const cod      = ordenado[0]?.Pieza || '';
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = '';
+
+  chunkArray(ordenado, LPP).forEach(bloco => {
+    const section = document.createElement('section');
+    section.className = 'sheet';
+    section.setAttribute('data-grupo', tipo);
+    const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`;
+    section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
-  numerarGrupo('porta');
-}
-document.getElementById('btnPortaPorta').addEventListener('click', gerarPortaPorta);
 
-</script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
-// ===== Inventário Porta-Porta =====
-function gerarPortaPorta(){
-  if(ultimoFiltro.length===0){document.getElementById('printArea').innerHTML='Pesquise primeiro.';return;}
-  const ordenado=[...ultimoFiltro].sort((a,b)=>String(a.Ubicacion||'').localeCompare(String(b.Ubicacion||''),'pt-BR',{numeric:true}));
-  const partes=chunkArray(ordenado, LPP);
-  const printArea=document.getElementById('printArea');printArea.innerHTML='';
-  partes.forEach(bloco=>{
-    const section=document.createElement('section');section.className='sheet';section.setAttribute('data-grupo','porta');
-    const titulo='Inventário Porta-Porta (QTD)';
-    const linhaContada='<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
-    const assinaturas='<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
-    section.innerHTML = `${cabecalho(titulo)}${linhaContada}${tabelaHTML(bloco,true)}${assinaturas}<div class="page-footer"></div>`;
+  numerarGrupo(tipo);
+}
+
+/* ── Gerar ambos (QTD + SQTD) ── */
+function gerarAmbos() {
+  if (ultimoFiltro.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
+    return;
+  }
+  const ordenado  = [...ultimoFiltro].sort(byUbicacionAZ);
+  const cod       = ordenado[0]?.Pieza || '';
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = '';
+
+  chunkArray(ordenado, LPP).forEach(bloco => {
+    const section = document.createElement('section');
+    section.className = 'sheet';
+    section.setAttribute('data-grupo', 'qtd');
+    section.innerHTML = `${cabecalho(`Inventário Cíclico (QTD) – Item: ${cod}`)}${tabelaHTML(bloco, true)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
-  numerarGrupo('porta');
-}
-document.getElementById('btnPortaPorta').addEventListener('click', gerarPortaPorta);
 
-</script>
-  <script>
-  'use strict';
-  const LPP = 21; let dados = []; let ultimoFiltro = [];
-  function chunkArray(arr, size){ const out = []; for (let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size)); return out; }
-  function dataHora(){ const d = new Date(); return { data:d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}), hora:d.toLocaleTimeString('pt-BR') }; }
-  function getLogo(){ return 'Imagem1.png'; }
-  function numeroFinal(ubi){
-    if (!ubi) return null; const partes = String(ubi).split('-'); if (partes.length < 3) return null; const bloco = partes[2]; const n = parseInt(bloco, 10); return isNaN(n) ? null : n;
-  }
-  function ladoSelecionado(){ const el = document.querySelector('input[name="lado"]:checked'); return (el?.value)||'todos'; }
-  function filtraPorLado(arr){ const lado = ladoSelecionado(); if(lado==='todos') return arr; return arr.filter(l=>{ const n=numeroFinal(l.Ubicacion); if(n==null||Number.isNaN(n)) return false; return lado==='par' ? (n%2===0) : (n%2!==0); }); }
-
-  document.getElementById('fileInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0]; if(!file) return; const nome = file.name.toLowerCase();
-    try{
-      if (nome.endsWith('.csv')){
-        if (typeof Papa !== 'undefined'){
-          Papa.parse(file, { header:true, skipEmptyLines:true,
-            complete: (res)=>{ dados = res.data; alert('Arquivo carregado! Linhas: ' + dados.length); },
-            error: (err)=> alert('Erro ao ler CSV: ' + (err?.message || err)) });
-        } else if (typeof XLSX !== 'undefined'){
-          const text = await file.text(); const wb = XLSX.read(text, {type:'string'});
-          const sheet = wb.Sheets[wb.SheetNames[0]]; dados = XLSX.utils.sheet_to_json(sheet, {defval:'', raw:false});
-          alert('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
-        } else { alert('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.'); }
-      } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')){
-        if (typeof XLSX === 'undefined'){ alert('SheetJS não carregou.'); return; }
-        const buf = await file.arrayBuffer(); const wb = XLSX.read(buf, {type:'array'});
-        const sheet = wb.Sheets[wb.SheetNames[0]]; dados = XLSX.utils.sheet_to_json(sheet, {defval:''});
-        alert('Arquivo carregado! Linhas: ' + dados.length);
-      } else { alert('Formato não suportado. Use CSV, XLSX ou XLS.'); }
-    }catch(err){ alert('Erro ao carregar: ' + (err?.message || err)); }
+  chunkArray(ordenado, LPP).forEach(bloco => {
+    const section = document.createElement('section');
+    section.className = 'sheet';
+    section.setAttribute('data-grupo', 'sqtd');
+    section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
+    printArea.appendChild(section);
   });
 
-  document.getElementById('btnBuscar').addEventListener('click', montarTabela);
-  document.getElementById('search').addEventListener('keypress', (e)=>{ if(e.key==='Enter') montarTabela(); });
-  document.getElementById('searchPos').addEventListener('keypress', (e)=>{ if(e.key==='Enter') montarTabela(); });
-  document.querySelectorAll('input[name="lado"]').forEach(r => r.addEventListener('change', montarTabela));
+  numerarGrupo('qtd');
+  numerarGrupo('sqtd');
+  window.print();
+}
 
-  function montarTabela(){
-    const termo = (document.getElementById('search').value || '').toLowerCase();
-    const termoPos = (document.getElementById('searchPos')?.value || '').toLowerCase().trim();
-    const tabela = document.getElementById('tabela'); tabela.innerHTML = '';
-
-    let base = dados.filter(l => (String(l.Pieza||'').toLowerCase() === termo) || (String(l.Descripcion1||'').toLowerCase().includes(termo)));
-    if(termoPos){ base = base.filter(l => String(l.Ubicacion||'').toLowerCase().startsWith(termoPos)); }
-    ultimoFiltro = filtraPorLado(base);
-
-    if (ultimoFiltro.length === 0){ tabela.innerHTML = '<tr><td>Nada encontrado</td></tr>'; return; }
-
-    const header = tabela.insertRow();
-    ['Endereço','Codpro','Descrição','Label','Label Origin','Quantidade'].forEach(txt => { const th = document.createElement('th'); th.textContent = txt; header.appendChild(th); });
-
-    ultimoFiltro.forEach(l => {
-      const tr = tabela.insertRow();
-      tr.insertCell().textContent = l.Ubicacion ?? '';
-      tr.insertCell().textContent = l.Pieza ?? '';
-      tr.insertCell().textContent = l.Descripcion1 ?? '';
-      tr.insertCell().textContent = (l.label ?? '');
-      tr.insertCell().textContent = (l.labelorigin ?? '');
-      tr.insertCell().textContent = (l.CantidadTotal ?? '');
-    });
+/* ── Embalagem por Posição ── */
+function gerarEmbalagemPosicao() {
+  if (ultimoFiltro.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
+    return;
+  }
+  const map = new Map();
+  for (const l of ultimoFiltro) {
+    const pos    = l.Ubicacion   || '';
+    const cod    = l.Pieza       || '';
+    const desc   = l.Descripcion1 || '';
+    const codpal = String(l.labelorigin ?? '').trim();
+    const key    = pos + '\n' + cod;
+    if (!map.has(key)) map.set(key, { Ubicacion: pos, Pieza: cod, Descripcion1: desc, set: new Set() });
+    if (codpal) map.get(key).set.add(codpal);
   }
 
-  function cabecalho(titulo){ const {data, hora} = dataHora(); const src = getLogo(); return `<div class="page-header"><div class="hdr"><div class="hdr-left"><div class="titulo">${titulo}</div><div class="dh">${data} • ${hora}</div></div><div class="hdr-right"><img src="${src}" alt="Sesé"></div></div><div class="inventariante">Inventariante: <span class="line"></span></div></div>`; }
+  const linhas = Array.from(map.values()).map(o => ({
+    Ubicacion: o.Ubicacion, Pieza: o.Pieza, Descripcion1: o.Descripcion1, QtdEmbalagem: o.set.size
+  }));
 
-  function tabelaHTML(linhas, mostrarQtd){ const thObs = mostrarQtd ? '<th>Observação</th>' : ''; return `<div class="grid-wrap"><table class="grid"><thead><tr><th>Endereço</th><th>Codpro</th><th>Descrição</th><th>Label</th><th>Label Origin</th><th>Quantidade</th>${thObs}</tr></thead><tbody>${linhas.map(l=>`<tr><td>${l.Ubicacion ?? ''}</td><td>${l.Pieza ?? ''}</td><td>${l.Descripcion1 ?? ''}</td><td>${(l.label ?? '')}</td><td>${(l.labelorigin ?? '')}</td><td style="text-align:right">${ mostrarQtd ? (l.CantidadTotal ?? '') : '' }</td>${ mostrarQtd ? '<td></td>' : '' }</tr>`).join('')}</tbody></table></div>`; }
+  linhas.sort((a, b) => {
+    const r = String(a.Ubicacion || '').localeCompare(String(b.Ubicacion || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+    return r !== 0 ? r : String(a.Pieza || '').localeCompare(String(b.Pieza || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+  });
 
-  function numerarGrupo(grupo){ const sheets=[...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)]; const total=sheets.length; sheets.forEach((sheet,idx)=>{ let footer = sheet.querySelector('.page-footer'); if(!footer){ footer=document.createElement('div'); footer.className='page-footer'; sheet.appendChild(footer);} footer.textContent = `Página ${idx+1} de ${total}`; }); }
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = '';
 
-  const byUbicacionAZ = (a,b)=> String(a.Ubicacion??'').localeCompare(String(b.Ubicacion??''), 'pt-BR', {numeric:true, sensitivity:'base'});
+  chunkArray(linhas, LPP).forEach(bloco => {
+    const section = document.createElement('section');
+    section.className = 'sheet';
+    section.setAttribute('data-grupo', 'embalagem');
+    section.innerHTML = `${cabecalho('Embalagem por Posição (contagem de labels distintos)')}${tabelaEmbalagemHTML(bloco)}<div class="page-footer"></div>`;
+    printArea.appendChild(section);
+  });
 
-  function gerarCadernos(tipo){ if(ultimoFiltro.length===0){ document.getElementById('printArea').innerHTML='Pesquise primeiro.'; return; } const ordenado=[...ultimoFiltro].sort(byUbicacionAZ); const cod=ordenado[0]?.Pieza||''; const partes=chunkArray(ordenado, LPP); const printArea=document.getElementById('printArea'); printArea.innerHTML=''; partes.forEach((bloco)=>{ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo', tipo); const titulo=`Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`; section.innerHTML=`${cabecalho(titulo)}${tabelaHTML(bloco, tipo==='qtd')}<div class="page-footer"></div>`; printArea.appendChild(section); }); numerarGrupo(tipo); }
+  numerarGrupo('embalagem');
+}
 
-  function gerarAmbos(){ if(ultimoFiltro.length===0){ document.getElementById('printArea').innerHTML='Pesquise primeiro.'; return; } const ordenado=[...ultimoFiltro].sort(byUbicacionAZ); const cod=ordenado[0]?.Pieza||''; const partesQ=chunkArray(ordenado, LPP); const partesS=chunkArray(ordenado, LPP); const printArea=document.getElementById('printArea'); printArea.innerHTML=''; partesQ.forEach((bloco)=>{ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo','qtd'); const titulo=`Inventário Cíclico (QTD) – Item: ${cod}`; section.innerHTML=`${cabecalho(titulo)}${tabelaHTML(bloco, true)}<div class="page-footer"></div>`; printArea.appendChild(section); }); partesS.forEach((bloco)=>{ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo','sqtd'); const titulo=`Inventário Cíclico (SQTD) – Item: ${cod}`; section.innerHTML=`${cabecalho(titulo)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`; printArea.appendChild(section); }); numerarGrupo('qtd'); numerarGrupo('sqtd'); window.print(); }
+/* ── Inventário Porta-Porta ── */
+function gerarPortaPorta() {
+  if (ultimoFiltro.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
+    return;
+  }
+  const ordenado = [...ultimoFiltro].sort(byUbicacionAZ);
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = '';
 
-  function gerarEmbalagemPosicao(){ if(ultimoFiltro.length===0){ document.getElementById('printArea').innerHTML='Pesquise primeiro.'; return; } const map = new Map(); for(const l of ultimoFiltro){ const pos=l.Ubicacion||''; const cod=l.Pieza||''; const desc=l.Descripcion1||''; const codpal = `${l.labelorigin ?? ''}`.trim(); const key=pos+'\n'+cod; if(!map.has(key)) map.set(key,{Ubicacion:pos,Pieza:cod,Descripcion1:desc,set:new Set()}); if(codpal) map.get(key).set.add(codpal); } const linhas=Array.from(map.values()).map(o=>({Ubicacion:o.Ubicacion,Pieza:o.Pieza,Descripcion1:o.Descripcion1,QtdEmbalagem:o.set.size})); linhas.sort((a,b)=>{ const r=String(a.Ubicacion||'').localeCompare(String(b.Ubicacion||''),'pt-BR',{numeric:true,sensitivity:'base'}); if(r!==0) return r; return String(a.Pieza||'').localeCompare(String(b.Pieza||''),'pt-BR',{numeric:true,sensitivity:'base'}); }); const printArea=document.getElementById('printArea'); printArea.innerHTML=''; const partes=chunkArray(linhas, LPP); partes.forEach((bloco)=>{ const section=document.createElement('section'); section.className='sheet'; section.setAttribute('data-grupo','embalagem'); const titulo='Embalagem por Posição (contagem de labels distintos)'; section.innerHTML=`${cabecalho(titulo)}${tabelaEmbalagemHTML(bloco)}<div class="page-footer"></div>`; printArea.appendChild(section); }); numerarGrupo('embalagem'); }
+  chunkArray(ordenado, LPP).forEach(bloco => {
+    const section = document.createElement('section');
+    section.className = 'sheet';
+    section.setAttribute('data-grupo', 'porta');
+    const linhaContada = '<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
+    const assinaturas  = '<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
+    section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
+    printArea.appendChild(section);
+  });
 
-  function tabelaEmbalagemHTML(linhas){ return `<div class="grid-wrap"><table class="grid"><thead><tr><th>Endereço</th><th>Codpro</th><th>Descrição</th><th>Qtd Embalagens (labels únicos)</th></tr></thead><tbody>${linhas.map(l=>`<tr><td>${l.Ubicacion}</td><td>${l.Pieza}</td><td>${l.Descripcion1}</td><td style="text-align:right">${l.QtdEmbalagem}</td></tr>`).join('')}</tbody></table></div>`; }
+  numerarGrupo('porta');
+}
 
-  document.getElementById('btnCiclicoQtd').addEventListener('click', ()=> gerarCadernos('qtd'));
-  document.getElementById('btnCiclicoSqtd').addEventListener('click', ()=> gerarCadernos('sqtd'));
-  document.getElementById('btnAmbos').addEventListener('click', gerarAmbos);
-  document.getElementById('btnEmbalagemPosicao').addEventListener('click', gerarEmbalagemPosicao);
+/* ── Posições Livres ── */
+(function () {
+  function ehVazio(v) {
+    if (v === null || v === undefined) return true;
+    const s = String(v).trim();
+    return s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined';
+  }
 
-  // ===================== POSIÇÕES LIVRES (ACRÉSCIMO) =====================
-  (function(){
-    const LPP_POS = LPP;
-    function ehVazio(v){ if (v === null || v === undefined) return True; }
-  })();
-  // Mantemos o bloco original de "Posições Livres" da sua versão fornecida
-  // =================== POSIÇÕES LIVRES (ACRÉSCIMO) ===================
-  (function(){
-    const LPP_POS = LPP;
-    function ehVazio(v){
-      if (v === null || v === undefined) return true;
-      const s = String(v).trim();
-      return s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined';
-    }
-    function tabelaPosLivreHTML(linhas){
-      return `\n <div class="grid-wrap">\n <table class="grid">\n <thead>\n <tr>\n <th>Endereço</th>\n </tr>\n </thead>\n <tbody>\n ${linhas.map(l => `\n <tr>\n <td>${l.name ?? ''}</td>\n </tr>\n `).join('')}\n </tbody>\n </table>\n </div>\n `;
-    }
-    function gerarPosicoesLivres(){
-      try{
-        if (!Array.isArray(dados) || dados.length === 0){
-          document.getElementById('printArea').innerHTML = 'Carregue primeiro o arquivo de Estoque por localização.';
-          return;
-        }
-        const temCampos = dados.some(l => ('name' in l) || ('label2' in l));
-        if (!temCampos){
-          document.getElementById('printArea').innerHTML = 'O arquivo carregado não parece ser o "Estoque por localização" (campos esperados: name;label2).';
-          return;
-        }
-        const prefixo = (document.getElementById('searchPos')?.value || '').trim().toLowerCase();
-        let livres = dados.filter(l => !ehVazio(l.name) && ehVazio(l.label2));
-        if (prefixo){ livres = livres.filter(l => String(l.name).toLowerCase().startsWith(prefixo)); }
-        livres.sort((a,b)=> String(a.name||'').localeCompare(String(b.name||''), 'pt-BR', {numeric:true, sensitivity:'base'}));
-        const tabela = document.getElementById('tabela');
-        tabela.innerHTML = '';
-        const header = tabela.insertRow();
-        ['Endereço'].forEach(txt => { const th = document.createElement('th'); th.textContent = txt; header.appendChild(th); });
-        livres.forEach(l => { const tr = tabela.insertRow(); tr.insertCell().textContent = l.name ?? ''; });
-        const printArea = document.getElementById('printArea');
-        printArea.innerHTML = '';
-        const partes = chunkArray(livres, LPP_POS);
-        partes.forEach(bloco => {
-          const section = document.createElement('section');
-          section.className = 'sheet';
-          section.setAttribute('data-grupo','poslivre');
-          const titulo = 'Posições Livres (label2 vazio) – Somente Endereço';
-          section.innerHTML = `${cabecalho(titulo)}${tabelaPosLivreHTML(bloco)}<div class="page-footer"></div>`;
-          printArea.appendChild(section);
-        });
-        numerarGrupo('poslivre');
-      }catch(err){
-        console.error('Erro gerarPosicoesLivres:', err);
-        alert('Erro ao gerar Posições Livres: ' + (err?.message || err));
+  function tabelaPosLivreHTML(linhas) {
+    return `
+    <div class="grid-wrap">
+      <table class="grid">
+        <colgroup><col style="width:100%"></colgroup>
+        <thead><tr><th>Endereço</th></tr></thead>
+        <tbody>${linhas.map(l => `<tr><td>${escHtml(l.name)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+
+  function gerarPosicoesLivres() {
+    try {
+      if (!Array.isArray(dados) || dados.length === 0) {
+        document.getElementById('printArea').innerHTML = 'Carregue primeiro o arquivo de Estoque por localização.';
+        return;
       }
-    }
-    const btn = document.getElementById('btnPosicoesLivres');
-    if (btn){ btn.addEventListener('click', gerarPosicoesLivres); }
-  })();
-  // =================== FIM POSIÇÕES LIVRES (ACRÉSCIMO) ===================
-  
-// ===== Inventário Porta-Porta =====
-function gerarPortaPorta(){
-  if(ultimoFiltro.length===0){document.getElementById('printArea').innerHTML='Pesquise primeiro.';return;}
-  const ordenado=[...ultimoFiltro].sort((a,b)=>String(a.Ubicacion||'').localeCompare(String(b.Ubicacion||''),'pt-BR',{numeric:true}));
-  const partes=chunkArray(ordenado, LPP);
-  const printArea=document.getElementById('printArea');printArea.innerHTML='';
-  partes.forEach(bloco=>{
-    const section=document.createElement('section');section.className='sheet';section.setAttribute('data-grupo','porta');
-    const titulo='Inventário Porta-Porta (QTD)';
-    const linhaContada='<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
-    const assinaturas='<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
-    section.innerHTML = `${cabecalho(titulo)}${linhaContada}${tabelaHTML(bloco,true)}${assinaturas}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-  });
-  numerarGrupo('porta');
-}
-document.getElementById('btnPortaPorta').addEventListener('click', gerarPortaPorta);
+      const temCampos = dados.some(l => ('name' in l) || ('label2' in l));
+      if (!temCampos) {
+        document.getElementById('printArea').innerHTML = 'O arquivo carregado não parece ser o "Estoque por localização" (campos esperados: name;label2).';
+        return;
+      }
+      const prefixo = (document.getElementById('searchPos')?.value || '').trim().toLowerCase();
+      let livres = dados.filter(l => !ehVazio(l.name) && ehVazio(l.label2));
+      if (prefixo) livres = livres.filter(l => String(l.name).toLowerCase().startsWith(prefixo));
+      livres.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR', { numeric: true, sensitivity: 'base' }));
 
+      const tabela = document.getElementById('tabela');
+      tabela.innerHTML = '';
+      const header = tabela.insertRow();
+      ['Endereço'].forEach(txt => {
+        const th = document.createElement('th');
+        th.textContent = txt;
+        header.appendChild(th);
+      });
+      livres.forEach(l => { const tr = tabela.insertRow(); tr.insertCell().textContent = l.name ?? ''; });
+
+      const printArea = document.getElementById('printArea');
+      printArea.innerHTML = '';
+
+      chunkArray(livres, LPP).forEach(bloco => {
+        const section = document.createElement('section');
+        section.className = 'sheet';
+        section.setAttribute('data-grupo', 'poslivre');
+        section.innerHTML = `${cabecalho('Posições Livres (label2 vazio) – Somente Endereço')}${tabelaPosLivreHTML(bloco)}<div class="page-footer"></div>`;
+        printArea.appendChild(section);
+      });
+
+      numerarGrupo('poslivre');
+    } catch (err) {
+      console.error('Erro gerarPosicoesLivres:', err);
+      showToast('Erro ao gerar Posições Livres: ' + (err?.message || err));
+    }
+  }
+
+  const btn = document.getElementById('btnPosicoesLivres');
+  if (btn) btn.addEventListener('click', gerarPosicoesLivres);
+})();
+
+/* ── Montagem da prévia ── */
+function montarTabela() {
+  const termo    = (document.getElementById('search').value    || '').toLowerCase();
+  const termoPos = (document.getElementById('searchPos').value || '').toLowerCase().trim();
+  const tabela   = document.getElementById('tabela');
+  tabela.innerHTML = '';
+
+  let base = dados.filter(l =>
+    String(l.Pieza       || '').toLowerCase() === termo ||
+    String(l.Descripcion1 || '').toLowerCase().includes(termo)
+  );
+  if (termoPos) base = base.filter(l => String(l.Ubicacion || '').toLowerCase().startsWith(termoPos));
+  ultimoFiltro = filtraPorLado(base);
+
+  if (ultimoFiltro.length === 0) { tabela.innerHTML = '<tr><td>Nada encontrado</td></tr>'; return; }
+
+  const header = tabela.insertRow();
+  ['Endereço','Codpro','Descrição','Label','Label Origin','Quantidade'].forEach(txt => {
+    const th = document.createElement('th');
+    th.textContent = txt;
+    header.appendChild(th);
+  });
+
+  ultimoFiltro.forEach(l => {
+    const tr = tabela.insertRow();
+    tr.insertCell().textContent = l.Ubicacion    ?? '';
+    tr.insertCell().textContent = l.Pieza        ?? '';
+    tr.insertCell().textContent = l.Descripcion1 ?? '';
+    tr.insertCell().textContent = l.label        ?? '';
+    tr.insertCell().textContent = l.labelorigin  ?? '';
+    const tdQtd = tr.insertCell();
+    tdQtd.textContent = l.CantidadTotal ?? '';
+    tdQtd.className   = 'num';
+  });
+}
+
+/* ── Carregamento de arquivo ── */
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const nome = file.name.toLowerCase();
+  try {
+    if (nome.endsWith('.csv')) {
+      if (typeof Papa !== 'undefined') {
+        Papa.parse(file, {
+          header: true, skipEmptyLines: true,
+          complete : (res) => { dados = res.data; showToast('Arquivo carregado! Linhas: ' + dados.length); },
+          error    : (err) => showToast('Erro ao ler CSV: ' + (err?.message || err))
+        });
+      } else if (typeof XLSX !== 'undefined') {
+        const text = await file.text();
+        const wb   = XLSX.read(text, { type: 'string' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        dados = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+        showToast('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
+      } else {
+        showToast('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.');
+      }
+    } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
+      if (typeof XLSX === 'undefined') { showToast('SheetJS não carregou.'); return; }
+      const buf   = await file.arrayBuffer();
+      const wb    = XLSX.read(buf, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      dados = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      showToast('Arquivo carregado! Linhas: ' + dados.length);
+    } else {
+      showToast('Formato não suportado. Use CSV, XLSX ou XLS.');
+    }
+  } catch (err) {
+    showToast('Erro ao carregar: ' + (err?.message || err));
+  }
+});
+
+/* ── Event listeners ── */
+document.getElementById('btnBuscar').addEventListener('click', montarTabela);
+document.getElementById('search').addEventListener('keypress',   (e) => { if (e.key === 'Enter') montarTabela(); });
+document.getElementById('searchPos').addEventListener('keypress',(e) => { if (e.key === 'Enter') montarTabela(); });
+document.querySelectorAll('input[name="lado"]').forEach(r => r.addEventListener('change', montarTabela));
+
+document.getElementById('btnCiclicoQtd').addEventListener('click',      () => gerarCadernos('qtd'));
+document.getElementById('btnCiclicoSqtd').addEventListener('click',     () => gerarCadernos('sqtd'));
+document.getElementById('btnAmbos').addEventListener('click',           gerarAmbos);
+document.getElementById('btnEmbalagemPosicao').addEventListener('click',gerarEmbalagemPosicao);
+document.getElementById('btnPortaPorta').addEventListener('click',      gerarPortaPorta);
 </script>
 </body>
 </html>

@@ -6,9 +6,10 @@
   <title>Dashboard Inventário (Leve)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- XLSX (Excel/CSV) -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="css/design-system.css" />
   <script src="js/normalize-styles.js" defer></script>
+  <script src="js/toast.js"></script>
   <style>
     :root {
       --bg: var(--color-bg);
@@ -141,6 +142,7 @@
 
   <script>
     let dados = {};
+    const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
     /* Conversão robusta: aceita "1.234,56" ou "1,234.56" */
     function toNumberFlexible(v) {
@@ -313,7 +315,7 @@
       if (!q) return;
 
       const match = Object.keys(dados).find(i => i.toLowerCase().includes(q));
-      if (!match) { alert('Item não encontrado'); return; }
+      if (!match) { showToast('Item não encontrado'); return; }
 
       const d = dados[match];
 
@@ -366,10 +368,10 @@
           const cls = dif > 0 ? 'diff-pos' : (dif < 0 ? 'diff-neg' : 'diff-zero');
           subTabela.innerHTML += `
             <tr>
-              <td>${sub}</td>
-              <td>${contado}</td>
-              <td>${sistema}</td>
-              <td class="${cls}">${dif}</td>
+              <td>${escHtml(sub)}</td>
+              <td>${escHtml(contado)}</td>
+              <td>${escHtml(sistema)}</td>
+              <td class="${cls}">${escHtml(dif)}</td>
             </tr>`;
         });
       }
