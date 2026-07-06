@@ -328,18 +328,17 @@ function cabecalho(titulo) {
    2. Alinhamento à direita feito com class="num" na <td>,
       não com seletor nth-child (que errava a coluna no
       modo sem Observação).
-   3. Quando mostrarQtd=false a coluna Quantidade some e
-      a tabela passa a ter 5 colunas (sem Obs e sem Qtd
-      visíveis) — compatível com o cabeçalho gerado.
+  3. Quando mostrarQtd=false a coluna Quantidade continua
+    no layout, mas o valor fica em branco.
 
    Larguras com Observação  (mostrarQtd = true,  7 col):
      Endereço  14% | Codpro 10% | Descrição 28%
      Label 12% | Label Origin 12% | Qtd 8% | Obs 16%
      Total = 100%
 
-   Larguras sem Observação  (mostrarQtd = false, 5 col):
-     Endereço  20% | Codpro 14% | Descrição 36%
-     Label 15% | Label Origin 15%
+   Larguras sem Observação  (mostrarQtd = false, 6 col):
+     Endereço  16% | Codpro 11% | Descrição 33%
+     Label 14% | Label Origin 14% | Qtd 12%
      Total = 100%
 ════════════════════════════════════════════════════════ */
 function tabelaHTML(linhas, mostrarQtd) {
@@ -356,16 +355,17 @@ function tabelaHTML(linhas, mostrarQtd) {
          <col style="width:16%">
        </colgroup>`
     : `<colgroup>
-          <col style="width:20%">
-          <col style="width:14%">
-          <col style="width:36%">
-          <col style="width:15%">
-          <col style="width:15%">
+         <col style="width:16%">
+         <col style="width:11%">
+         <col style="width:33%">
+         <col style="width:14%">
+         <col style="width:14%">
+         <col style="width:12%">
        </colgroup>`;
 
   /* --- cabeçalho da tabela ----------------------------- */
   const thObs = mostrarQtd ? '<th>Observação</th>' : '';
-  const thQtd = mostrarQtd ? '<th>Quantidade</th>' : '';
+  const thQtd = '<th>Quantidade</th>';
   const thead = `
     <thead>
       <tr>
@@ -388,7 +388,7 @@ function tabelaHTML(linhas, mostrarQtd) {
     const orig  = l.labelorigin ?? '';
     const qtd   = l.CantidadTotal ?? '';
     const tdObs = mostrarQtd ? '<td></td>' : '';
-    const tdQtd  = mostrarQtd ? `<td class="num" title="${escHtml(qtd)}">${escHtml(qtd)}</td>` : '';
+    const tdQtd  = mostrarQtd ? `<td class="num" title="${escHtml(qtd)}">${escHtml(qtd)}</td>` : '<td class="num"></td>';
 
     return `<tr>
       <td title="${escHtml(ubi)}">${escHtml(ubi)}</td>
