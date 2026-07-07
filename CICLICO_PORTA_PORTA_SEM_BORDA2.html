@@ -328,8 +328,9 @@ function cabecalho(titulo) {
    2. Alinhamento à direita feito com class="num" na <td>,
       não com seletor nth-child (que errava a coluna no
       modo sem Observação).
-  3. Quando mostrarQtd=false a coluna Quantidade continua
-    no layout, mas o valor fica em branco.
+   3. Quando mostrarQtd=false a coluna Quantidade some e
+      a tabela passa a ter 5 colunas (sem Obs e sem Qtd
+      visíveis) — compatível com o cabeçalho gerado.
 
    Larguras com Observação  (mostrarQtd = true,  7 col):
      Endereço  14% | Codpro 10% | Descrição 28%
@@ -365,7 +366,6 @@ function tabelaHTML(linhas, mostrarQtd) {
 
   /* --- cabeçalho da tabela ----------------------------- */
   const thObs = mostrarQtd ? '<th>Observação</th>' : '';
-  const thQtd = '<th>Quantidade</th>';
   const thead = `
     <thead>
       <tr>
@@ -374,7 +374,7 @@ function tabelaHTML(linhas, mostrarQtd) {
         <th>Descrição</th>
         <th>Label</th>
         <th>Label Origin</th>
-        ${thQtd}
+        <th>Quantidade</th>
         ${thObs}
       </tr>
     </thead>`;
@@ -386,17 +386,16 @@ function tabelaHTML(linhas, mostrarQtd) {
     const desc  = l.Descripcion1 ?? '';
     const lbl   = l.label      ?? '';
     const orig  = l.labelorigin ?? '';
-    const qtd   = l.CantidadTotal ?? '';
+    const qtd   = mostrarQtd ? (l.CantidadTotal ?? '') : '';
     const tdObs = mostrarQtd ? '<td></td>' : '';
-    const tdQtd  = mostrarQtd ? `<td class="num" title="${escHtml(qtd)}">${escHtml(qtd)}</td>` : '<td class="num"></td>';
 
     return `<tr>
-      <td title="${escHtml(ubi)}">${escHtml(ubi)}</td>
-      <td title="${escHtml(pieza)}">${escHtml(pieza)}</td>
-      <td title="${escHtml(desc)}">${escHtml(desc)}</td>
-      <td title="${escHtml(lbl)}">${escHtml(lbl)}</td>
-      <td title="${escHtml(orig)}">${escHtml(orig)}</td>
-      ${tdQtd}
+      <td title="${ubi}">${ubi}</td>
+      <td title="${pieza}">${pieza}</td>
+      <td title="${desc}">${desc}</td>
+      <td title="${lbl}">${lbl}</td>
+      <td title="${orig}">${orig}</td>
+      <td class="num" title="${qtd}">${qtd}</td>
       ${tdObs}
     </tr>`;
   }).join('');
