@@ -10,29 +10,26 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="js/toast.js"></script>
 
-  <link rel="stylesheet" href="css/design-system.css" />
-  <script src="js/normalize-styles.js" defer></script>
-
   <style>
     :root{
-      --azul: var(--color-primary);
-      --azul-escuro: var(--color-primary-dark);
-      --azul-botao: var(--color-primary-600);
-      --cinza: var(--color-text-muted);
-      --bg: var(--color-bg);
-      --verde: var(--color-success);
-      --vermelho: var(--color-danger);
-      --perigo: var(--color-danger);
-      --hdr-grad-start: var(--color-primary-dark);
-      --hdr-grad-end: var(--color-primary);
-      --hdr-text: var(--color-surface);
-      --hdr-accent: var(--color-info);
-      --card: var(--color-surface);
-      --muted: var(--color-text-muted);
-      --border: var(--color-border);
+      --azul: #0d6efd;
+      --azul-escuro: #0f1830;
+      --azul-botao: #0d6efd;
+      --cinza: #8b96b8;
+      --bg: #f2f4f9;
+      --verde: #00c853;
+      --vermelho: #ff3b6b;
+      --perigo: #ff3b6b;
+      --hdr-grad-start: #0f1830;
+      --hdr-grad-end: #1a2a56;
+      --hdr-text: #ffffff;
+      --hdr-accent: #7dd3fc;
+      --card: #111c38;
+      --muted: #8b96b8;
+      --border: rgba(255,255,255,.08);
     }
-    body { font-family: Arial, sans-serif; background: var(--bg); padding: 20px; color: #222; }
-    h1 { margin-bottom: 10px; text-align: center; }
+    body { font-family: Arial, sans-serif; background: var(--bg); padding: 20px; color: #1a2340; }
+    h1 { margin-bottom: 10px; text-align: center; color:#1a2340; }
 
     /* ===================== HEADER ELEGANTE ===================== */
     .app-header {
@@ -83,19 +80,24 @@
     .btn-hdr:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.25); }
     .btn-hdr:active { transform: translateY(1px); }
 
-    .box { background:#fff; padding:15px; border-radius:8px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,.1); }
-    .box h3 { margin-bottom:10px; }
+    .box { background:var(--card); color:#e6efff; padding:15px; border-radius:12px; margin-bottom:20px; box-shadow:0 4px 14px rgba(15,24,48,.18); border:1px solid var(--border); }
+    .box h3 { margin-bottom:10px; color:#fff; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
     .box canvas { width:100% !important; max-height:320px; }
     table { width:100%; border-collapse:collapse; font-size:14px; }
-    th, td { border:1px solid #ddd; padding:8px; text-align:left; vertical-align:top; }
-    th { background:#eee; position: sticky; top:0; z-index:1; }
-    .muted { color:#666; font-size:12px; }
+    th, td { border:1px solid #1a2941; padding:8px; text-align:left; vertical-align:top; }
+    th { background:#0c1630; color:#dbe7ff; position: sticky; top:0; z-index:1; }
+    td { color:#e6efff; }
+    .muted { color:var(--muted); font-size:12px; }
     .file-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .kpi-row { display:grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap:10px; margin-bottom:10px; }
-    .kpi { background:#f7f9fc; border:1px solid #e3e8ef; border-radius:8px; padding:10px; }
-    .kpi .label { font-size:12px; color:#667085; }
-    .kpi .value { font-size:18px; font-weight:700; margin-top:4px; }
+    .kpi { background:#16223f; border:1px solid var(--border); border-top:4px solid var(--azul); border-radius:10px; padding:10px; }
+    .kpi:nth-child(1){ border-top-color:#17c3c3; }
+    .kpi:nth-child(2){ border-top-color:#ff8a3d; }
+    .kpi:nth-child(3){ border-top-color:var(--verde); }
+    .kpi:nth-child(4){ border-top-color:var(--azul); }
+    .kpi .label { font-size:12px; color:var(--muted); }
+    .kpi .value { font-size:18px; font-weight:700; margin-top:4px; color:#fff; }
     .th-sortable { cursor:pointer; user-select:none; }
 
     /* Modal */
@@ -117,9 +119,12 @@
       .app-header .right { justify-content: flex-start; }
     }
   </style>
+<link rel="stylesheet" href="css/design-system.css" />
+<script src="js/normalize-styles.js" defer></script>
 </head>
 <body>
-    <!-- ====== Cabeçalho com relógio + botões principais ====== -->
+
+  <!-- ====== Cabeçalho com relógio + botões principais ====== -->
   <header class="app-header" aria-label="Cabeçalho da aplicação">
     <div class="left">
       <div class="logo-wrap">
@@ -298,12 +303,44 @@ function salvarInventarioRegistro(reg){
   localStorage.setItem(INV_KEY, JSON.stringify(hist));
   return hist;
 }
+
 function limparHistoricoGeral(){
+  // Apaga histórico de inventários e snapshots (LIMPA GERAL)
   localStorage.removeItem(INV_KEY);
-  reRenderInventarioSelectOptions();
-  desenharHistoricoInventarios();
-  desenharPizzaAcuracia(0);
+  localStorage.removeItem(INV_SNAP_KEY);
+
+  // Zera dataset e estado de tabela
+  TBL_HEADERS = []; TBL_ROWS = []; TBL_FILTER = '';
+  TBL_SORT = { colIndex: null, asc: true };
+  const thead = document.getElementById('theadRow');
+  const tbody = document.querySelector('#tabela tbody');
+  if (thead) thead.innerHTML = '';
+  if (tbody) tbody.innerHTML = '';
+  const theadD = document.getElementById('theadDesvios');
+  const tbodyD = document.getElementById('tbodyDesvios');
+  if (theadD) theadD.innerHTML = '';
+  if (tbodyD) tbodyD.innerHTML = '';
+
+  // Zera KPIs e datas exibidas
+  const zeroDate = '--/--/----';
+  const chip = document.getElementById('hdrDataChip');
+  if (chip) chip.textContent = `Atualizado: ${zeroDate}`;
+  document.getElementById('dataAtual').innerText = zeroDate;
+  document.getElementById('dataAtualTabela').innerText = zeroDate;
+  document.getElementById('kpiPecas').innerText = '0';
   document.getElementById('kpiAcuracidade').innerText = '—';
+
+  // Reseta título de desvios
+  const titulo = document.getElementById('tituloDesvios');
+  if (titulo){ titulo.textContent='📋 Produtos com Desvio'; titulo.style.color=''; titulo.style.fontWeight=''; }
+
+  // Destroi gráficos
+  try { if (chartInv) { chartInv.destroy(); chartInv = null; } } catch(e){}
+  try { if (chartPizza) { chartPizza.destroy(); chartPizza = null; } } catch(e){}
+
+  // Recarrega select vazio e destrava UI
+  reRenderInventarioSelectOptions();
+  setLockMode(false);
 }
 
 /* ============================================================
@@ -313,14 +350,22 @@ function carregarSnapshots(){
   try { return JSON.parse(localStorage.getItem(INV_SNAP_KEY)) || {}; }
   catch { return {}; }
 }
-function salvarSnapshot(isoData, headers, rows, opts={ overwrite:false }){
+
+function salvarSnapshot(isoData, headers, rows, opts={ overwrite:false }) {
   if (!isoData) throw new Error('Data ISO não informada.');
   const snaps = carregarSnapshots();
   if (!opts.overwrite && snaps[isoData]) return { ok:false, reason:'exists' };
-  snaps[isoData] = { savedAt: Date.now(), headers: [...headers], rows: rows.map(r => ({...r})) };
+  const kpis = computeKPIs(headers, rows);
+  snaps[isoData] = {
+    savedAt: Date.now(),
+    headers: [...headers],
+    rows: rows.map(r => ({...r})),
+    kpis
+  };
   localStorage.setItem(INV_SNAP_KEY, JSON.stringify(snaps));
   return { ok:true };
 }
+
 function carregarSnapshotPorData(isoData){
   const snaps = carregarSnapshots();
   return snaps[isoData] || null;
@@ -370,6 +415,32 @@ function desenharPizzaAcuracia(acur){
 /* ============================================================
     HELPERS / TABELAS
 ============================================================ */
+
+// --- NOVO: cálculo de KPIs unificado ---
+function computeKPIs(headers, rows) {
+  const colQtd = detectarColunaQuantidade(headers, rows) || 'Quantidade';
+  let totalQtdPecas = 0, ok = 0, desvio = 0;
+  for (const r of rows) {
+    const qRaw = toNumber(r[colQtd]);
+    const q = Number.isFinite(qRaw) ? qRaw : 0;
+    totalQtdPecas += q;
+    if (q > 0) ok++; else desvio++;
+  }
+  const total = ok + desvio;
+  const acuracia = total > 0 ? (ok / total) * 100 : 0;
+  return { totalQtdPecas, ok, desvio, acuracia };
+}
+
+// --- NOVO: modo de trava (congela UI quando um snapshot é aplicado) ---
+let LOCKED = false;
+function setLockMode(on, iso = null) {
+  LOCKED = !!on;
+  const file = document.getElementById('fileInput');
+  const btnSalvar = document.getElementById('btnSalvarSnapshot');
+  if (file) file.disabled = LOCKED;
+  if (btnSalvar) btnSalvar.disabled = LOCKED;
+}
+
 function norm(s){
   return String(s ?? '')
     .normalize('NFD')
@@ -721,28 +792,16 @@ document.getElementById('btnModalSalvar').onclick = ()=>{
 /* ============================================================
     PROCESSAMENTO DO WMS
 ============================================================ */
+
 function processarWMS(dados){
   const headers = Object.keys(dados[0] || {});
   if (!headers.length) { showToast('A planilha está vazia.'); return; }
-
-  const colQtd = detectarColunaQuantidade(headers, dados) || 'Quantidade';
-
-  let totalQtdPecas=0, ok=0, desvio=0;
-  dados.forEach(r=>{
-    const qRaw = toNumber(r[colQtd]);
-    const q = Number.isFinite(qRaw) ? qRaw : 0;
-    totalQtdPecas += q;
-    if(q>0) ok++; else desvio++;
-  });
-
-  document.getElementById('kpiPecas').innerText = totalQtdPecas.toLocaleString(LOCALE);
-  const total = ok+desvio;
-  const ac = total>0 ? (ok/total)*100 : 0;
-  lastComputed = { acuracia: ac, ok, total };
-
+  const k = computeKPIs(headers, dados);
+  document.getElementById('kpiPecas').innerText = k.totalQtdPecas.toLocaleString(LOCALE);
+  lastComputed = { acuracia: k.acuracia, ok: k.ok, total: k.ok + k.desvio };
   setTableDataset(headers, dados);
   preencherTabelaDesvios(dados, headers);
-  abrirModal(ac);
+  abrirModal(k.acuracia);
 }
 
 /* ============================================================
@@ -771,28 +830,32 @@ function reRenderInventarioSelectOptions(){
   if (!sel.value && sel.options.length) sel.value = sel.options[0].value;
 }
 
+
 function atualizarViewsAcuraciaPorSelecao(){
   const sel = document.getElementById('selDiaInv');
   if (!sel) return;
   const iso = sel.value;
-
   const hist = carregarInventarios();
-  const inv = hist.find(h=>h.data===iso) || { acuracia:0 };
-
+  const inv = hist.find(h => h.data === iso) || { acuracia:0 };
   document.getElementById('kpiAcuracidade').innerText =
     inv.acuracia ? `${inv.acuracia.toFixed(1)}%` : '—';
-
   try { desenharPizzaAcuracia(inv.acuracia || 0); } catch(e){ console.error(e); }
-
-  // Se houver snapshot deste dia, restaurar tabela/desvios
   const snap = carregarSnapshotPorData(iso);
   if (snap && snap.headers && snap.rows) {
     setTableDataset(snap.headers, snap.rows);
     preencherTabelaDesvios(snap.rows, snap.headers);
+    const k = snap.kpis || computeKPIs(snap.headers, snap.rows);
+    document.getElementById('kpiPecas').innerText = k.totalQtdPecas.toLocaleString(LOCALE);
+    const ddmmyyyy = iso ? iso.split('-').reverse().join('/') : '--/--/----';
+    const chip = document.getElementById('hdrDataChip');
+    if (chip) chip.textContent = `Atualizado: ${ddmmyyyy}`;
+    document.getElementById('dataAtual').innerText = ddmmyyyy;
+    document.getElementById('dataAtualTabela').innerText = ddmmyyyy;
+    setLockMode(true, iso);
   } else {
-    // Se não houver snapshot, mantém dataset atual mas atualiza título de desvios para neutro
     const titulo = document.getElementById('tituloDesvios');
     if (titulo) { titulo.style.color = ''; titulo.style.fontWeight = ''; }
+    setLockMode(false);
   }
 }
 
