@@ -192,6 +192,18 @@
     </div>
   </div>
 
+  <!-- Materiais Divergentes (Sistema x Inventário) -->
+  <div class="box">
+    <h3 id="tituloDivergentes">📌 Materiais Divergentes</h3>
+    <div class="muted" id="infoDivergentes" style="margin-bottom:8px;"></div>
+    <div style="overflow:auto; max-height:420px;">
+      <table id="tabelaDivergentes">
+        <thead><tr id="theadDivergentes"></tr></thead>
+        <tbody id="tbodyDivergentes"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Tabela principal -->
   <div class="box">
     <h3>🧾 Dados — Atualizado em: <span id="dataAtualTabela"></span></h3>
@@ -320,6 +332,15 @@ function limparHistoricoGeral(){
   const tbodyD = document.getElementById('tbodyDesvios');
   if (theadD) theadD.innerHTML = '';
   if (tbodyD) tbodyD.innerHTML = '';
+
+  const theadDiv = document.getElementById('theadDivergentes');
+  const tbodyDiv = document.getElementById('tbodyDivergentes');
+  const infoDiv = document.getElementById('infoDivergentes');
+  if (theadDiv) theadDiv.innerHTML = '';
+  if (tbodyDiv) tbodyDiv.innerHTML = '';
+  if (infoDiv) infoDiv.textContent = '';
+  const tituloDiv = document.getElementById('tituloDivergentes');
+  if (tituloDiv) { tituloDiv.textContent = '📌 Materiais Divergentes'; tituloDiv.style.color=''; tituloDiv.style.fontWeight=''; }
 
   // Zera KPIs e datas exibidas
   const zeroDate = '--/--/----';
@@ -713,6 +734,144 @@ function preencherTabelaDesvios(dados, headers){
 }
 
 /* ============================================================
+    MATERIAIS DIVERGENTES — Sistema (WMS) x Inventariado (Físico)
+============================================================ */
+function detectarColunaQtdSistema(headers){
+  return detectarColuna(headers, [
+    ['quantidade sistema','qtd sistema','qtde sistema','quantidade wms','qtd wms','qtde wms',
+     'quantidade estoque','qtd estoque','saldo sistema','saldo wms','estoque sistema',
+     'quantidade sistêmica','sistema']
+  ]);
+}
+function detectarColunaQtdInventario(headers){
+  return detectarColuna(headers, [
+    ['quantidade inventariada','qtd inventariada','qtde inventariada','quantidade inventario',
+     'quantidade inventário','qtd inventario','qtd inventário','quantidade fisica','quantidade física',
+     'qtd fisica','qtd física','quantidade contada','qtd contada','contagem fisica','contagem física',
+     'inventariado','inventario','inventário']
+  ]);
+}
+function detectarColunaDiferenca(headers){
+  return detectarColuna(headers, [
+    ['diferença','diferenca','divergencia','divergência','delta','diff']
+  ]);
+}
+function detectarColunaDescricao(headers){
+  return detectarColuna(headers, [
+    ['descrição','descricao','desc','description','nome do produto','nome material','nome']
+  ]);
+}
+
+function preencherTabelaDivergentes(dados, headers){
+  const thead = document.getElementById('theadDivergentes');
+  const tbody = document.getElementById('tbodyDivergentes');
+  const info  = document.getElementById('infoDivergentes');
+  const titulo = document.getElementById('tituloDivergentes');
+  if (!thead || !tbody) return;
+  thead.innerHTML = ''; tbody.innerHTML = '';
+
+  if (!Array.isArray(dados) || !headers?.length){
+    if (info) info.textContent = '';
+    return;
+  }
+
+  // 1) Detectar colunas relevantes (sem tocar na detecção usada pelos Desvios/KPIs)
+  const colMaterial   = detectarColuna(headers, [['peça','peca','produto','item','código','codigo','sku','material']]);
+  const colDescricao  = detectarColunaDescricao(headers);
+  const colLocal      = detectarColuna(headers, [['localização','localizacao','location','bin','rua','endereco','endereço']]);
+  const colQtdSistema = detectarColunaQtdSistema(headers);
+  const colQtdInvent  = detectarColunaQtdInventario(headers);
+  const colDiferenca  = detectarColunaDiferenca(headers);
+
+  // 2) Sem as duas colunas de quantidade (Sistema e Inventariado) não é possível comparar
+  if (!colQtdSistema || !colQtdInvent){
+    const faltando = [];
+    if (!colQtdSistema) faltando.push('"Quantidade Sistema (WMS)"');
+    if (!colQtdInvent)  faltando.push('"Quantidade Inventariada (Física)"');
+
+    if (info){
+      info.textContent = `A planilha importada não possui a(s) coluna(s) ${faltando.join(' e ')} necessária(s) para comparar Sistema x Inventário. `
+        + 'A planilha atual traz apenas uma coluna de quantidade única, usada nos KPIs e em "Produtos com Desvio". '
+        + 'Para exibir os Materiais Divergentes, inclua na planilha duas colunas separadas com a quantidade do WMS e a quantidade contada fisicamente.';
+    }
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.innerText = 'Não foi possível identificar as colunas de quantidade do sistema e/ou inventariada.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    if (titulo){ titulo.style.color=''; titulo.style.fontWeight=''; }
+    return;
+  }
+
+  // 3) Monta colunas de exibição (somente as que existirem)
+  const colunas = [];
+  if (colMaterial)  colunas.push({ key: colMaterial,  label: 'Material' });
+  if (colDescricao) colunas.push({ key: colDescricao, label: 'Descrição' });
+  if (colLocal)     colunas.push({ key: colLocal,     label: 'Localização' });
+  colunas.push({ key: colQtdSistema, label: 'Quantidade Sistema' });
+  colunas.push({ key: colQtdInvent,  label: 'Quantidade Inventariada' });
+  colunas.push({ key: '__diferenca__', label: 'Diferença' });
+
+  colunas.forEach(c=>{
+    const th = document.createElement('th');
+    th.innerText = c.label;
+    thead.appendChild(th);
+  });
+
+  // 4) Filtra apenas registros onde Sistema != Inventário
+  const divergentes = [];
+  for (const r of dados){
+    const sisRaw = r[colQtdSistema];
+    const invRaw = r[colQtdInvent];
+    const sis = toNumber(sisRaw);
+    const inv = toNumber(invRaw);
+    const sisNum = Number.isFinite(sis) ? sis : 0;
+    const invNum = Number.isFinite(inv) ? inv : 0;
+    if (sisNum !== invNum){
+      const diffCalculada = colDiferenca ? toNumber(r[colDiferenca]) : (invNum - sisNum);
+      divergentes.push({ row: r, diferenca: Number.isFinite(diffCalculada) ? diffCalculada : (invNum - sisNum) });
+    }
+  }
+
+  // 5) Ordena por material/etiqueta se existir
+  const chaveOrdenacao = colMaterial || colQtdSistema;
+  divergentes.sort((a,b) => String(a.row[chaveOrdenacao] ?? '')
+    .localeCompare(String(b.row[chaveOrdenacao] ?? ''), 'pt-BR', { sensitivity:'base', numeric:true }));
+
+  if (info){
+    info.textContent = `Exibindo ${divergentes.length.toLocaleString(LOCALE)} material(is) com divergência entre Sistema e Inventário, de ${dados.length.toLocaleString(LOCALE)} registro(s) importado(s).`;
+  }
+
+  if (!divergentes.length){
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = colunas.length;
+    td.innerText = 'Nenhum material divergente encontrado.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    const frag = document.createDocumentFragment();
+    divergentes.forEach(({ row, diferenca })=>{
+      const tr = document.createElement('tr');
+      colunas.forEach(c=>{
+        const td = document.createElement('td');
+        td.innerText = (c.key === '__diferenca__') ? diferenca : (row[c.key] ?? '');
+        tr.appendChild(td);
+      });
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+  }
+
+  if (titulo){
+    titulo.style.color = divergentes.length > 0 ? 'var(--vermelho)' : '';
+    titulo.style.fontWeight = divergentes.length > 0 ? '700' : '';
+  }
+
+  console.debug('[divergentes] colQtdSistema:', colQtdSistema, '| colQtdInvent:', colQtdInvent, '| total divergentes:', divergentes.length);
+}
+
+/* ============================================================
     EXPORTAÇÕES
 ============================================================ */
 function exportarTabelaCSV(){
@@ -801,6 +960,7 @@ function processarWMS(dados){
   lastComputed = { acuracia: k.acuracia, ok: k.ok, total: k.ok + k.desvio };
   setTableDataset(headers, dados);
   preencherTabelaDesvios(dados, headers);
+  preencherTabelaDivergentes(dados, headers);
   abrirModal(k.acuracia);
 }
 
@@ -844,6 +1004,7 @@ function atualizarViewsAcuraciaPorSelecao(){
   if (snap && snap.headers && snap.rows) {
     setTableDataset(snap.headers, snap.rows);
     preencherTabelaDesvios(snap.rows, snap.headers);
+    preencherTabelaDivergentes(snap.rows, snap.headers);
     const k = snap.kpis || computeKPIs(snap.headers, snap.rows);
     document.getElementById('kpiPecas').innerText = k.totalQtdPecas.toLocaleString(LOCALE);
     const ddmmyyyy = iso ? iso.split('-').reverse().join('/') : '--/--/----';
@@ -855,6 +1016,14 @@ function atualizarViewsAcuraciaPorSelecao(){
   } else {
     const titulo = document.getElementById('tituloDesvios');
     if (titulo) { titulo.style.color = ''; titulo.style.fontWeight = ''; }
+    const theadD = document.getElementById('theadDivergentes');
+    const tbodyD = document.getElementById('tbodyDivergentes');
+    const infoD = document.getElementById('infoDivergentes');
+    if (theadD) theadD.innerHTML = '';
+    if (tbodyD) tbodyD.innerHTML = '';
+    if (infoD) infoD.textContent = '';
+    const tituloD = document.getElementById('tituloDivergentes');
+    if (tituloD) { tituloD.style.color = ''; tituloD.style.fontWeight = ''; }
     setLockMode(false);
   }
 }
