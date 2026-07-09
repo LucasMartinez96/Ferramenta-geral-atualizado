@@ -109,12 +109,11 @@ td.num { text-align: right; }
   padding: 12px;
   margin-bottom: 20px;
   background: #fff;
-  page-break-inside: avoid;
   display: grid;
   grid-template-rows: auto 1fr auto;
   row-gap: 4px;
 }
-.sheet + .sheet { page-break-before: always; }
+.sheet + .sheet { page-break-before: always; break-before: page; }
 
 /* Sem borda para porta-porta */
 .sheet[data-grupo='porta'] {
@@ -172,28 +171,91 @@ td.num { text-align: right; }
 
   #printArea { padding: 0 !important; margin: 0 auto !important; background: #fff !important; }
 
+  /*
+     CORREÇÃO DA PÁGINA EM BRANCO NO CHROME/EDGE
+     ────────────────────────────────────────────
+     Na pré-visualização (tela) o .sheet usa CSS Grid
+     (grid-template-rows: auto 1fr auto) para posicionar
+     cabeçalho / tabela / rodapé. Combinar um contêiner de
+     Grid com "page-break-inside: avoid" é a causa raiz do
+     bug clássico do Chrome/Edge: se o conteúdo do .sheet
+     ultrapassa a altura útil da folha, o motor de impressão
+     empurra o bloco inteiro (por causa do "avoid") para a
+     página seguinte e deixa a página anterior em branco.
+
+     A correção é: SOMENTE na impressão, o .sheet volta a um
+     fluxo normal em bloco (display:block) e SEM
+     "page-break-inside: avoid" na folha inteira. Quem garante
+     que nenhuma linha é cortada ao meio é a regra em <tr>
+     logo abaixo — muito mais confiável e sem o efeito colateral
+     de páginas em branco.
+  */
   .sheet {
+    display: block !important;
     width: 281mm;
     min-height: 194mm;
     height: auto;
     margin: 0 auto;
-    page-break-inside: avoid;
+    page-break-inside: auto;
+    break-inside: auto;
   }
 
   .sheet[data-grupo='porta'] { border: none !important; box-shadow: none !important; }
 
-  /* Na impressão permite quebra dentro da tabela para não cortar linhas */
-  table { page-break-inside: auto; }
-  tr    { page-break-inside: avoid; page-break-after: auto; }
+  .page-header {
+    margin-bottom: 4px;
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  .grid-wrap { overflow: visible; min-height: 0; }
+
+  .page-footer {
+    margin-top: 6px;
+    padding-top: 3px;
+    border-top: 1px solid #d8e1ea;
+    text-align: right;
+    page-break-before: avoid;
+    break-before: avoid-page;
+  }
+
+  /* table-layout:fixed já é definido nas regras gerais e NÃO é
+     sobrescrito aqui: é isso que garante que o <colgroup> controle
+     100% da largura das colunas de forma idêntica no <thead> e no
+     <tbody>, em todas as páginas. */
+  table { page-break-inside: auto; break-inside: auto; }
+
+  /* Repete o cabeçalho da tabela em cada página, caso alguma
+     tabela precise mesmo assim se dividir entre folhas
+     (rede de segurança extra para manter cabeçalho e corpo
+     sempre alinhados). */
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+
+  /* Nenhuma linha é cortada entre páginas */
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid-page;
+    page-break-after: auto;
+  }
 
   th, td {
     border-color: #cfd6de;
     border-width: 0.5pt;
-    padding: 4px 6px;
-    /* Impressão: permite quebra de linha para não truncar conteúdo */
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+    padding: 3px 6px;
+    font-size: 11.5px;
+    line-height: 1.25;
+    /*
+       Mantém EXATAMENTE o mesmo comportamento de texto da tela:
+       uma única linha por célula, com reticências (ellipsis)
+       quando o conteúdo não couber na largura da coluna.
+       Isto é o que corrige a quebra de linha em "Descrição"
+       (que aumentava a altura das linhas) e, por consequência,
+       o desalinhamento de colunas e de cabeçalho entre páginas.
+    */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .grid { border-width: 0.75pt; border-color: #cfd6de; }
