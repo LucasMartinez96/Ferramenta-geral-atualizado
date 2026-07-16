@@ -331,6 +331,25 @@ function chunkArray(arr, size) {
   return out;
 }
 
+/* ── Separação de impressão por Fábrica (Ubicacion / Posição) ──
+   Regra: tudo que começar com "1-" ou "2-" fica no grupo Fábrica 1/2;
+   tudo que começar com "3-" fica no grupo Fábrica 3. A ordenação já
+   aplicada antes de chamar esta função é preservada dentro de cada
+   grupo (partição estável). O grupo Fábrica 3 só é paginado depois
+   que todo o grupo Fábrica 1/2 já foi paginado, e nunca compartilham
+   o mesmo bloco/página entre si. */
+function chunksPorFabrica(linhas) {
+  const fab12 = [];
+  const fab3  = [];
+  for (const l of linhas) {
+    const chave    = String(l.Ubicacion ?? l.name ?? '');
+    const primeiro = chave.split('-')[0].trim();
+    if (primeiro === '3') fab3.push(l);
+    else fab12.push(l);
+  }
+  return [...chunkArray(fab12, LPP), ...chunkArray(fab3, LPP)];
+}
+
 function dataHora() {
   const d = new Date();
   return {
@@ -534,7 +553,7 @@ function gerarCadernos(tipo) {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', tipo);
@@ -557,7 +576,7 @@ function gerarAmbos() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'qtd');
@@ -565,7 +584,7 @@ function gerarAmbos() {
     printArea.appendChild(section);
   });
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'sqtd');
@@ -607,7 +626,7 @@ function gerarEmbalagemPosicao() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(linhas, LPP).forEach(bloco => {
+  chunksPorFabrica(linhas).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'embalagem');
@@ -628,7 +647,7 @@ function gerarPortaPorta() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'porta');
@@ -689,7 +708,7 @@ function gerarPortaPorta() {
       const printArea = document.getElementById('printArea');
       printArea.innerHTML = '';
 
-      chunkArray(livres, LPP).forEach(bloco => {
+      chunksPorFabrica(livres).forEach(bloco => {
         const section = document.createElement('section');
         section.className = 'sheet';
         section.setAttribute('data-grupo', 'poslivre');
