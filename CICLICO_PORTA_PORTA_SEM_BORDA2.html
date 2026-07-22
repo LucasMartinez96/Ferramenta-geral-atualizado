@@ -347,7 +347,11 @@ function chunksPorFabrica(linhas) {
     if (primeiro === '3') fab3.push(l);
     else fab12.push(l);
   }
-  return [...chunkArray(fab12, LPP), ...chunkArray(fab3, LPP)];
+  const blocos12 = chunkArray(fab12, LPP);
+  const blocos3  = chunkArray(fab3, LPP);
+  blocos12.forEach(b => { b._fabGrupo = 'fab12'; });
+  blocos3.forEach(b => { b._fabGrupo = 'fab3'; });
+  return [...blocos12, ...blocos3];
 }
 
 function dataHora() {
@@ -526,16 +530,19 @@ function tabelaEmbalagemHTML(linhas) {
 
 /* ── Numeração de páginas ── */
 function numerarGrupo(grupo) {
-  const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)];
-  const total  = sheets.length;
-  sheets.forEach((sheet, idx) => {
-    let footer = sheet.querySelector('.page-footer');
-    if (!footer) {
-      footer = document.createElement('div');
-      footer.className = 'page-footer';
-      sheet.appendChild(footer);
-    }
-    footer.textContent = `Página ${idx + 1} de ${total}`;
+  ['fab12', 'fab3'].forEach(fabGrupo => {
+    const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"]`)];
+    const total  = sheets.length;
+    if (total === 0) return;
+    sheets.forEach((sheet, idx) => {
+      let footer = sheet.querySelector('.page-footer');
+      if (!footer) {
+        footer = document.createElement('div');
+        footer.className = 'page-footer';
+        sheet.appendChild(footer);
+      }
+      footer.textContent = `Página ${idx + 1} de ${total}`;
+    });
   });
 }
 
@@ -557,6 +564,7 @@ function gerarCadernos(tipo) {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', tipo);
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`;
     section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
     printArea.appendChild(section);
@@ -580,6 +588,7 @@ function gerarAmbos() {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'qtd');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     section.innerHTML = `${cabecalho(`Inventário Cíclico (QTD) – Item: ${cod}`)}${tabelaHTML(bloco, true)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
@@ -588,6 +597,7 @@ function gerarAmbos() {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'sqtd');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
@@ -630,6 +640,7 @@ function gerarEmbalagemPosicao() {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'embalagem');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     section.innerHTML = `${cabecalho('Embalagem por Posição (contagem de labels distintos)')}${tabelaEmbalagemHTML(bloco)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
@@ -651,6 +662,7 @@ function gerarPortaPorta() {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'porta');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     const linhaContada = '<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
     const assinaturas  = '<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
     section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
@@ -712,6 +724,7 @@ function gerarPortaPorta() {
         const section = document.createElement('section');
         section.className = 'sheet';
         section.setAttribute('data-grupo', 'poslivre');
+        section.setAttribute('data-fabgrupo', bloco._fabGrupo);
         section.innerHTML = `${cabecalho('Posições Livres (label2 vazio) – Somente Endereço')}${tabelaPosLivreHTML(bloco)}<div class="page-footer"></div>`;
         printArea.appendChild(section);
       });
