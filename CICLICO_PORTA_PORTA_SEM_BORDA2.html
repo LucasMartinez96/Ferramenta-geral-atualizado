@@ -109,12 +109,11 @@ td.num { text-align: right; }
   padding: 12px;
   margin-bottom: 20px;
   background: #fff;
-  page-break-inside: avoid;
   display: grid;
   grid-template-rows: auto 1fr auto;
   row-gap: 4px;
 }
-.sheet + .sheet { page-break-before: always; }
+.sheet + .sheet { page-break-before: always; break-before: page; }
 
 /* Sem borda para porta-porta */
 .sheet[data-grupo='porta'] {
@@ -172,28 +171,91 @@ td.num { text-align: right; }
 
   #printArea { padding: 0 !important; margin: 0 auto !important; background: #fff !important; }
 
+  /*
+     CORREÇÃO DA PÁGINA EM BRANCO NO CHROME/EDGE
+     ────────────────────────────────────────────
+     Na pré-visualização (tela) o .sheet usa CSS Grid
+     (grid-template-rows: auto 1fr auto) para posicionar
+     cabeçalho / tabela / rodapé. Combinar um contêiner de
+     Grid com "page-break-inside: avoid" é a causa raiz do
+     bug clássico do Chrome/Edge: se o conteúdo do .sheet
+     ultrapassa a altura útil da folha, o motor de impressão
+     empurra o bloco inteiro (por causa do "avoid") para a
+     página seguinte e deixa a página anterior em branco.
+
+     A correção é: SOMENTE na impressão, o .sheet volta a um
+     fluxo normal em bloco (display:block) e SEM
+     "page-break-inside: avoid" na folha inteira. Quem garante
+     que nenhuma linha é cortada ao meio é a regra em <tr>
+     logo abaixo — muito mais confiável e sem o efeito colateral
+     de páginas em branco.
+  */
   .sheet {
+    display: block !important;
     width: 281mm;
     min-height: 194mm;
     height: auto;
     margin: 0 auto;
-    page-break-inside: avoid;
+    page-break-inside: auto;
+    break-inside: auto;
   }
 
   .sheet[data-grupo='porta'] { border: none !important; box-shadow: none !important; }
 
-  /* Na impressão permite quebra dentro da tabela para não cortar linhas */
-  table { page-break-inside: auto; }
-  tr    { page-break-inside: avoid; page-break-after: auto; }
+  .page-header {
+    margin-bottom: 4px;
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  .grid-wrap { overflow: visible; min-height: 0; }
+
+  .page-footer {
+    margin-top: 6px;
+    padding-top: 3px;
+    border-top: 1px solid #d8e1ea;
+    text-align: right;
+    page-break-before: avoid;
+    break-before: avoid-page;
+  }
+
+  /* table-layout:fixed já é definido nas regras gerais e NÃO é
+     sobrescrito aqui: é isso que garante que o <colgroup> controle
+     100% da largura das colunas de forma idêntica no <thead> e no
+     <tbody>, em todas as páginas. */
+  table { page-break-inside: auto; break-inside: auto; }
+
+  /* Repete o cabeçalho da tabela em cada página, caso alguma
+     tabela precise mesmo assim se dividir entre folhas
+     (rede de segurança extra para manter cabeçalho e corpo
+     sempre alinhados). */
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+
+  /* Nenhuma linha é cortada entre páginas */
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid-page;
+    page-break-after: auto;
+  }
 
   th, td {
     border-color: #cfd6de;
     border-width: 0.5pt;
-    padding: 4px 6px;
-    /* Impressão: permite quebra de linha para não truncar conteúdo */
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+    padding: 3px 6px;
+    font-size: 11.5px;
+    line-height: 1.25;
+    /*
+       Mantém EXATAMENTE o mesmo comportamento de texto da tela:
+       uma única linha por célula, com reticências (ellipsis)
+       quando o conteúdo não couber na largura da coluna.
+       Isto é o que corrige a quebra de linha em "Descrição"
+       (que aumentava a altura das linhas) e, por consequência,
+       o desalinhamento de colunas e de cabeçalho entre páginas.
+    */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .grid { border-width: 0.75pt; border-color: #cfd6de; }
@@ -267,6 +329,29 @@ function chunkArray(arr, size) {
   const out = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
+}
+
+/* ── Separação de impressão por Fábrica (Ubicacion / Posição) ──
+   Regra: tudo que começar com "1-" ou "2-" fica no grupo Fábrica 1/2;
+   tudo que começar com "3-" fica no grupo Fábrica 3. A ordenação já
+   aplicada antes de chamar esta função é preservada dentro de cada
+   grupo (partição estável). O grupo Fábrica 3 só é paginado depois
+   que todo o grupo Fábrica 1/2 já foi paginado, e nunca compartilham
+   o mesmo bloco/página entre si. */
+function chunksPorFabrica(linhas) {
+  const fab12 = [];
+  const fab3  = [];
+  for (const l of linhas) {
+    const chave    = String(l.Ubicacion ?? l.name ?? '');
+    const primeiro = chave.split('-')[0].trim();
+    if (primeiro === '3') fab3.push(l);
+    else fab12.push(l);
+  }
+  const blocos12 = chunkArray(fab12, LPP);
+  const blocos3  = chunkArray(fab3, LPP);
+  blocos12.forEach(b => { b._fabGrupo = 'fab12'; });
+  blocos3.forEach(b => { b._fabGrupo = 'fab3'; });
+  return [...blocos12, ...blocos3];
 }
 
 function dataHora() {
@@ -445,16 +530,19 @@ function tabelaEmbalagemHTML(linhas) {
 
 /* ── Numeração de páginas ── */
 function numerarGrupo(grupo) {
-  const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)];
-  const total  = sheets.length;
-  sheets.forEach((sheet, idx) => {
-    let footer = sheet.querySelector('.page-footer');
-    if (!footer) {
-      footer = document.createElement('div');
-      footer.className = 'page-footer';
-      sheet.appendChild(footer);
-    }
-    footer.textContent = `Página ${idx + 1} de ${total}`;
+  ['fab12', 'fab3'].forEach(fabGrupo => {
+    const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"]`)];
+    const total  = sheets.length;
+    if (total === 0) return;
+    sheets.forEach((sheet, idx) => {
+      let footer = sheet.querySelector('.page-footer');
+      if (!footer) {
+        footer = document.createElement('div');
+        footer.className = 'page-footer';
+        sheet.appendChild(footer);
+      }
+      footer.textContent = `Página ${idx + 1} de ${total}`;
+    });
   });
 }
 
@@ -472,10 +560,11 @@ function gerarCadernos(tipo) {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', tipo);
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`;
     section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
     printArea.appendChild(section);
@@ -495,18 +584,20 @@ function gerarAmbos() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'qtd');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     section.innerHTML = `${cabecalho(`Inventário Cíclico (QTD) – Item: ${cod}`)}${tabelaHTML(bloco, true)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'sqtd');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
@@ -545,10 +636,11 @@ function gerarEmbalagemPosicao() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(linhas, LPP).forEach(bloco => {
+  chunksPorFabrica(linhas).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'embalagem');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     section.innerHTML = `${cabecalho('Embalagem por Posição (contagem de labels distintos)')}${tabelaEmbalagemHTML(bloco)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
   });
@@ -566,10 +658,11 @@ function gerarPortaPorta() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-  chunkArray(ordenado, LPP).forEach(bloco => {
+  chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
     section.setAttribute('data-grupo', 'porta');
+    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     const linhaContada = '<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
     const assinaturas  = '<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
     section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
@@ -627,10 +720,11 @@ function gerarPortaPorta() {
       const printArea = document.getElementById('printArea');
       printArea.innerHTML = '';
 
-      chunkArray(livres, LPP).forEach(bloco => {
+      chunksPorFabrica(livres).forEach(bloco => {
         const section = document.createElement('section');
         section.className = 'sheet';
         section.setAttribute('data-grupo', 'poslivre');
+        section.setAttribute('data-fabgrupo', bloco._fabGrupo);
         section.innerHTML = `${cabecalho('Posições Livres (label2 vazio) – Somente Endereço')}${tabelaPosLivreHTML(bloco)}<div class="page-footer"></div>`;
         printArea.appendChild(section);
       });
