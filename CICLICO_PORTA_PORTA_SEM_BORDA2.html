@@ -282,6 +282,13 @@ td.num { text-align: right; }
       <label><input type="radio" name="lado" value="impar"><span>Ímpar</span></label>
     </div>
   </div>
+  <div class="row">
+    <label class="muted" for="dataManual">Data do PDF:</label>
+    <input id="dataManual" type="date" />
+    <label class="muted" for="horaManual">Horário do PDF:</label>
+    <input id="horaManual" type="time" />
+    <span class="muted">Deixe em branco para usar a data/hora atual do sistema.</span>
+  </div>
   <div class="row" style="margin-top:4px;">
     <button class="btn-lg alt"     id="btnCiclicoQtd">Cíclico QTD</button>
     <button class="btn-lg primary" id="btnCiclicoSqtd">Cíclico SQTD</button>
@@ -355,7 +362,31 @@ function chunksPorFabrica(linhas) {
 }
 
 function dataHora() {
-  const d = new Date();
+  const now = new Date();
+  const dataVal = document.getElementById('dataManual')?.value || '';
+  const horaVal = document.getElementById('horaManual')?.value || '';
+
+  let ano = now.getFullYear(), mes = now.getMonth(), dia = now.getDate();
+  let hh  = now.getHours(),    mm  = now.getMinutes(), ss = now.getSeconds();
+
+  if (dataVal) {
+    const partes = dataVal.split('-');
+    if (partes.length === 3) {
+      ano = parseInt(partes[0], 10);
+      mes = parseInt(partes[1], 10) - 1;
+      dia = parseInt(partes[2], 10);
+    }
+  }
+  if (horaVal) {
+    const partes = horaVal.split(':');
+    if (partes.length >= 2) {
+      hh = parseInt(partes[0], 10);
+      mm = parseInt(partes[1], 10);
+      ss = 0;
+    }
+  }
+
+  const d = new Date(ano, mes, dia, hh, mm, ss);
   return {
     data: d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }),
     hora: d.toLocaleTimeString('pt-BR')
