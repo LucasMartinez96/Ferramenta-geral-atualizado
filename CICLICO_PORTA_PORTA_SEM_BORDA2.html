@@ -97,6 +97,14 @@ th {
   white-space: nowrap;
 }
 
+/* Coluna Codpro: exibir o código completo, sem reticências.
+   white-space permanece nowrap (não quebra em várias linhas),
+   apenas o corte por overflow/ellipsis é removido. */
+th.codpro, td.codpro {
+  overflow: visible;
+  text-overflow: clip;
+}
+
 /* Alinhamento à direita apenas para células explicitamente marcadas */
 td.num { text-align: right; }
 
@@ -211,12 +219,28 @@ td.num { text-align: right; }
   .grid-wrap { overflow: visible; min-height: 0; }
 
   .page-footer {
+    position: relative;
     margin-top: 6px;
     padding-top: 3px;
     border-top: 1px solid #d8e1ea;
     text-align: right;
     page-break-before: avoid;
     break-before: avoid-page;
+  }
+
+  /* Texto fixo de rodapé, centralizado, em todas as páginas impressas.
+     Não interfere na numeração de páginas (que permanece à direita,
+     via o texto normal do .page-footer). */
+  .page-footer::after {
+    content: "F-05BR-C-055 Rev.00";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 3px;
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+    pointer-events: none;
   }
 
   /* table-layout:fixed já é definido nas regras gerais e NÃO é
@@ -256,6 +280,13 @@ td.num { text-align: right; }
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Coluna Codpro: também na impressão, mostrar o código
+     completo, sem reticências e sem quebrar linha. */
+  th.codpro, td.codpro {
+    overflow: visible;
+    text-overflow: clip;
   }
 
   .grid { border-width: 0.75pt; border-color: #cfd6de; }
@@ -449,14 +480,19 @@ function cabecalho(titulo) {
       visíveis) — compatível com o cabeçalho gerado.
 
    Larguras com Observação  (mostrarQtd = true,  7 col):
-     Endereço  14% | Codpro 10% | Descrição 28%
+     Endereço  14% | Codpro 14% | Descrição 24%
      Label 12% | Label Origin 12% | Qtd 8% | Obs 16%
      Total = 100%
 
    Larguras sem Observação  (mostrarQtd = false, 6 col):
-     Endereço  16% | Codpro 11% | Descrição 33%
+     Endereço  16% | Codpro 15% | Descrição 29%
      Label 14% | Label Origin 14% | Qtd 12%
      Total = 100%
+
+   Coluna Codpro (.codpro) foi alargada e teve o
+   text-overflow: ellipsis removido especificamente para
+   ela, para exibir códigos longos (ex.: B-39658-342BUY)
+   por completo, sem quebrar em várias linhas.
 ════════════════════════════════════════════════════════ */
 function tabelaHTML(linhas, mostrarQtd) {
 
@@ -464,8 +500,8 @@ function tabelaHTML(linhas, mostrarQtd) {
   const colgroup = mostrarQtd
     ? `<colgroup>
          <col style="width:14%">
-         <col style="width:10%">
-         <col style="width:28%">
+         <col style="width:14%">
+         <col style="width:24%">
          <col style="width:12%">
          <col style="width:12%">
          <col style="width: 8%">
@@ -473,8 +509,8 @@ function tabelaHTML(linhas, mostrarQtd) {
        </colgroup>`
     : `<colgroup>
          <col style="width:16%">
-         <col style="width:11%">
-         <col style="width:33%">
+         <col style="width:15%">
+         <col style="width:29%">
          <col style="width:14%">
          <col style="width:14%">
          <col style="width:12%">
@@ -486,7 +522,7 @@ function tabelaHTML(linhas, mostrarQtd) {
     <thead>
       <tr>
         <th>Endereço</th>
-        <th>Codpro</th>
+        <th class="codpro">Codpro</th>
         <th>Descrição</th>
         <th>Label</th>
         <th>Label Origin</th>
@@ -507,7 +543,7 @@ function tabelaHTML(linhas, mostrarQtd) {
 
     return `<tr>
       <td title="${ubi}">${ubi}</td>
-      <td title="${pieza}">${pieza}</td>
+      <td class="codpro" title="${pieza}">${pieza}</td>
       <td title="${desc}">${desc}</td>
       <td title="${lbl}">${lbl}</td>
       <td title="${orig}">${orig}</td>
@@ -573,6 +609,13 @@ function numerarGrupo(grupo) {
         sheet.appendChild(footer);
       }
       footer.textContent = `Página ${idx + 1} de ${total}`;
+
+      /* Assinatura do Inventariante: somente na primeira
+         página de cada relatório (cabeçalho — título, data,
+         hora e logo — permanece em todas as páginas). */
+      if (idx > 0) {
+        sheet.querySelector('.inventariante')?.remove();
+      }
     });
   });
 }
