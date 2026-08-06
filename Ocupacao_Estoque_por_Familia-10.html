@@ -81,17 +81,20 @@
 
   /* ===== Panels / layout ===== */
   .layout { display:grid; grid-template-columns: 1.6fr 1fr; gap:16px; align-items:start; }
+  /* Histórico do Mês ao lado da tabela de ocupação, dentro do mesmo painel */
+  .table-history-grid { display:grid; grid-template-columns:1fr 240px; gap:16px; align-items:start; }
+  @media (max-width:900px) { .table-history-grid { grid-template-columns:1fr; } }
   .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 18px 16px; box-shadow:var(--shadow); transition:box-shadow .2s ease; }
   .panel:hover { box-shadow:var(--shadow-lg); }
   h3 { margin:0 0 14px; font-size:12.5px; color:var(--primary); text-transform:uppercase; letter-spacing:.06em; font-weight:800; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:7px; }
   h3::before { content:''; width:4px; height:14px; border-radius:3px; background:linear-gradient(180deg,var(--primary),var(--accent)); display:inline-block; flex:none; }
 
-  /* ===== Table ===== */
-  table { width:100%; border-collapse:collapse; font-size:12.8px; }
-  th { background:var(--primary); color:#fff; padding:10px 9px; text-align:left; position:sticky; top:0; font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; }
+  /* ===== Table (compacta) ===== */
+  table { width:100%; border-collapse:collapse; font-size:11.5px; }
+  th { background:var(--primary); color:#fff; padding:6px 8px; text-align:left; position:sticky; top:0; font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; line-height:1.2; }
   th:first-child { border-top-left-radius:8px; }
   th:last-child { border-top-right-radius:8px; }
-  td { padding:8px 9px; border-bottom:1px solid var(--border); }
+  td { padding:4px 8px; border-bottom:1px solid var(--border); line-height:1.25; }
   /* Agrupamento visual por Tipo de Armazenagem: cada grupo alterna um tom de fundo suave,
      reforçando onde um tipo termina e o próximo começa (não altera dados). */
   tbody tr.tipo-grp-a td { background:#ffffff; }
@@ -102,9 +105,9 @@
   .tipo-cell { font-weight:700; vertical-align:top; border-right:2px solid var(--border); }
   tbody tr.tipo-grp-a .tipo-cell { background:#eef1f7; }
   tbody tr.tipo-grp-b .tipo-cell { background:#e7edf6; }
-  .tipo-badge { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:2px 8px; border-radius:999px; margin-bottom:5px; white-space:nowrap; }
-  .tipo-badge i { width:7px; height:7px; border-radius:50%; display:inline-block; }
-  .tipo-name { display:block; font-size:12.5px; font-weight:800; color:var(--text); line-height:1.3; }
+  .tipo-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; padding:1px 7px; border-radius:999px; margin-bottom:3px; white-space:nowrap; }
+  .tipo-badge i { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .tipo-name { display:block; font-size:11.5px; font-weight:800; color:var(--text); line-height:1.2; }
   .b-fab1 { background:var(--b-fab1-bg); color:var(--b-fab1); } .b-fab1 i { background:var(--b-fab1); }
   .b-fab2 { background:var(--b-fab2-bg); color:var(--b-fab2); } .b-fab2 i { background:var(--b-fab2); }
   .b-fab3 { background:var(--b-fab3-bg); color:var(--b-fab3); } .b-fab3 i { background:var(--b-fab3); }
@@ -122,7 +125,7 @@
   .pct-alta::before { content:'\1F7E0\00A0'; }
   .pct-crit::before { content:'\1F534\00A0'; }
   .subtotal td { background:var(--surface-2); font-weight:800; border-top:2px solid var(--border); border-bottom:2px solid var(--border); }
-  .grand td { background:var(--primary); color:#fff; font-weight:900; font-size:14px; }
+  .grand td { background:var(--primary); color:#fff; font-weight:900; font-size:12.5px; }
 
   /* ===== Donut / resumo ===== */
   .donut-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:18px; }
@@ -173,12 +176,39 @@
 
   #appFooter { text-align:center; font-size:11px; color:#94a3b8; padding:14px 20px 6px; }
 
+  /* ===== Toast de confirmação/sucesso ===== */
+  .toast-msg { position:fixed; top:18px; right:18px; z-index:9999; background:var(--accent); color:#fff; padding:12px 18px; border-radius:10px; box-shadow:var(--shadow-lg); font-size:13px; font-weight:700; max-width:320px; opacity:0; transform:translateY(-8px); transition:opacity .25s ease, transform .25s ease; pointer-events:none; }
+  .toast-msg.show { opacity:1; transform:translateY(0); }
+  .empty-row-msg { text-align:center; color:var(--muted); padding:22px 9px; font-size:12.5px; }
+
+  /* ===== Coluna Tendência (histórico diário) — estilo discreto, tipo dashboard financeiro ===== */
+  .trend { display:inline-flex; align-items:center; gap:3px; font-variant-numeric:tabular-nums; font-weight:700; font-size:11px; white-space:nowrap; }
+  .trend-icon { display:inline-block; width:10px; text-align:center; font-size:11px; line-height:1; }
+  .trend-up { color:var(--crit); }
+  .trend-down { color:var(--low); }
+  .trend-flat { color:var(--muted); font-weight:600; }
+
+  /* ===== Destinatários do Relatório (envio de e-mail) ===== */
+  .recipients-field { margin-bottom:12px; }
+  .recipients-field label { display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:5px; }
+  .recipients-field label .opt { font-weight:400; text-transform:none; letter-spacing:0; }
+  .recipients-field input[type=text] { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:9px; font-size:12.5px; font-family:inherit; color:var(--text); background:var(--surface); box-sizing:border-box; }
+  .recipients-field input[type=text]:focus { outline:none; border-color:var(--primary); }
+  .recipients-hint { font-size:10.5px; color:var(--muted); margin-top:4px; }
+  .recipients-checkbox { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text); font-weight:600; margin:6px 0 14px; cursor:pointer; user-select:none; }
+  .recipients-checkbox input { width:15px; height:15px; cursor:pointer; accent-color:var(--primary); flex:none; }
+  .recipients-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .recipients-msg { font-size:11.5px; color:var(--green); font-weight:700; margin-top:10px; opacity:0; max-height:0; overflow:hidden; transition:opacity .2s ease; }
+  .recipients-msg.show { opacity:1; max-height:40px; }
+  @media (max-width:480px) { .recipients-field input[type=text] { font-size:13.5px; } }
+
   @media print {
     body { padding:0; background:#fff; padding-bottom:24px; }
-    .toolbar, #pdfBtn, #emailBtn, #clearBtn, .topbar, .ribbon, .ribbon-legend, .kpis { display:none !important; }
+    .toolbar, #pdfBtn, #emailBtn, #clearBtn, #clearHistoryBtn, .toast-msg, .topbar, .ribbon, .ribbon-legend, .kpis, #recipientsPanel { display:none !important; }
     #pdfHeader { display:none !important; }
     .app { max-width:100%; padding:0; }
     .layout { grid-template-columns:1fr; display:block; }
+    .table-history-grid { grid-template-columns:1fr; }
     .layout > div, .layout > .panel { width:100%; margin-bottom:14px; }
     /* Cabeçalho + tabela compartilham a mesma página, sem quebra em branco antes */
     .layout > .panel:first-child { break-inside:auto; }
@@ -233,7 +263,7 @@
       <input type="file" id="estoqueInput" accept=".csv">
     </label>
     <button class="btn btn-danger" id="clearBtn">Limpar estoque</button>
-    <span id="fileState">Carregado: estoque enviado anteriormente (posição, quantidade por localização).</span>
+    <span id="fileState">Nenhum estoque carregado. Importe um arquivo CSV para começar.</span>
     <span id="freshness"></span>
     <div class="search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -247,14 +277,28 @@
   <div class="layout">
     <div class="panel">
       <h3>Ocupação por Tipo de Armazenagem x Família</h3>
-      <div>
-      <table>
-        <thead><tr>
-          <th>Tipo de Armazenagem</th><th>Família</th><th class="num">Capacidade</th>
-          <th class="num">Ocupado</th><th class="num">Disponível</th><th class="num">% Ocupado</th><th class="num">% Livre</th>
-        </tr></thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+      <div class="table-history-grid">
+        <div>
+          <table>
+            <thead><tr>
+              <th>Tipo de Armazenagem</th><th>Família</th><th class="num">Capacidade</th>
+              <th class="num">Ocupado</th><th class="num">Disponível</th><th class="num">% Ocupado</th><th class="num">% Livre</th>
+            </tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div>
+          <h3 id="historicoTitulo" style="margin-top:0;">Histórico Diário</h3>
+          <div id="historicoWrap" style="max-height:520px; overflow-y:auto;">
+            <table>
+              <thead><tr>
+                <th>Data</th><th class="num">% Ocupado</th><th class="num">% Livre</th><th class="num">Tendência</th>
+              </tr></thead>
+              <tbody id="historicoBody"></tbody>
+            </table>
+          </div>
+          <button class="btn btn-danger" id="clearHistoryBtn" style="margin-top:10px;width:100%;">Limpar Histórico Diário</button>
+        </div>
       </div>
     </div>
 
@@ -278,6 +322,31 @@
           <span class="rank-tab" data-rank="free">Mais livres</span>
         </div>
         <div id="rankingBox" style="max-height:420px; overflow-y:auto;"></div>
+      </div>
+
+      <div class="panel" id="recipientsPanel" style="margin-top:16px;">
+        <h3>Destinatários do Relatório</h3>
+        <div class="recipients-field">
+          <label for="recipientTo">Para (TO)</label>
+          <input type="text" id="recipientTo" placeholder="gerente@empresa.com; coordenador@empresa.com">
+        </div>
+        <div class="recipients-field">
+          <label for="recipientCc">Cópia (CC)</label>
+          <input type="text" id="recipientCc" placeholder="estoque@empresa.com">
+        </div>
+        <div class="recipients-field">
+          <label for="recipientBcc">Cópia oculta (BCC) <span class="opt">— opcional</span></label>
+          <input type="text" id="recipientBcc" placeholder="opcional">
+          <div class="recipients-hint">Separe múltiplos e-mails por ponto e vírgula (;)</div>
+        </div>
+        <label class="recipients-checkbox">
+          <input type="checkbox" id="recipientSaveDefault">
+          Salvar como padrão
+        </label>
+        <div class="recipients-actions">
+          <button class="btn btn-outline" id="clearRecipientsBtn" type="button">Limpar destinatários</button>
+        </div>
+        <div class="recipients-msg" id="recipientsSavedMsg">✅ Destinatários salvos com sucesso</div>
       </div>
     </div>
   </div>
@@ -316,6 +385,185 @@ function tipoBadge(tipo) {
 function fmt(n) { return Math.round(n).toLocaleString('pt-BR'); }
 function fmtp(p) { return p.toFixed(2).replace('.', ',') + '%'; }
 function pctClass(p) { if (p >= 90) return 'pct-crit'; if (p >= 75) return 'pct-alta'; if (p >= 50) return 'pct-warn'; return 'pct-ok'; }
+
+// ===== Histórico automático da ocupação diária (funcionalidade nova — não altera
+// nenhum cálculo, layout, gráfico, indicador, importação ou exportação existente) =====
+const HISTORY_STORAGE_KEY = 'ocupacaoEstoque_historicoDiario';
+
+function loadDailyHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+// Salva/atualiza (sem duplicar) o registro do dia atual com os valores já calculados
+// pela renderização da ocupação geral, e re-renderiza a tabela de histórico.
+// O histórico é permanente: só é gravado quando há dados de fato carregados (import/atualização),
+// nunca é apagado por uma nova importação, e persiste no localStorage entre sessões.
+function saveDailyHistoryEntry(pctOcupado, pctLivre, capacidade, ocupado, disponivel) {
+  const now = new Date();
+  const dateKey = now.toLocaleDateString('pt-BR'); // dd/mm/aaaa — chave única por dia
+  let history = loadDailyHistory();
+  history[dateKey] = {
+    pctOcupado: pctOcupado, pctLivre: pctLivre,
+    capacidade: capacidade, ocupado: ocupado, disponivel: disponivel,
+    ts: now.getTime()
+  };
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+  } catch (e) {
+    // LocalStorage indisponível (ex.: modo privado) — segue sem persistir, sem quebrar a ferramenta.
+  }
+  renderDailyHistoryTable();
+}
+
+// Nomes abreviados dos meses em português, para exibir a Data no formato "dd-mmm" (ex.: 05-ago),
+// no mesmo estilo do histórico mensal de referência enviado pelo usuário.
+const MONTH_ABBR = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function formatHistoryDateLabel(dateKey) {
+  const parts = (dateKey || '').split('/'); // dd/mm/aaaa
+  if (parts.length < 2) return dateKey || '--';
+  const dia = parts[0];
+  const mesIndex = parseInt(parts[1], 10) - 1;
+  const mesAbrev = MONTH_ABBR[mesIndex] || parts[1];
+  return dia + '-' + mesAbrev;
+}
+
+// Exibe o histórico salvo, ordenado do dia 01 até o último dia do mês (ordem cronológica).
+// Não recebe nem depende do CURRENT_QTY em memória — lê sempre direto do localStorage,
+// por isso permanece intacto mesmo com a tela zerada ou após uma nova importação.
+function renderDailyHistoryTable() {
+  const tbody = document.getElementById('historicoBody');
+  if (!tbody) return;
+  const history = loadDailyHistory();
+  const entries = Object.keys(history).map(dateKey => Object.assign({ dateKey: dateKey }, history[dateKey]));
+  entries.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  if (!entries.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-row-msg">Sem registros ainda.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = entries.map((e, idx) => {
+    const cls = pctClass(e.pctOcupado);
+    const dataLabel = formatHistoryDateLabel(e.dateKey);
+    let tendCell;
+    if (idx === 0) {
+      tendCell = '—';
+    } else {
+      const diff = e.pctOcupado - entries[idx - 1].pctOcupado;
+      const diffAbs = Math.abs(diff).toFixed(2).replace('.', ',');
+      let icon, tcls, sign;
+      if (diff > 0.0049) { icon = '▲'; tcls = 'trend-up'; sign = '+'; }
+      else if (diff < -0.0049) { icon = '▼'; tcls = 'trend-down'; sign = '-'; }
+      else { icon = '➜'; tcls = 'trend-flat'; sign = ''; }
+      const displayVal = (icon === '➜') ? '0,00' : (sign + diffAbs);
+      tendCell = `<span class="trend ${tcls}"><span class="trend-icon">${icon}</span>${displayVal}%</span>`;
+    }
+    return `<tr title="${e.dateKey}">
+      <td>${dataLabel}</td>
+      <td class="num ${cls}">${fmtp(e.pctOcupado)}</td>
+      <td class="num livre">${fmtp(e.pctLivre)}</td>
+      <td class="num">${tendCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Ícones dos KPIs — extraído para constante de topo para ser reaproveitado tanto pelo
+// render() normal quanto pelo estado inicial zerado (renderEmptyState), sem duplicar SVGs.
+const KPI_ICONS = {
+  cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+  occ: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>',
+  free: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>',
+  pct: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="m5 19 14-14"/></svg>',
+  tipos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+  familias: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="10" cy="7" r="3"/><path d="M17.5 11a3 3 0 1 0-1.5-5.6"/><path d="M22 21v-2a3 3 0 0 0-2.5-2.96"/></svg>'
+};
+
+// Estado inicial (e pós-"Limpar estoque"): ferramenta 100% zerada, sem nenhum dado carregado.
+// Não usa POSITIONS/GROUPS nem qualquer cálculo — apenas exibe zeros/mensagens.
+// O histórico permanente NÃO é tocado aqui (segue lendo do localStorage normalmente).
+function renderEmptyState() {
+  document.getElementById('tableBody').innerHTML =
+    '<tr><td colspan="7" class="empty-row-msg">Nenhum dado importado. Importe um arquivo CSV de estoque para começar.</td></tr>';
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi">
+      <div class="kpi-top"><span class="label">Capacidade Total</span><span class="kpi-icon" style="background:var(--accent-bg);color:var(--accent)">${KPI_ICONS.cap}</span></div>
+      <div class="value">${fmt(0)}</div>
+      <div class="sub">posições/slots cadastrados</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="label">Ocupado</span><span class="kpi-icon" style="background:var(--red-bg);color:var(--red)">${KPI_ICONS.occ}</span></div>
+      <div class="value">${fmt(0)}</div>
+      <div class="sub">${fmtp(0)} da capacidade total</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="label">Disponível</span><span class="kpi-icon" style="background:var(--green-bg);color:var(--green)">${KPI_ICONS.free}</span></div>
+      <div class="value">${fmt(0)}</div>
+      <div class="sub">${fmtp(0)} da capacidade total</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="label">% Ocupação</span><span class="kpi-icon" style="background:#eef4ff;color:var(--primary)">${KPI_ICONS.pct}</span></div>
+      <div class="value">${fmtp(0)}</div>
+      <div class="sub">sem dados carregados</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="label">Tipos de Armazenagem</span><span class="kpi-icon" style="background:var(--b-fab2-bg);color:var(--b-fab2)">${KPI_ICONS.tipos}</span></div>
+      <div class="value">0</div>
+      <div class="sub">grupos distintos cadastrados</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span class="label">Total de Famílias</span><span class="kpi-icon" style="background:var(--b-fab3-bg);color:var(--b-fab3)">${KPI_ICONS.familias}</span></div>
+      <div class="value">0</div>
+      <div class="sub">linhas na tabela de ocupação</div>
+    </div>`;
+
+  document.getElementById('donutWrap').innerHTML = `
+    <div class="donut" style="background:conic-gradient(var(--primary) 0deg, #e2e8f0 0deg);">
+      <div class="donut-inner"><div class="big">${fmtp(0)}</div><div class="small">ocupado</div></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--primary)"></i>Ocupado</span>
+      <span><i class="dot" style="background:#e2e8f0"></i>Livre</span>
+    </div>`;
+
+  document.getElementById('resumoBox').innerHTML =
+    '<p style="color:var(--muted);font-size:13px;">Sem dados carregados. Importe um arquivo CSV para visualizar o resumo por armazém.</p>';
+
+  document.getElementById('plantRibbon').innerHTML = '';
+  document.getElementById('plantLegend').innerHTML = '';
+
+  window.__RANKING_RUAS__ = [];
+  renderRanking('crit');
+
+  document.getElementById('freshness').innerHTML = '';
+
+  // O histórico permanente continua sendo exibido normalmente (não é apagado nem zerado aqui).
+  renderDailyHistoryTable();
+}
+
+// Confirmação padrão para ações importantes (limpar, exportar, atualizar, etc.).
+function confirmarAcao(mensagem) {
+  return window.confirm(mensagem || 'Tem certeza que deseja continuar?');
+}
+
+// Toast simples de feedback (sucesso), reaproveitando as cores já usadas na ferramenta.
+let __toastTimer = null;
+function showToast(mensagem) {
+  let toast = document.getElementById('appToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'appToast';
+    toast.className = 'toast-msg';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = mensagem;
+  clearTimeout(__toastTimer);
+  requestAnimationFrame(() => toast.classList.add('show'));
+  __toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+}
 
 // Tolerant CSV line parser: handles rows where the whole line got wrongly quoted
 // because of embedded commas inside DESCRIPTION. We only need position (name) and QUANTITY,
@@ -516,14 +764,13 @@ function render(qtyByPos, meta) {
 
   const grandDisp = grandCap - grandOcc;
   const grandPctLivre = 100 - grandPct;
-  const kpiIcons = {
-    cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
-    occ: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>',
-    free: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>',
-    pct: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="m5 19 14-14"/></svg>',
-    tipos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
-    familias: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="10" cy="7" r="3"/><path d="M17.5 11a3 3 0 1 0-1.5-5.6"/><path d="M22 21v-2a3 3 0 0 0-2.5-2.96"/></svg>'
-  };
+
+  // Histórico automático da ocupação diária (não altera nenhum cálculo existente,
+  // apenas registra o resultado já calculado acima para o dia atual). Permanente:
+  // uma nova importação apenas atualiza o registro do dia, nunca apaga os demais dias.
+  saveDailyHistoryEntry(grandPct, grandPctLivre, grandCap, grandOcc, grandDisp);
+
+  const kpiIcons = KPI_ICONS;
   // Total de Tipos de Armazenagem e Total de Famílias: apenas contagens sobre o `agg` já calculado
   // (não altera capacidade/ocupação/filtros existentes).
   const totalTipos = byTipo.size;
@@ -647,11 +894,39 @@ function renderRanking(mode) {
   }).join('') : '<p style="color:var(--muted);font-size:12.5px;">Sem famílias "RUA" cadastradas nos dados atuais.</p>';
 }
 
-// initial render with default (previously supplied) stock snapshot
-const defaultQtyMap = new Map(DEFAULT_QTY);
-render(defaultQtyMap, null);
+// Estado inicial: ferramenta 100% zerada — nenhum dado carregado ainda.
+// DEFAULT_QTY continua definido acima (dado embutido), mas deixa de ser usado no carregamento
+// inicial: os dados só aparecem depois que o usuário importa um CSV (item 3 do pedido).
+// O histórico mensal salvo no localStorage é permanente e não é afetado por este estado.
 
-let CURRENT_QTY = defaultQtyMap;
+// Registro manual do histórico para 05/08/2026 (inserido a pedido).
+// Correção: os % informados originalmente (72,82% / 27,18%) não batiam com
+// Capacidade/Ocupado (15.390 / 11.192) — o cálculo correto é 72,72% / 27,28%.
+// Esta função corrige o registro se ele já existir com o valor antigo errado (72.82),
+// e cria o registro corrigido caso ainda não exista. Não mexe em nenhum outro dia do histórico.
+function seedManualHistoryEntry() {
+  const dateKey = '05/08/2026';
+  const history = loadDailyHistory();
+  if (history[dateKey] && history[dateKey].pctOcupado !== 72.82) return; // já existe e já está correto/atualizado — não sobrescreve
+  history[dateKey] = {
+    pctOcupado: 72.72,
+    pctLivre: 27.28,
+    capacidade: 15390,
+    ocupado: 11192,
+    disponivel: 4198,
+    ts: new Date(2026, 7, 5).getTime() // 05/08/2026 — mês 7 = agosto (índice 0-based)
+  };
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+  } catch (e) {
+    // LocalStorage indisponível — segue sem persistir, sem quebrar a ferramenta.
+  }
+}
+seedManualHistoryEntry();
+
+let CURRENT_QTY = new Map();
+let DATA_LOADED = false;
+renderEmptyState();
 
 document.getElementById('estoqueInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
@@ -661,6 +936,8 @@ document.getElementById('estoqueInput').addEventListener('change', function(e) {
   reader.onload = function(ev) {
     const { qtyByPos, minDate, maxDate, hasStatusColumn, hasLabelColumn, hasNameColumn } = parseEstoqueCSV(ev.target.result);
     CURRENT_QTY = qtyByPos;
+    DATA_LOADED = true;
+    // render() recalcula tabela, KPIs, donut, ranking e já salva automaticamente o dia no histórico.
     render(CURRENT_QTY, { minDate, maxDate });
     document.getElementById('fileState').textContent =
       'Carregado: ' + file.name + ' — ' + qtyByPos.size + ' posições lidas (duplicadas removidas)' +
@@ -671,18 +948,38 @@ document.getElementById('estoqueInput').addEventListener('change', function(e) {
         : hasStatusColumn
         ? ' (coluna STATUS detectada: posições marcadas LIVRE não contam como ocupadas, mesmo com saldo residual).'
         : ' (sem coluna NAME, LABEL/ETIQUETA ou STATUS neste arquivo — ocupação calculada só pela quantidade, como antes).');
+    showToast('✅ Estoque importado com sucesso! Tabela, KPIs, gráfico, ranking e histórico do dia atualizados.');
   };
   reader.readAsText(file, 'utf-8');
+  e.target.value = ''; // permite reimportar o mesmo arquivo em seguida, se necessário
 });
 
 document.getElementById('clearBtn').addEventListener('click', function() {
+  if (!confirmarAcao('Tem certeza que deseja continuar?')) return;
   CURRENT_QTY = new Map();
-  render(CURRENT_QTY, null);
+  DATA_LOADED = false;
+  // Volta ao estado inicial zerado (item 3). O histórico permanente NÃO é apagado.
+  renderEmptyState();
   document.getElementById('fileState').textContent =
-    'Estoque limpo (capacidade e famílias continuam de pé). Importe um novo CSV de estoque para recalcular a ocupação.';
+    'Estoque limpo. A ferramenta voltou ao estado inicial (zerado). Importe um novo CSV para recalcular a ocupação.';
+});
+
+// Limpar Histórico do Mês: apaga apenas o histórico diário de ocupação (LocalStorage),
+// sem afetar estoque importado, configurações, a estrutura da tabela ou qualquer outro dado da ferramenta.
+document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+  const confirmado = confirm('Tem certeza que deseja apagar todo o histórico do mês? Esta ação não pode ser desfeita.');
+  if (!confirmado) return;
+  try {
+    localStorage.removeItem(HISTORY_STORAGE_KEY);
+  } catch (e) {
+    // ignora silenciosamente caso LocalStorage esteja indisponível
+  }
+  renderDailyHistoryTable();
 });
 
 document.getElementById('pdfBtn').addEventListener('click', function() {
+  if (!DATA_LOADED) { alert('Nenhum dado carregado. Importe um arquivo CSV antes de gerar o PDF.'); return; }
+  if (!confirmarAcao('Tem certeza que deseja continuar?')) return;
   const now = new Date();
   const dataHora = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
   document.getElementById('pdfHeader').innerHTML =
@@ -702,6 +999,8 @@ setInterval(tickClock, 30000);
 
 // Atualizar: apenas re-renderiza com os dados já carregados (não busca dados novos)
 document.getElementById('refreshBtn').addEventListener('click', function() {
+  if (!DATA_LOADED) { alert('Nenhum dado carregado ainda. Importe um arquivo CSV primeiro.'); return; }
+  if (!confirmarAcao('Tem certeza que deseja continuar?')) return;
   render(CURRENT_QTY, null);
 });
 
@@ -722,12 +1021,88 @@ document.querySelectorAll('.rank-tab').forEach(tab => {
   });
 });
 
+// ===== Destinatários do Relatório (TO/CC/BCC) para o envio de e-mail =====
+// Não altera o assunto nem o corpo do e-mail — apenas quem recebe a mensagem.
+const RECIPIENTS_STORAGE_KEY = 'ocupacaoEstoque_destinatariosPadrao';
+
+// Converte "a@x.com; b@x.com" em "a@x.com,b@x.com" (formato aceito no link mailto:).
+function normalizeEmails(raw) {
+  return (raw || '')
+    .split(';')
+    .map(e => e.trim())
+    .filter(Boolean)
+    .join(',');
+}
+
+function loadSavedRecipients() {
+  try {
+    const raw = localStorage.getItem(RECIPIENTS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveRecipientsAsDefault() {
+  const data = {
+    to: document.getElementById('recipientTo').value.trim(),
+    cc: document.getElementById('recipientCc').value.trim(),
+    bcc: document.getElementById('recipientBcc').value.trim()
+  };
+  try {
+    localStorage.setItem(RECIPIENTS_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    // LocalStorage indisponível — segue sem persistir, sem quebrar a ferramenta.
+  }
+  showRecipientsSavedMessage();
+}
+
+let __recipientsMsgTimer = null;
+function showRecipientsSavedMessage() {
+  const msg = document.getElementById('recipientsSavedMsg');
+  if (!msg) return;
+  msg.classList.add('show');
+  clearTimeout(__recipientsMsgTimer);
+  __recipientsMsgTimer = setTimeout(() => msg.classList.remove('show'), 2800);
+}
+
+// Ao abrir o dashboard: se houver destinatários salvos como padrão, preenche os campos automaticamente.
+(function initRecipientsFromStorage() {
+  const saved = loadSavedRecipients();
+  if (saved) {
+    document.getElementById('recipientTo').value = saved.to || '';
+    document.getElementById('recipientCc').value = saved.cc || '';
+    document.getElementById('recipientBcc').value = saved.bcc || '';
+    document.getElementById('recipientSaveDefault').checked = true;
+  }
+})();
+
+// Marcar "Salvar como padrão" já salva imediatamente os valores atuais dos campos.
+document.getElementById('recipientSaveDefault').addEventListener('change', function() {
+  if (this.checked) saveRecipientsAsDefault();
+});
+
+document.getElementById('clearRecipientsBtn').addEventListener('click', function() {
+  if (!confirmarAcao('Tem certeza que deseja continuar?')) return;
+  document.getElementById('recipientTo').value = '';
+  document.getElementById('recipientCc').value = '';
+  document.getElementById('recipientBcc').value = '';
+  document.getElementById('recipientSaveDefault').checked = false;
+  try {
+    localStorage.removeItem(RECIPIENTS_STORAGE_KEY);
+  } catch (e) {
+    // ignora silenciosamente caso LocalStorage esteja indisponível
+  }
+});
+
 // Enviar por e-mail: abre o cliente de e-mail padrão com o resumo executivo pronto no corpo da mensagem.
 // Anexo de PDF automático não é possível via mailto (limitação do navegador) — o usuário deve
 // gerar o PDF pelo botão correspondente e anexá-lo manualmente.
 document.getElementById('appFooter').textContent = 'Desenvolvedor: Lucas Martinez';
 
 document.getElementById('emailBtn').addEventListener('click', function() {
+  if (!DATA_LOADED) { alert('Nenhum dado carregado. Importe um arquivo CSV antes de enviar por e-mail.'); return; }
+  if (!confirmarAcao('Tem certeza que deseja continuar?')) return;
   const agg = computeGroups(CURRENT_QTY);
   let grandCap = 0, grandOcc = 0;
   agg.forEach(r => { grandCap += r.capacidade; grandOcc += r.ocupado; });
@@ -745,13 +1120,29 @@ document.getElementById('emailBtn').addEventListener('click', function() {
   body += 'Ocupado: ' + fmt(grandOcc) + '\n';
   body += 'Disponível: ' + fmt(grandCap - grandOcc) + '\n\n';
   body += '(Gere o PDF pelo botão correspondente e anexe manualmente a este e-mail.)';
-  window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+  // Lê os destinatários digitados na seção "Destinatários do Relatório" (TO/CC/BCC).
+  // Assunto e corpo acima permanecem 100% inalterados.
+  const to = normalizeEmails(document.getElementById('recipientTo').value);
+  const cc = normalizeEmails(document.getElementById('recipientCc').value);
+  const bcc = normalizeEmails(document.getElementById('recipientBcc').value);
+
+  if (document.getElementById('recipientSaveDefault').checked) {
+    saveRecipientsAsDefault();
+  }
+
+  const params = ['subject=' + encodeURIComponent(subject), 'body=' + encodeURIComponent(body)];
+  if (cc) params.push('cc=' + cc);
+  if (bcc) params.push('bcc=' + bcc);
+  window.location.href = 'mailto:' + to + '?' + params.join('&');
 });
 
 // Exportar PNG: gera uma imagem compacta contendo os cards de KPI, a tabela de ocupação,
 // o gráfico de Ocupação Geral e o Resumo por Armazém —
 // sem barra superior, botões, busca ou informações técnicas.
 document.getElementById('pngBtn').addEventListener('click', function() {
+  if (!DATA_LOADED) { alert('Nenhum dado carregado. Importe um arquivo CSV antes de exportar a imagem.'); return; }
+  if (!confirmarAcao('Tem certeza que deseja continuar?')) return;
   exportPNG();
 });
 
@@ -803,6 +1194,8 @@ async function exportPNG() {
     const donutHtml = document.getElementById('donutWrap').innerHTML;
     const resumoHtml = document.getElementById('resumoBox').innerHTML;
     const kpiHtml = document.getElementById('kpiRow').innerHTML;
+    // Histórico do Mês completo incluído na exportação PNG (Ranking por Rua foi removido do PNG a pedido).
+    const historicoRowsHtml = document.getElementById('historicoBody').innerHTML;
 
     const now = new Date();
     const dataHora = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
@@ -856,20 +1249,48 @@ async function exportPNG() {
         #exportRoot .kpi .label { font-size:8.5px; }
         #exportRoot .kpi .value { font-size:17px; }
         #exportRoot .kpi .sub { font-size:8.5px; }
+        /* Ranking por Rua (item 1 — incluído na exportação PNG) */
+        #exportRoot .rank-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:10.5px; padding:2px 4px; }
+        #exportRoot .rank-row-top { background:#f7f9fc; border-radius:6px; }
+        #exportRoot .rank-pos { width:16px; text-align:center; font-weight:800; color:#64748b; flex:none; font-size:11px; }
+        #exportRoot .rank-name { flex:1 1 auto; font-weight:600; }
+        #exportRoot .rank-row-top .rank-name { font-weight:800; }
+        #exportRoot .rank-track { flex:1 1 70px; height:6px; background:#f7f9fc; border:1px solid #e2e8f0; border-radius:5px; overflow:hidden; }
+        #exportRoot .rank-fill { height:100%; border-radius:5px; }
+        #exportRoot .rank-pct { width:44px; text-align:right; font-weight:800; }
+        /* Histórico do Mês + Tendência (itens 1 e 2 — incluídos na exportação PNG) */
+        #exportRoot .trend { display:inline-flex; align-items:center; gap:2px; font-weight:700; font-size:9.5px; white-space:nowrap; }
+        #exportRoot .trend-icon { display:inline-block; width:9px; text-align:center; font-size:9.5px; line-height:1; }
+        #exportRoot .trend-up { color:#d92d3e; }
+        #exportRoot .trend-down { color:#15945a; }
+        #exportRoot .trend-flat { color:#64748b; font-weight:600; }
       </style>
       <h2>Ocupação de Estoque por Família — Grupo Sesé</h2>
       <div class="meta">Relatório gerado em ${dataHora}</div>
       <div class="kpis">${kpiHtml}</div>
-      <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start;">
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start;">
         <div>
           <h3>Ocupação por Tipo de Armazenagem x Família</h3>
-          <table>
-            <thead><tr>
-              <th>Tipo de Armazenagem</th><th>Família</th><th class="num">Capacidade</th>
-              <th class="num">Ocupado</th><th class="num">Disponível</th><th class="num">% Ocupado</th><th class="num">% Livre</th>
-            </tr></thead>
-            <tbody>${rowsHtml}</tbody>
-          </table>
+          <div style="display:grid;grid-template-columns:1fr 240px;gap:16px;align-items:start;">
+            <div>
+              <table>
+                <thead><tr>
+                  <th>Tipo de Armazenagem</th><th>Família</th><th class="num">Capacidade</th>
+                  <th class="num">Ocupado</th><th class="num">Disponível</th><th class="num">% Ocupado</th><th class="num">% Livre</th>
+                </tr></thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+            <div>
+              <h3 style="margin-top:0;">Histórico Diário</h3>
+              <table>
+                <thead><tr>
+                  <th>Data</th><th class="num">% Ocupado</th><th class="num">% Livre</th><th class="num">Tendência</th>
+                </tr></thead>
+                <tbody>${historicoRowsHtml}</tbody>
+              </table>
+            </div>
+          </div>
         </div>
         <div>
           <div class="panel">
