@@ -289,6 +289,10 @@
         </div>
         <div>
           <h3 id="historicoTitulo" style="margin-top:0;">Histórico Diário</h3>
+          <div style="margin-bottom:12px;">
+            <label for="historicoDateInput" style="display:block; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px;">Data do Histórico:</label>
+            <input type="date" id="historicoDateInput" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:9px; font-size:12.5px; font-family:inherit; color:var(--text); background:var(--surface);">
+          </div>
           <div id="historicoWrap" style="max-height:520px; overflow-y:auto;">
             <table>
               <thead><tr>
@@ -399,18 +403,43 @@ function loadDailyHistory() {
   }
 }
 
-// Salva/atualiza (sem duplicar) o registro do dia atual com os valores já calculados
+// Lê a data escolhida pelo usuário no campo "Data do Histórico" (input type="date",
+// formato aaaa-mm-dd) e converte para a chave usada no histórico (dd/mm/aaaa).
+// Se o campo estiver vazio/indisponível, cai de volta na data atual (comportamento antigo).
+function getSelectedHistoryDateKey() {
+  const input = document.getElementById('historicoDateInput');
+  if (input && input.value) {
+    const parts = input.value.split('-'); // aaaa-mm-dd
+    if (parts.length === 3) {
+      return parts[2] + '/' + parts[1] + '/' + parts[0]; // dd/mm/aaaa
+    }
+  }
+  return new Date().toLocaleDateString('pt-BR');
+}
+
+// Converte uma chave de histórico (dd/mm/aaaa) em objeto Date, para permitir ordenar
+// o histórico pela ordem CRONOLÓGICA da data registrada (e não pela ordem de digitação).
+function parseHistoryDateKey(dateKey) {
+  const parts = (dateKey || '').split('/');
+  if (parts.length < 3) return new Date(0);
+  return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+}
+
+// Salva/atualiza (sem duplicar) o registro do dia SELECIONADO pelo usuário no campo
+// "Data do Histórico" (por padrão, a data de hoje) com os valores já calculados
 // pela renderização da ocupação geral, e re-renderiza a tabela de histórico.
 // O histórico é permanente: só é gravado quando há dados de fato carregados (import/atualização),
 // nunca é apagado por uma nova importação, e persiste no localStorage entre sessões.
+// Se a data selecionada já possuir um registro, ele é substituído (sem duplicar) — os
+// demais dias do histórico não são criados nem alterados.
 function saveDailyHistoryEntry(pctOcupado, pctLivre, capacidade, ocupado, disponivel) {
-  const now = new Date();
-  const dateKey = now.toLocaleDateString('pt-BR'); // dd/mm/aaaa — chave única por dia
+  const dateKey = getSelectedHistoryDateKey(); // dd/mm/aaaa — chave única por dia
+  const entryDate = parseHistoryDateKey(dateKey);
   let history = loadDailyHistory();
   history[dateKey] = {
     pctOcupado: pctOcupado, pctLivre: pctLivre,
     capacidade: capacidade, ocupado: ocupado, disponivel: disponivel,
-    ts: now.getTime()
+    ts: entryDate.getTime()
   };
   try {
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
@@ -440,7 +469,9 @@ function renderDailyHistoryTable() {
   if (!tbody) return;
   const history = loadDailyHistory();
   const entries = Object.keys(history).map(dateKey => Object.assign({ dateKey: dateKey }, history[dateKey]));
-  entries.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  // Ordena pela data CRONOLÓGICA representada em cada chave (dd/mm/aaaa), e não pela ordem
+  // em que os registros foram gravados — assim a Tendência compara sempre com o dia anterior real.
+  entries.sort((a, b) => parseHistoryDateKey(a.dateKey).getTime() - parseHistoryDateKey(b.dateKey).getTime());
   if (!entries.length) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty-row-msg">Sem registros ainda.</td></tr>';
     return;
@@ -923,6 +954,18 @@ function seedManualHistoryEntry() {
   }
 }
 seedManualHistoryEntry();
+
+// Preenche o campo "Data do Histórico" com a data de hoje por padrão (item 2 do pedido).
+// O usuário pode alterá-la livremente antes de importar o CSV.
+(function initHistoricoDateInput() {
+  const input = document.getElementById('historicoDateInput');
+  if (!input) return;
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  input.value = yyyy + '-' + mm + '-' + dd;
+})();
 
 let CURRENT_QTY = new Map();
 let DATA_LOADED = false;
