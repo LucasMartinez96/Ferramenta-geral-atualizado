@@ -375,25 +375,39 @@ function chunkArray(arr, size) {
 
 /* ── Separação de impressão por Fábrica (Ubicacion / Posição) ──
    Regra: tudo que começar com "1-" ou "2-" fica no grupo Fábrica 1/2;
-   tudo que começar com "3-" fica no grupo Fábrica 3. A ordenação já
-   aplicada antes de chamar esta função é preservada dentro de cada
-   grupo (partição estável). O grupo Fábrica 3 só é paginado depois
-   que todo o grupo Fábrica 1/2 já foi paginado, e nunca compartilham
-   o mesmo bloco/página entre si. */
+   tudo que começar com "3-" fica no grupo Fábrica 3; tudo que começar
+   com "4-" fica no grupo Fábrica 4. A ordenação já aplicada antes de
+   chamar esta função é preservada dentro de cada grupo (partição
+   estável). Cada grupo só é paginado depois que o grupo anterior já
+   foi paginado, e nunca compartilham o mesmo bloco/página entre si. */
 function chunksPorFabrica(linhas) {
   const fab12 = [];
   const fab3  = [];
+  const fab4  = [];
+
   for (const l of linhas) {
-    const chave    = String(l.Ubicacion ?? l.name ?? '');
+    const chave = String(l.Ubicacion ?? l.name ?? '');
     const primeiro = chave.split('-')[0].trim();
-    if (primeiro === '3') fab3.push(l);
-    else fab12.push(l);
+
+    if (primeiro === '3') {
+      fab3.push(l);
+    } else if (primeiro === '4') {
+      fab4.push(l);
+    } else {
+      // 1-, 2- e qualquer outro caso continuam no grupo 1/2
+      fab12.push(l);
+    }
   }
+
   const blocos12 = chunkArray(fab12, LPP);
   const blocos3  = chunkArray(fab3, LPP);
+  const blocos4  = chunkArray(fab4, LPP);
+
   blocos12.forEach(b => { b._fabGrupo = 'fab12'; });
   blocos3.forEach(b => { b._fabGrupo = 'fab3'; });
-  return [...blocos12, ...blocos3];
+  blocos4.forEach(b => { b._fabGrupo = 'fab4'; });
+
+  return [...blocos12, ...blocos3, ...blocos4];
 }
 
 function dataHora() {
@@ -612,7 +626,7 @@ function numerarGrupo(grupo) {
   )];
 
   materiais.forEach(matId => {
-    ['fab12', 'fab3'].forEach(fabGrupo => {
+    ['fab12', 'fab3', 'fab4'].forEach(fabGrupo => {
       const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"][data-mat="${matId}"]`)];
       const total  = sheets.length;
       if (total === 0) return;
