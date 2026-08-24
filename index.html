@@ -124,14 +124,6 @@ const TOOLS = {
   "Indicador_SALA_COFRE_atualizado.html": { title:"Sala Cofre", subtitle:"Gestão de estoque, acuracidade e histórico" }
 };
 
-const REMOVED_PAGES = new Set([
-  "Batimento de estoque.html",
-  "BACKLOG.html",
-  "Contencão atualizada.html",
-  "Dashboard de produção.html",
-  "RECE1 REC2.html"
-]);
-
 const frame = document.getElementById("frame");
 const panel = document.getElementById("panel");
 const homePanel = document.getElementById("homePanel");
@@ -146,25 +138,37 @@ const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;'
 function setActive(el){ navItems.forEach(i=>i.classList.remove("active")); if(el) el.classList.add("active"); }
 function setContext(title, subtitle){ shellTitle.textContent=title; shellSubtitle.textContent=subtitle; }
 function navForPage(page){ return Array.from(document.querySelectorAll('.nav-item[data-page]')).find(el=>el.dataset.page===page) || null; }
+function aplicarPadraoVisualNoFrame(){
+  try{
+    const doc = frame.contentDocument;
+    if(!doc || !doc.head || !doc.body) return;
+    doc.body.classList.add('tool-standardized');
+    if(!doc.querySelector('link[data-tool-standard]')){
+      const link = doc.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'css/tool-standard.css';
+      link.dataset.toolStandard = 'true';
+      doc.head.appendChild(link);
+    }
+  }catch(e){ /* aparência opcional: nunca bloquear a ferramenta */ }
+}
 
 window.alternarMenu = ()=>{ sidebar.classList.toggle("open"); sidebarBackdrop.classList.toggle("open"); };
 window.fecharMenu = ()=>{ sidebar.classList.remove("open"); sidebarBackdrop.classList.remove("open"); };
-
 window.mostrarInicio = (el=document.getElementById("navHome"), limparPagina=true)=>{
   setActive(el); homePanel.style.display="block"; panel.style.display="none"; frame.style.display="none"; loading.style.display="none";
   if(limparPagina) localStorage.removeItem("pagina");
   setContext("Visão Geral","Acesso centralizado às ferramentas de logística e inventário"); fecharMenu();
 };
-
 window.abrir = (pagina,el)=>{
   if(!TOOLS[pagina]) return;
   setActive(el || navForPage(pagina)); homePanel.style.display="none"; panel.style.display="none"; frame.style.display="block"; frame.style.opacity="0"; loading.style.display="grid";
   localStorage.setItem("pagina",pagina); setContext(TOOLS[pagina].title,TOOLS[pagina].subtitle); fecharMenu();
-  if(frame.getAttribute("src") !== pagina) frame.src = pagina; else { frame.style.opacity="1"; loading.style.display="none"; }
+  if(frame.getAttribute("src") !== pagina) frame.src = pagina; else { aplicarPadraoVisualNoFrame(); frame.style.opacity="1"; loading.style.display="none"; }
 };
 window.abrirPorCard = (card)=>{ const page=card.dataset.cardPage; abrir(page,navForPage(page)); };
 window.ativarCardTeclado = (event,card)=>{ if(event.key==="Enter" || event.key===" "){ event.preventDefault(); abrirPorCard(card); } };
-frame.addEventListener("load",()=>{ if(frame.style.display!=="none"){ frame.style.opacity="1"; loading.style.display="none"; } });
+frame.addEventListener("load",()=>{ aplicarPadraoVisualNoFrame(); if(frame.style.display!=="none"){ frame.style.opacity="1"; loading.style.display="none"; } });
 
 window.abrirPainel = (el)=>{
   setActive(el); frame.style.display="none"; homePanel.style.display="none"; panel.style.display="block"; loading.style.display="none";
@@ -178,19 +182,22 @@ onAuthStateChanged(auth, async(user)=>{
   if(!snap.exists()) await setDoc(ref,{ email:user.email, tipo:"admin" });
   carregarUsuarios();
   const ultima = localStorage.getItem("pagina");
-  if(ultima && REMOVED_PAGES.has(ultima)) localStorage.removeItem("pagina");
-  if(ultima && TOOLS[ultima]) abrir(ultima,navForPage(ultima)); else mostrarInicio(document.getElementById("navHome"),false);
+  if(ultima && TOOLS[ultima]) abrir(ultima,navForPage(ultima));
+  else { if(ultima) localStorage.removeItem("pagina"); mostrarInicio(document.getElementById("navHome"),false); }
 });
 
 window.criarUsuario = async()=>{
-  const cred = await createUserWithEmailAndPassword(auth,emailNovo.value,senhaNovo.value);
-  await setDoc(doc(db,"usuarios",cred.user.uid),{ email: emailNovo.value, tipo: tipoNovo.value });
+  const email = document.getElementById('emailNovo').value;
+  const senha = document.getElementById('senhaNovo').value;
+  const tipo = document.getElementById('tipoNovo').value;
+  const cred = await createUserWithEmailAndPassword(auth,email,senha);
+  await setDoc(doc(db,"usuarios",cred.user.uid),{ email, tipo });
   carregarUsuarios();
 };
 async function carregarUsuarios(){
   const query = await getDocs(collection(db,"usuarios")); const linhas = [];
   query.forEach(docu=>{ const u = docu.data(); linhas.push(`<tr><td>${escHtml(u.email)}</td><td>${escHtml(u.tipo)}</td><td><button class="btn btn-danger btn-sm" onclick="remover('${escHtml(docu.id)}')">Excluir</button></td></tr>`); });
-  listaUsuarios.innerHTML = linhas.join("");
+  document.getElementById('listaUsuarios').innerHTML = linhas.join("");
 }
 window.remover = async(id)=>{ await deleteDoc(doc(db,"usuarios",id)); carregarUsuarios(); };
 window.logout = ()=>{ signOut(auth).then(()=>location="login.html"); };
