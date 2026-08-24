@@ -15,7 +15,7 @@
   };
 
   function expandShortHex(sh){
-    if(sh.length===4){ // #abc -> #aabbcc
+    if(sh.length===4){
       return '#' + sh[1]+sh[1] + sh[2]+sh[2] + sh[3]+sh[3];
     }
     return sh.toLowerCase();
@@ -29,7 +29,22 @@
     });
   }
 
+  function attachVisualLayer(){
+    try{
+      if(!document.querySelector('link[data-tool-standard]')){
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/tool-standard.css';
+        link.dataset.toolStandard = 'true';
+        document.head.appendChild(link);
+      }
+      if(document.body) document.body.classList.add('tool-standardized');
+    }catch(e){ /* camada visual opcional; nunca bloquear a ferramenta */ }
+  }
+
   function normalize(){
+    attachVisualLayer();
+
     document.querySelectorAll('[style]').forEach(el=>{
       try{
         const s = el.getAttribute('style');
@@ -39,7 +54,6 @@
       }catch(e){ /* continue silently */ }
     });
 
-    // Normalize inline style attributes on <style> tags inside HTML (rare)
     document.querySelectorAll('style').forEach(st=>{
       try{
         const txt = st.textContent;
@@ -49,12 +63,8 @@
       }catch(e){}
     });
 
-    // Add helper classes to buttons without standardized classes
     document.querySelectorAll('button').forEach(btn=>{
-      if(!btn.classList.contains('btn')){
-        btn.classList.add('btn');
-      }
-
+      if(!btn.classList.contains('btn')) btn.classList.add('btn');
       if(btn.classList.contains('primary')) btn.classList.add('btn-primary');
       if(btn.classList.contains('alt')) btn.classList.add('btn-secondary');
       if(btn.classList.contains('danger')) btn.classList.add('btn-danger');
