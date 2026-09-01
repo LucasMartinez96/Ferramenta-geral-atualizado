@@ -2,236 +2,106 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Sistema Logístico</title>
-
-  <link rel="stylesheet" href="css/design-system.css" />
-  <script src="js/normalize-styles.js" defer></script>
-
-<style>
-:root{
-  --page-bg: var(--color-neutral-900);
-  --sidebar-bg: var(--color-neutral-900);
-  --sidebar-hover: var(--color-neutral-800);
-  --sidebar-active: var(--color-primary);
-  --topbar-start: var(--color-neutral-900);
-  --topbar-end: var(--color-primary-dark);
-  --panel-bg: var(--color-neutral-100);
-  --card-bg: var(--color-surface);
-  --border-soft: var(--color-border);
-  --text-on-dark: var(--color-neutral-50);
-}
-
-body{
-  margin:0;
-  display:flex;
-  height:100vh;
-  font-family:Segoe UI;
-  background:var(--page-bg);
-}
-
-/* SIDEBAR */
-.sidebar{
-  width:80px;
-  background:var(--sidebar-bg);
-  color:var(--text-on-dark);
-  transition:.3s;
-}
-.sidebar:hover{width:260px;}
-
-.item{
-  padding:12px;
-  cursor:pointer;
-  display:flex;
-  gap:10px;
-}
-.item:hover{background:var(--sidebar-hover);}
-.item.active{background:var(--sidebar-active);}
-
-.text{opacity:0;}
-.sidebar:hover .text{opacity:1;}
-
-/* MAIN */
-.main{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-}
-
-/* TOPO */
-.topbar{
-  height:55px;
-  background:linear-gradient(90deg,var(--topbar-start),var(--topbar-end));
-  color:var(--text-on-dark);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:0 20px;
-}
-
-.btnLogout{
-  background:var(--color-danger);
-  border:none;
-  padding:6px 12px;
-  border-radius:6px;
-  color:var(--text-on-dark);
-  cursor:pointer;
-}
-
-/* IFRAME */
-iframe{
-  flex:1;
-  border:none;
-  transition:opacity .3s;
-}
-
-/* LOADING */
-.loading{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  color:#fff;
-  font-size:18px;
-  display:none;
-}
-
-/* PAINEL */
-.panel{
-  display:none;
-  padding:30px;
-  background:var(--panel-bg);
-  height:100%;
-  overflow:auto;
-}
-
-.card{
-  background:var(--card-bg);
-  padding:20px;
-  border-radius:10px;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-td,th{
-  padding:8px;
-  border-bottom:1px solid var(--border-soft);
-}
-th{background:var(--color-neutral-100);}
-
-.btn{
-  padding:8px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-.btn-primary{background:var(--color-primary);color:var(--text-on-dark);}
-.btn-danger{background:var(--color-danger);color:var(--text-on-dark);}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema Integrado de Gestão Operacional</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/app-shell.css">
 </head>
-
 <body>
+<div class="app-shell">
+  <aside class="shell-sidebar" id="sidebar" aria-label="Navegação principal">
+    <div class="shell-brand">
+      <div class="shell-brand-mark" aria-hidden="true">📦</div>
+      <div class="shell-brand-copy"><strong>Sistema Logístico</strong><span>Gestão operacional integrada</span></div>
+    </div>
+    <nav class="shell-nav">
+      <div class="shell-nav-section">Visão geral</div>
+      <button class="nav-item active" id="navHome" type="button" onclick="mostrarInicio(this)"><span class="nav-icon">⌂</span><span class="nav-label">Dashboard</span></button>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
+      <div class="shell-nav-section">Inventário e estoque</div>
+      <button class="nav-item" data-page="CICLICO_PORTA_PORTA_SEM_BORDA2.html" type="button" onclick="abrir('CICLICO_PORTA_PORTA_SEM_BORDA2.html',this)"><span class="nav-icon">📦</span><span class="nav-label">Inventário Cíclico</span></button>
+      <button class="nav-item" data-page="PORTA-PORTA.html" type="button" onclick="abrir('PORTA-PORTA.html',this)"><span class="nav-icon">📋</span><span class="nav-label">Divergência</span></button>
+      <button class="nav-item" data-page="ferramenta_de_inventario_travada.html" type="button" onclick="abrir('ferramenta_de_inventario_travada.html',this)"><span class="nav-icon">📌</span><span class="nav-label">Inventário Travado</span></button>
+      <button class="nav-item" data-page="CICLICO ALM51.html" type="button" onclick="abrir('CICLICO ALM51.html',this)"><span class="nav-icon">🏷️</span><span class="nav-label">Cíclico ALM51</span></button>
+      <button class="nav-item" data-page="Ocupacao_Estoque_por_Familia-10.html" type="button" onclick="abrir('Ocupacao_Estoque_por_Familia-10.html',this)"><span class="nav-icon">▦</span><span class="nav-label">Ocupação de Estoque</span></button>
 
-<div class="item" onclick="abrir('Batimento de estoque.html',this)">📊 <span class="text">Batimento</span></div>
-<div class="item" onclick="abrir('BACKLOG.html',this)">📈 <span class="text">Backlog</span></div>
-<div class="item" onclick="abrir('CICLICO_PORTA_PORTA_SEM_BORDA2.html',this)">📦 <span class="text">Inventário ciclico</span></div>
-<div class="item" onclick="abrir('PORTA-PORTA.html',this)">📋 <span class="text">Divergência</span></div>
-<div class="item" onclick="abrir('ferramenta_de_inventario_travada.html',this)">📌 <span class="text">Travado</span></div>
-<div class="item" onclick="abrir('DEVOLUÇÃO V3.html',this)">↩️ <span class="text">Devoluções</span></div>
-<div class="item" onclick="abrir('Contencão atualizada.html',this)">🛑 <span class="text">Contenção</span></div>
-<div class="item" onclick="abrir('Dashboard de produção.html',this)">🏭 <span class="text">Produção</span></div>
-<div class="item" onclick="abrir('RECE1 REC2.html',this)">📦 <span class="text">Recebimento</span></div>
-<div class="item" onclick="abrir('iNDICADOR PERECIVEL.html',this)">🥫 <span class="text">Perecíveis</span></div>
-<div class="item" onclick="abrir('Indicador_SALA_COFRE_atualizado.html',this)">🔒 <span class="text">Sala Cofre</span></div>
-<div class="item" onclick="abrir('CICLICO ALM51.html',this)">📛 <span class="text">Cíclico ALM51</span></div>
-<div class="item" onclick="abrirPainel(this)">👥 <span class="text">Usuários</span></div>
+      <div class="shell-nav-section">Indicadores operacionais</div>
+      <button class="nav-item" data-page="DEVOLUÇÃO V3.html" type="button" onclick="abrir('DEVOLUÇÃO V3.html',this)"><span class="nav-icon">↩️</span><span class="nav-label">Devoluções</span></button>
+      <button class="nav-item" data-page="iNDICADOR PERECIVEL.html" type="button" onclick="abrir('iNDICADOR PERECIVEL.html',this)"><span class="nav-icon">◷</span><span class="nav-label">Perecíveis</span></button>
+      <button class="nav-item" data-page="Indicador_SALA_COFRE_atualizado.html" type="button" onclick="abrir('Indicador_SALA_COFRE_atualizado.html',this)"><span class="nav-icon">🔒</span><span class="nav-label">Sala Cofre</span></button>
 
-</div>
+      <div class="shell-nav-section">Administração</div>
+      <button class="nav-item" id="navUsers" type="button" onclick="abrirPainel(this)"><span class="nav-icon">👥</span><span class="nav-label">Usuários</span></button>
+    </nav>
+    <div class="shell-sidebar-footer">Interface padronizada · Operação preservada</div>
+  </aside>
 
-<!-- MAIN -->
-<div class="main">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="fecharMenu()"></div>
 
-<div class="topbar">
-<div>🚀 Sistema Logístico</div>
+  <section class="shell-main">
+    <header class="shell-topbar">
+      <div class="topbar-left">
+        <button class="shell-action menu-toggle" type="button" aria-label="Abrir menu" onclick="alternarMenu()">☰</button>
+        <div class="topbar-title">
+          <div class="topbar-eyebrow">Sistema Integrado de Gestão Operacional</div>
+          <h1 id="shellTitle">Visão Geral</h1>
+          <p id="shellSubtitle">Acesso centralizado às ferramentas de logística e inventário</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="user-badge" id="user">Carregando usuário...</span>
+        <button class="shell-action" type="button" onclick="mostrarInicio(document.getElementById('navHome'))" title="Voltar ao dashboard">⌂ <span class="action-label">Início</span></button>
+        <button class="shell-action danger" type="button" onclick="logout()" title="Sair do sistema">↪ <span class="action-label">Sair</span></button>
+      </div>
+    </header>
 
-<div style="display:flex;gap:15px;">
-<span id="user"></span>
-<button class="btnLogout" onclick="logout()">Sair</button>
-</div>
-</div>
+    <main class="shell-workspace">
+      <div class="shell-loading" id="loading" aria-live="polite"><div class="loading-card"><span class="loading-spinner"></span>Carregando ferramenta...</div></div>
 
-<div id="loading" class="loading">Carregando...</div>
+      <section class="home-panel" id="homePanel">
+        <div class="home-inner">
+          <div class="hero-card">
+            <div class="hero-copy">
+              <div class="hero-kicker">Central operacional</div>
+              <h2>Gestão logística em um único ambiente</h2>
+              <p>Selecione uma ferramenta para acessar inventários, divergências, ocupação e indicadores operacionais. As rotinas, cálculos e regras internas de cada módulo permanecem preservadas.</p>
+            </div>
+            <div class="hero-stat"><strong>8</strong><span>ferramentas ativas</span></div>
+          </div>
 
-<!-- PAINEL -->
-<div class="panel" id="panel">
+          <div class="section-heading"><div><h3>Ferramentas disponíveis</h3><span>Organizadas por finalidade operacional</span></div></div>
+          <div class="tool-grid">
+            <article class="tool-card" tabindex="0" role="button" data-card-page="CICLICO_PORTA_PORTA_SEM_BORDA2.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">📦</span><span class="tool-card-arrow">→</span></div><h4>Inventário Cíclico</h4><p>Preparação, filtros e impressão das contagens cíclicas.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+            <article class="tool-card" tabindex="0" role="button" data-card-page="PORTA-PORTA.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">📋</span><span class="tool-card-arrow">→</span></div><h4>Divergência</h4><p>Registro e visualização das diferenças de inventário por item.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+            <article class="tool-card" tabindex="0" role="button" data-card-page="ferramenta_de_inventario_travada.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">📌</span><span class="tool-card-arrow">→</span></div><h4>Inventário Travado</h4><p>Análise de itens contados, sistema e subinventários.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+            <article class="tool-card" tabindex="0" role="button" data-card-page="CICLICO ALM51.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">🏷️</span><span class="tool-card-arrow">→</span></div><h4>Cíclico ALM51</h4><p>Planejamento, mapeamento e impressão do inventário ALM51.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+            <article class="tool-card" tabindex="0" role="button" data-card-page="Ocupacao_Estoque_por_Familia-10.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">▦</span><span class="tool-card-arrow">→</span></div><h4>Ocupação de Estoque</h4><p>Capacidade, ocupação, famílias e posições de armazenagem.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+            <article class="tool-card" tabindex="0" role="button" data-card-page="DEVOLUÇÃO V3.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">↩️</span><span class="tool-card-arrow">→</span></div><h4>Devoluções</h4><p>Indicadores diários de embalagens e peças devolvidas.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+            <article class="tool-card" tabindex="0" role="button" data-card-page="iNDICADOR PERECIVEL.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">◷</span><span class="tool-card-arrow">→</span></div><h4>Perecíveis</h4><p>Acompanhamento de vencimentos, faixas e itens em falta.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+            <article class="tool-card" tabindex="0" role="button" data-card-page="Indicador_SALA_COFRE_atualizado.html" onclick="abrirPorCard(this)" onkeydown="ativarCardTeclado(event,this)"><div class="tool-card-head"><span class="tool-card-icon">🔒</span><span class="tool-card-arrow">→</span></div><h4>Sala Cofre</h4><p>Gestão de estoque, acuracidade, histórico e divergências.</p><div class="tool-card-footer">Abrir ferramenta</div></article>
+          </div>
+        </div>
+      </section>
 
-<h2>👥 Gestão de Usuários</h2>
+      <section class="users-panel" id="panel">
+        <div class="users-inner">
+          <div class="users-header"><h2>Gestão de Usuários</h2><p>Administração dos acessos já existentes no sistema.</p></div>
+          <div class="users-grid">
+            <div class="users-card"><h3>Criar usuário</h3><div class="users-form"><input id="emailNovo" type="email" placeholder="Email" autocomplete="email"><input id="senhaNovo" type="password" placeholder="Senha" autocomplete="new-password"><select id="tipoNovo"><option value="admin">Admin</option><option value="operador">Operador</option></select><button class="btn btn-primary" type="button" onclick="criarUsuario()">Criar usuário</button></div></div>
+            <div class="users-card"><h3>Usuários cadastrados</h3><div class="users-table-wrap"><table class="users-table"><thead><tr><th>Email</th><th>Tipo</th><th>Ação</th></tr></thead><tbody id="listaUsuarios"></tbody></table></div></div>
+          </div>
+        </div>
+      </section>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-
-<div class="card">
-<h3>Criar Usuário</h3>
-
-<input id="emailNovo" placeholder="Email" style="width:100%;margin-top:10px;">
-<input id="senhaNovo" type="password" placeholder="Senha" style="width:100%;margin-top:10px;">
-
-<select id="tipoNovo" style="width:100%;margin-top:10px;">
-<option value="admin">Admin</option>
-<option value="operador">Operador</option>
-</select>
-
-<button class="btn btn-primary" onclick="criarUsuario()" style="width:100%;margin-top:10px;">
-Criar
-</button>
-
-</div>
-
-<div class="card">
-<h3>Usuários</h3>
-
-<table>
-<thead>
-<tr>
-<th>Email</th>
-<th>Tipo</th>
-<th>Ação</th>
-</tr>
-</thead>
-<tbody id="listaUsuarios"></tbody>
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-<iframe id="frame"></iframe>
-
+      <iframe id="frame" title="Ferramenta operacional selecionada"></iframe>
+    </main>
+  </section>
 </div>
 
 <script type="module">
-  import { initializeUtils, Toast } from './js/utils.js';
-
-  // Inicializa utilitários
-  initializeUtils();
-
-  const toast = new Toast();
-
-  // Exemplo: notificar que o design system foi carregado
-  toast.info('Design system carregado');
-</script>
-
-<script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
@@ -243,121 +113,94 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+const TOOLS = {
+  "CICLICO_PORTA_PORTA_SEM_BORDA2.html": { title:"Inventário Cíclico", subtitle:"Contagem, filtros e impressão de inventário" },
+  "PORTA-PORTA.html": { title:"Divergência", subtitle:"Diferenças de inventário por item" },
+  "ferramenta_de_inventario_travada.html": { title:"Inventário Travado", subtitle:"Análise de contagem e saldo por subinventário" },
+  "CICLICO ALM51.html": { title:"Cíclico ALM51", subtitle:"Planejamento e impressão do inventário ALM51" },
+  "Ocupacao_Estoque_por_Familia-10.html": { title:"Ocupação de Estoque", subtitle:"Capacidade e ocupação por família" },
+  "DEVOLUÇÃO V3.html": { title:"Devoluções", subtitle:"Indicadores de embalagens e peças devolvidas" },
+  "iNDICADOR PERECIVEL.html": { title:"Perecíveis", subtitle:"Controle de vencimentos e disponibilidade" },
+  "Indicador_SALA_COFRE_atualizado.html": { title:"Sala Cofre", subtitle:"Gestão de estoque, acuracidade e histórico" }
+};
+
 const frame = document.getElementById("frame");
 const panel = document.getElementById("panel");
+const homePanel = document.getElementById("homePanel");
 const loading = document.getElementById("loading");
-const items = document.querySelectorAll(".item");
-
+const sidebar = document.getElementById("sidebar");
+const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+const shellTitle = document.getElementById("shellTitle");
+const shellSubtitle = document.getElementById("shellSubtitle");
+const navItems = Array.from(document.querySelectorAll(".nav-item"));
 const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-/* LOGIN */
-onAuthStateChanged(auth, async(user)=>{
-
-if(!user){
-  location="login.html";
-  return;
+function setActive(el){ navItems.forEach(i=>i.classList.remove("active")); if(el) el.classList.add("active"); }
+function setContext(title, subtitle){ shellTitle.textContent=title; shellSubtitle.textContent=subtitle; }
+function navForPage(page){ return Array.from(document.querySelectorAll('.nav-item[data-page]')).find(el=>el.dataset.page===page) || null; }
+function aplicarPadraoVisualNoFrame(){
+  try{
+    const doc = frame.contentDocument;
+    if(!doc || !doc.head || !doc.body) return;
+    doc.body.classList.add('tool-standardized');
+    if(!doc.querySelector('link[data-tool-standard]')){
+      const link = doc.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'css/tool-standard.css';
+      link.dataset.toolStandard = 'true';
+      doc.head.appendChild(link);
+    }
+  }catch(e){ /* aparência opcional: nunca bloquear a ferramenta */ }
 }
 
-document.getElementById("user").innerText = user.email;
-
-// garante no banco
-const ref = doc(db,"usuarios",user.uid);
-const snap = await getDoc(ref);
-
-if(!snap.exists()){
-  await setDoc(ref,{ email:user.email, tipo:"admin" });
-}
-
-// carregar usuários
-carregarUsuarios();
-
-// restaurar tela
-const ultima = localStorage.getItem("pagina");
-if(ultima){
-  frame.src = ultima;
-}
-
-});
-
-/* NAVEGAÇÃO (CORRIGIDO DEFINITIVO) */
+window.alternarMenu = ()=>{ sidebar.classList.toggle("open"); sidebarBackdrop.classList.toggle("open"); };
+window.fecharMenu = ()=>{ sidebar.classList.remove("open"); sidebarBackdrop.classList.remove("open"); };
+window.mostrarInicio = (el=document.getElementById("navHome"), limparPagina=true)=>{
+  setActive(el); homePanel.style.display="block"; panel.style.display="none"; frame.style.display="none"; loading.style.display="none";
+  if(limparPagina) localStorage.removeItem("pagina");
+  setContext("Visão Geral","Acesso centralizado às ferramentas de logística e inventário"); fecharMenu();
+};
 window.abrir = (pagina,el)=>{
-
-items.forEach(i=>i.classList.remove("active"));
-el.classList.add("active");
-
-// ✅ MOSTRAR FRAME DE VOLTA
-frame.style.display = "block";
-panel.style.display = "none";
-
-loading.style.display="block";
-frame.style.opacity=0;
-
-localStorage.setItem("pagina",pagina);
-
-setTimeout(()=>{
-frame.src = pagina;
-
-setTimeout(()=>{
-frame.style.opacity=1;
-loading.style.display="none";
-},300);
-
-},200);
-
+  if(!TOOLS[pagina]) return;
+  setActive(el || navForPage(pagina)); homePanel.style.display="none"; panel.style.display="none"; frame.style.display="block"; frame.style.opacity="0"; loading.style.display="grid";
+  localStorage.setItem("pagina",pagina); setContext(TOOLS[pagina].title,TOOLS[pagina].subtitle); fecharMenu();
+  if(frame.getAttribute("src") !== pagina) frame.src = pagina; else { aplicarPadraoVisualNoFrame(); frame.style.opacity="1"; loading.style.display="none"; }
 };
+window.abrirPorCard = (card)=>{ const page=card.dataset.cardPage; abrir(page,navForPage(page)); };
+window.ativarCardTeclado = (event,card)=>{ if(event.key==="Enter" || event.key===" "){ event.preventDefault(); abrirPorCard(card); } };
+frame.addEventListener("load",()=>{ aplicarPadraoVisualNoFrame(); if(frame.style.display!=="none"){ frame.style.opacity="1"; loading.style.display="none"; } });
 
-/* PAINEL */
 window.abrirPainel = (el)=>{
-
-items.forEach(i=>i.classList.remove("active"));
-el.classList.add("active");
-
-frame.style.display="none";
-panel.style.display="block";
-
+  setActive(el); frame.style.display="none"; homePanel.style.display="none"; panel.style.display="block"; loading.style.display="none";
+  setContext("Gestão de Usuários","Administração dos acessos existentes"); fecharMenu();
 };
 
-/* USUÁRIOS */
+onAuthStateChanged(auth, async(user)=>{
+  if(!user){ location="login.html"; return; }
+  document.getElementById("user").innerText = user.email;
+  const ref = doc(db,"usuarios",user.uid); const snap = await getDoc(ref);
+  if(!snap.exists()) await setDoc(ref,{ email:user.email, tipo:"admin" });
+  carregarUsuarios();
+  const ultima = localStorage.getItem("pagina");
+  if(ultima && TOOLS[ultima]) abrir(ultima,navForPage(ultima));
+  else { if(ultima) localStorage.removeItem("pagina"); mostrarInicio(document.getElementById("navHome"),false); }
+});
+
 window.criarUsuario = async()=>{
-const cred = await createUserWithEmailAndPassword(auth,emailNovo.value,senhaNovo.value);
-
-await setDoc(doc(db,"usuarios",cred.user.uid),{
-  email: emailNovo.value,
-  tipo: tipoNovo.value
-});
-
-carregarUsuarios();
-}
-
-async function carregarUsuarios(){
-const query = await getDocs(collection(db,"usuarios"));
-
-const linhas = [];
-query.forEach(docu=>{
-  const u = docu.data();
-
-  linhas.push(`
-  <tr>
-  <td>${escHtml(u.email)}</td>
-  <td>${escHtml(u.tipo)}</td>
-  <td><button class="btn btn-danger" onclick="remover('${escHtml(docu.id)}')">Excluir</button></td>
-  </tr>`);
-});
-
-listaUsuarios.innerHTML = linhas.join("");
-}
-
-window.remover = async(id)=>{
-await deleteDoc(doc(db,"usuarios",id));
-carregarUsuarios();
-}
-
-/* LOGOUT */
-window.logout = ()=>{
-signOut(auth).then(()=>location="login.html");
+  const email = document.getElementById('emailNovo').value;
+  const senha = document.getElementById('senhaNovo').value;
+  const tipo = document.getElementById('tipoNovo').value;
+  const cred = await createUserWithEmailAndPassword(auth,email,senha);
+  await setDoc(doc(db,"usuarios",cred.user.uid),{ email, tipo });
+  carregarUsuarios();
 };
-
+async function carregarUsuarios(){
+  const query = await getDocs(collection(db,"usuarios")); const linhas = [];
+  query.forEach(docu=>{ const u = docu.data(); linhas.push(`<tr><td>${escHtml(u.email)}</td><td>${escHtml(u.tipo)}</td><td><button class="btn btn-danger btn-sm" onclick="remover('${escHtml(docu.id)}')">Excluir</button></td></tr>`); });
+  document.getElementById('listaUsuarios').innerHTML = linhas.join("");
+}
+window.remover = async(id)=>{ await deleteDoc(doc(db,"usuarios",id)); carregarUsuarios(); };
+window.logout = ()=>{ signOut(auth).then(()=>location="login.html"); };
 </script>
-
 </body>
 </html>

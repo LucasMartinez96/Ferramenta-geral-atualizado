@@ -304,7 +304,7 @@ td.num { text-align: right; }
     <span class="muted">Carregue CSV, XLSX ou XLS.</span>
   </div>
   <div class="row">
-    <input id="search" type="text" placeholder="Buscar por Código (Pieza) ou Descrição" />
+    <input id="search" type="text" placeholder="Buscar por Código (Pieza) ou Descrição — vários códigos: 123456;789012" />
     <button class="primary" id="btnBuscar">Buscar</button>
     <input id="searchPos" type="text" placeholder="Buscar por Posição (ex.: 1-200-0001-00 ou 1-200)" style="min-width:280px" />
     <div class="segmented" title="Filtrar lado da posição (Ubicacion)">
@@ -361,6 +361,10 @@ td.num { text-align: right; }
 const LPP = 21;
 let dados = [];
 let ultimoFiltro = [];
+// Ordem dos códigos de material (Pieza) conforme digitados na busca,
+// usada apenas para separar a impressão por material (um relatório
+// completo por material, em sequência), sem alterar a lógica de busca.
+let ordemMateriais = [];
 
 /* ── Utilitários gerais ── */
 function chunkArray(arr, size) {
@@ -371,25 +375,47 @@ function chunkArray(arr, size) {
 
 /* ── Separação de impressão por Fábrica (Ubicacion / Posição) ──
    Regra: tudo que começar com "1-" ou "2-" fica no grupo Fábrica 1/2;
-   tudo que começar com "3-" fica no grupo Fábrica 3. A ordenação já
-   aplicada antes de chamar esta função é preservada dentro de cada
-   grupo (partição estável). O grupo Fábrica 3 só é paginado depois
-   que todo o grupo Fábrica 1/2 já foi paginado, e nunca compartilham
-   o mesmo bloco/página entre si. */
+   tudo que começar com "3-" fica no grupo Fábrica 3; tudo que começar
+   com "4-" fica no grupo Fábrica 4. A ordenação já aplicada antes de
+   chamar esta função é preservada dentro de cada grupo (partição
+   estável). Cada grupo só é paginado depois que o grupo anterior já
+   foi paginado, e nunca compartilham o mesmo bloco/página entre si. */
 function chunksPorFabrica(linhas) {
   const fab12 = [];
   const fab3  = [];
+  const fab4  = [];
+
   for (const l of linhas) {
-    const chave    = String(l.Ubicacion ?? l.name ?? '');
+    const chave = String(l.Ubicacion ?? l.name ?? '');
     const primeiro = chave.split('-')[0].trim();
-    if (primeiro === '3') fab3.push(l);
-    else fab12.push(l);
+
+    if (primeiro === '3') {
+      fab3.push(l);
+    } else if (primeiro === '4') {
+      fab4.push(l);
+    } else {
+      // 1-, 2- e qualquer outro caso continuam no grupo 1/2
+      fab12.push(l);
+    }
   }
+<<<<<<< HEAD
   const blocos12 = chunkArray(fab12, LPP);
   const blocos3  = chunkArray(fab3, LPP);
   blocos12.forEach(b => { b._fabGrupo = 'fab12'; });
   blocos3.forEach(b => { b._fabGrupo = 'fab3'; });
   return [...blocos12, ...blocos3];
+=======
+
+  const blocos12 = chunkArray(fab12, LPP);
+  const blocos3  = chunkArray(fab3, LPP);
+  const blocos4  = chunkArray(fab4, LPP);
+
+  blocos12.forEach(b => { b._fabGrupo = 'fab12'; });
+  blocos3.forEach(b => { b._fabGrupo = 'fab3'; });
+  blocos4.forEach(b => { b._fabGrupo = 'fab4'; });
+
+  return [...blocos12, ...blocos3, ...blocos4];
+>>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
 }
 
 function dataHora() {
@@ -595,8 +621,14 @@ function tabelaEmbalagemHTML(linhas) {
   </div>`;
 }
 
-/* ── Numeração de páginas ── */
+/* ── Numeração de páginas ──
+   Numera "Página X de Y" separadamente por material (data-mat), além do
+   grupo Fábrica (fabgrupo), para que a paginação de cada material pesquisado
+   comece do zero, exatamente como acontece quando se pesquisa um único
+   material. data-grupo/data-fabgrupo continuam intactos (CSS de impressão
+   e layout não são afetados). */
 function numerarGrupo(grupo) {
+<<<<<<< HEAD
   ['fab12', 'fab3'].forEach(fabGrupo => {
     const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"]`)];
     const total  = sheets.length;
@@ -616,8 +648,56 @@ function numerarGrupo(grupo) {
       if (idx > 0) {
         sheet.querySelector('.inventariante')?.remove();
       }
+=======
+  const materiais = [...new Set(
+    [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)]
+      .map(s => s.getAttribute('data-mat') || '0')
+  )];
+
+  materiais.forEach(matId => {
+    ['fab12', 'fab3', 'fab4'].forEach(fabGrupo => {
+      const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"][data-mat="${matId}"]`)];
+      const total  = sheets.length;
+      if (total === 0) return;
+      sheets.forEach((sheet, idx) => {
+        let footer = sheet.querySelector('.page-footer');
+        if (!footer) {
+          footer = document.createElement('div');
+          footer.className = 'page-footer';
+          sheet.appendChild(footer);
+        }
+        footer.textContent = `Página ${idx + 1} de ${total}`;
+
+        /* Assinatura do Inventariante: somente na primeira
+           página de cada relatório (cabeçalho — título, data,
+           hora e logo — permanece em todas as páginas). */
+        if (idx > 0) {
+          sheet.querySelector('.inventariante')?.remove();
+        }
+      });
+>>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
     });
   });
+}
+
+/* ── Separa uma lista já filtrada em relatórios individuais por material ──
+   Cada material pesquisado (Pieza) vira seu próprio grupo, preservando a
+   ordem em que os códigos foram digitados na busca (ordemMateriais). Se
+   não houver mais de um material (busca única, como já funcionava), tudo
+   permanece em um único grupo — comportamento 100% igual ao original. */
+function separarPorMaterial(lista) {
+  if (ordemMateriais.length <= 1) {
+    return [{ cod: lista[0]?.Pieza || '', linhas: lista }];
+  }
+  const porCod = new Map();
+  for (const l of lista) {
+    const cod = l.Pieza || '';
+    if (!porCod.has(cod)) porCod.set(cod, []);
+    porCod.get(cod).push(l);
+  }
+  return ordemMateriais
+    .filter(cod => porCod.has(cod))
+    .map(cod => ({ cod, linhas: porCod.get(cod) }));
 }
 
 const byUbicacionAZ = (a, b) =>
@@ -630,10 +710,10 @@ function gerarCadernos(tipo) {
     return;
   }
   const ordenado = [...ultimoFiltro].sort(byUbicacionAZ);
-  const cod      = ordenado[0]?.Pieza || '';
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
+<<<<<<< HEAD
   chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
@@ -642,6 +722,19 @@ function gerarCadernos(tipo) {
     const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`;
     section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
     printArea.appendChild(section);
+=======
+  separarPorMaterial(ordenado).forEach((mat, matIdx) => {
+    const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${mat.cod}`;
+    chunksPorFabrica(mat.linhas).forEach(bloco => {
+      const section = document.createElement('section');
+      section.className = 'sheet';
+      section.setAttribute('data-grupo', tipo);
+      section.setAttribute('data-fabgrupo', bloco._fabGrupo);
+      section.setAttribute('data-mat', String(matIdx));
+      section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
+      printArea.appendChild(section);
+    });
+>>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo(tipo);
@@ -654,10 +747,10 @@ function gerarAmbos() {
     return;
   }
   const ordenado  = [...ultimoFiltro].sort(byUbicacionAZ);
-  const cod       = ordenado[0]?.Pieza || '';
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
+<<<<<<< HEAD
   chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
@@ -674,6 +767,30 @@ function gerarAmbos() {
     section.setAttribute('data-fabgrupo', bloco._fabGrupo);
     section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
     printArea.appendChild(section);
+=======
+  const materiais = separarPorMaterial(ordenado);
+
+  materiais.forEach((mat, matIdx) => {
+    chunksPorFabrica(mat.linhas).forEach(bloco => {
+      const section = document.createElement('section');
+      section.className = 'sheet';
+      section.setAttribute('data-grupo', 'qtd');
+      section.setAttribute('data-fabgrupo', bloco._fabGrupo);
+      section.setAttribute('data-mat', String(matIdx));
+      section.innerHTML = `${cabecalho(`Inventário Cíclico (QTD) – Item: ${mat.cod}`)}${tabelaHTML(bloco, true)}<div class="page-footer"></div>`;
+      printArea.appendChild(section);
+    });
+
+    chunksPorFabrica(mat.linhas).forEach(bloco => {
+      const section = document.createElement('section');
+      section.className = 'sheet';
+      section.setAttribute('data-grupo', 'sqtd');
+      section.setAttribute('data-fabgrupo', bloco._fabGrupo);
+      section.setAttribute('data-mat', String(matIdx));
+      section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${mat.cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
+      printArea.appendChild(section);
+    });
+>>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo('qtd');
@@ -732,6 +849,7 @@ function gerarPortaPorta() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
+<<<<<<< HEAD
   chunksPorFabrica(ordenado).forEach(bloco => {
     const section = document.createElement('section');
     section.className = 'sheet';
@@ -741,6 +859,20 @@ function gerarPortaPorta() {
     const assinaturas  = '<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
     section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
     printArea.appendChild(section);
+=======
+  separarPorMaterial(ordenado).forEach((mat, matIdx) => {
+    chunksPorFabrica(mat.linhas).forEach(bloco => {
+      const section = document.createElement('section');
+      section.className = 'sheet';
+      section.setAttribute('data-grupo', 'porta');
+      section.setAttribute('data-fabgrupo', bloco._fabGrupo);
+      section.setAttribute('data-mat', String(matIdx));
+      const linhaContada = '<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
+      const assinaturas  = '<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
+      section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
+      printArea.appendChild(section);
+    });
+>>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo('porta');
@@ -816,19 +948,66 @@ function gerarPortaPorta() {
 
 /* ── Montagem da prévia ── */
 function montarTabela() {
-  const termo    = (document.getElementById('search').value    || '').toLowerCase();
+  const termoRaw = (document.getElementById('search').value || '');
   const termoPos = (document.getElementById('searchPos').value || '').toLowerCase().trim();
   const tabela   = document.getElementById('tabela');
   tabela.innerHTML = '';
 
-  let base = dados.filter(l =>
-    String(l.Pieza       || '').toLowerCase() === termo ||
-    String(l.Descripcion1 || '').toLowerCase().includes(termo)
-  );
+  // Suporte a múltiplos códigos separados por ";" (ex.: 123456; 789012; 345678)
+  // Remove espaços extras e códigos duplicados. Se nada for digitado, mantém
+  // o comportamento original (termo vazio = combina com todas as descrições).
+  const termosBrutos = termoRaw.split(';').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+  const termos    = termosBrutos.length > 0 ? [...new Set(termosBrutos)] : [''];
+  const multiplo  = termosBrutos.length > 1;
+
+  // Mesma regra de match de sempre (Pieza exata OU Descrição contém),
+  // agora aplicada a cada termo informado.
+  let base = dados.filter(l => {
+    const pieza = String(l.Pieza        || '').toLowerCase();
+    const desc  = String(l.Descripcion1 || '').toLowerCase();
+    return termos.some(t => pieza === t || desc.includes(t));
+  });
   if (termoPos) base = base.filter(l => String(l.Ubicacion || '').toLowerCase().startsWith(termoPos));
   ultimoFiltro = filtraPorLado(base);
 
-  if (ultimoFiltro.length === 0) { tabela.innerHTML = '<tr><td>Nada encontrado</td></tr>'; return; }
+  // Guarda a ordem dos materiais (Pieza) exatamente na sequência em que os
+  // códigos foram digitados na busca, para uso exclusivo na separação da
+  // impressão por material (não afeta a busca/tabela em si).
+  ordemMateriais = [];
+  if (multiplo) {
+    const vistos = new Set();
+    termos.forEach(t => {
+      dados.forEach(l => {
+        const pieza = String(l.Pieza        || '').toLowerCase();
+        const desc  = String(l.Descripcion1 || '').toLowerCase();
+        if ((pieza === t || desc.includes(t)) && !vistos.has(l.Pieza)) {
+          vistos.add(l.Pieza);
+          ordemMateriais.push(l.Pieza);
+        }
+      });
+    });
+  }
+
+  // Identifica quais códigos pesquisados (no modo múltiplo) não retornaram nada,
+  // sem interromper a exibição dos demais resultados.
+  let naoEncontrados = [];
+  if (multiplo) {
+    naoEncontrados = termos.filter(t => !dados.some(l =>
+      String(l.Pieza || '').toLowerCase() === t || String(l.Descripcion1 || '').toLowerCase().includes(t)
+    ));
+  }
+
+  if (ultimoFiltro.length === 0) {
+    tabela.innerHTML = '<tr><td>Nada encontrado</td></tr>';
+    if (naoEncontrados.length > 0) {
+      const tr = tabela.insertRow();
+      const td = tr.insertCell();
+      td.textContent = 'Códigos não encontrados: ' + naoEncontrados.join(', ');
+      td.style.color = '#b00020';
+      td.style.fontStyle = 'italic';
+    }
+    return;
+  }
 
   const header = tabela.insertRow();
   ['Endereço','Codpro','Descrição','Label','Label Origin','Quantidade'].forEach(txt => {
@@ -848,6 +1027,15 @@ function montarTabela() {
     tdQtd.textContent = l.CantidadTotal ?? '';
     tdQtd.className   = 'num';
   });
+
+  if (naoEncontrados.length > 0) {
+    const trAviso = tabela.insertRow();
+    const tdAviso = trAviso.insertCell();
+    tdAviso.colSpan = 6;
+    tdAviso.style.color = '#b00020';
+    tdAviso.style.fontStyle = 'italic';
+    tdAviso.textContent = 'Códigos não encontrados: ' + naoEncontrados.join(', ');
+  }
 }
 
 /* ── Carregamento de arquivo ── */
