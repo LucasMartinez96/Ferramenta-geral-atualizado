@@ -43,6 +43,21 @@ input, button, select {
 input[type="file"] { padding: 6px; }
 button { cursor: pointer; border: none; }
 
+.file-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  background: #eef2f7;
+}
+.file-status.success { color: #166534; background: #dcfce7; }
+.file-status.error   { color: #991b1b; background: #fee2e2; }
+.file-status.loading { color: #1d4ed8; background: #dbeafe; }
+
 .btn-lg {
   min-width: 180px;
   padding: 10px 16px;
@@ -300,8 +315,9 @@ td.num { text-align: right; }
 
 <div id="controles" class="card">
   <div class="row">
-    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
-    <span class="muted">Carregue CSV, XLSX ou XLS.</span>
+    <input type="file" id="fileInput" accept=".csv,.tsv,.xlsx,.xls,.xlt">
+    <span class="muted">Carregue CSV, TSV, XLSX, XLS ou XLT.</span>
+    <span id="fileStatus" class="file-status" role="status" aria-live="polite">Nenhum arquivo carregado.</span>
   </div>
   <div class="row">
     <input id="search" type="text" placeholder="Buscar por Código (Pieza) ou Descrição — vários códigos: 123456;789012" />
@@ -353,7 +369,7 @@ td.num { text-align: right; }
 
 <!-- Bibliotecas externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js"      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <script>
 'use strict';
@@ -398,14 +414,6 @@ function chunksPorFabrica(linhas) {
       fab12.push(l);
     }
   }
-<<<<<<< HEAD
-  const blocos12 = chunkArray(fab12, LPP);
-  const blocos3  = chunkArray(fab3, LPP);
-  blocos12.forEach(b => { b._fabGrupo = 'fab12'; });
-  blocos3.forEach(b => { b._fabGrupo = 'fab3'; });
-  return [...blocos12, ...blocos3];
-=======
-
   const blocos12 = chunkArray(fab12, LPP);
   const blocos3  = chunkArray(fab3, LPP);
   const blocos4  = chunkArray(fab4, LPP);
@@ -415,7 +423,6 @@ function chunksPorFabrica(linhas) {
   blocos4.forEach(b => { b._fabGrupo = 'fab4'; });
 
   return [...blocos12, ...blocos3, ...blocos4];
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
 }
 
 function dataHora() {
@@ -628,27 +635,6 @@ function tabelaEmbalagemHTML(linhas) {
    material. data-grupo/data-fabgrupo continuam intactos (CSS de impressão
    e layout não são afetados). */
 function numerarGrupo(grupo) {
-<<<<<<< HEAD
-  ['fab12', 'fab3'].forEach(fabGrupo => {
-    const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"]`)];
-    const total  = sheets.length;
-    if (total === 0) return;
-    sheets.forEach((sheet, idx) => {
-      let footer = sheet.querySelector('.page-footer');
-      if (!footer) {
-        footer = document.createElement('div');
-        footer.className = 'page-footer';
-        sheet.appendChild(footer);
-      }
-      footer.textContent = `Página ${idx + 1} de ${total}`;
-
-      /* Assinatura do Inventariante: somente na primeira
-         página de cada relatório (cabeçalho — título, data,
-         hora e logo — permanece em todas as páginas). */
-      if (idx > 0) {
-        sheet.querySelector('.inventariante')?.remove();
-      }
-=======
   const materiais = [...new Set(
     [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)]
       .map(s => s.getAttribute('data-mat') || '0')
@@ -656,7 +642,8 @@ function numerarGrupo(grupo) {
 
   materiais.forEach(matId => {
     ['fab12', 'fab3', 'fab4'].forEach(fabGrupo => {
-      const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"][data-mat="${matId}"]`)];
+      const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"]`)]
+        .filter(s => (s.getAttribute('data-mat') || '0') === matId);
       const total  = sheets.length;
       if (total === 0) return;
       sheets.forEach((sheet, idx) => {
@@ -675,7 +662,6 @@ function numerarGrupo(grupo) {
           sheet.querySelector('.inventariante')?.remove();
         }
       });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
     });
   });
 }
@@ -713,16 +699,6 @@ function gerarCadernos(tipo) {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-<<<<<<< HEAD
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', tipo);
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`;
-    section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-=======
   separarPorMaterial(ordenado).forEach((mat, matIdx) => {
     const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${mat.cod}`;
     chunksPorFabrica(mat.linhas).forEach(bloco => {
@@ -734,7 +710,6 @@ function gerarCadernos(tipo) {
       section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
       printArea.appendChild(section);
     });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo(tipo);
@@ -750,24 +725,6 @@ function gerarAmbos() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-<<<<<<< HEAD
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', 'qtd');
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    section.innerHTML = `${cabecalho(`Inventário Cíclico (QTD) – Item: ${cod}`)}${tabelaHTML(bloco, true)}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-  });
-
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', 'sqtd');
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-=======
   const materiais = separarPorMaterial(ordenado);
 
   materiais.forEach((mat, matIdx) => {
@@ -790,7 +747,6 @@ function gerarAmbos() {
       section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${mat.cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
       printArea.appendChild(section);
     });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo('qtd');
@@ -849,17 +805,6 @@ function gerarPortaPorta() {
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-<<<<<<< HEAD
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', 'porta');
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    const linhaContada = '<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
-    const assinaturas  = '<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
-    section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-=======
   separarPorMaterial(ordenado).forEach((mat, matIdx) => {
     chunksPorFabrica(mat.linhas).forEach(bloco => {
       const section = document.createElement('section');
@@ -872,7 +817,6 @@ function gerarPortaPorta() {
       section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
       printArea.appendChild(section);
     });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo('porta');
@@ -1039,39 +983,253 @@ function montarTabela() {
 }
 
 /* ── Carregamento de arquivo ── */
+const ALIASES_CABECALHO = new Map([
+  ['ubicacion', 'Ubicacion'], ['location', 'Ubicacion'], ['localizacao', 'Ubicacion'],
+  ['endereco', 'Ubicacion'], ['posicao', 'Ubicacion'],
+  ['pieza', 'Pieza'], ['peca', 'Pieza'], ['codpro', 'Pieza'], ['codigo', 'Pieza'],
+  ['codigomaterial', 'Pieza'], ['item', 'Pieza'], ['material', 'Pieza'],
+  ['descripcion1', 'Descripcion1'], ['descripcion', 'Descripcion1'],
+  ['descricao', 'Descripcion1'], ['description', 'Descripcion1'],
+  ['label', 'label'], ['etiqueta', 'label'],
+  ['labelorigin', 'labelorigin'], ['labelorigem', 'labelorigin'],
+  ['etiquetaorigem', 'labelorigin'], ['etiquetaorigen', 'labelorigin'],
+  ['cantidadtotal', 'CantidadTotal'], ['cantidad', 'CantidadTotal'],
+  ['quantidade', 'CantidadTotal'], ['qtde', 'CantidadTotal'], ['qtd', 'CantidadTotal'],
+  ['quantity', 'CantidadTotal'],
+  ['name', 'name'], ['nome', 'name'],
+  ['label2', 'label2'], ['etiqueta2', 'label2']
+]);
+
+function chaveCabecalho(valor) {
+  return String(valor ?? '')
+    .replace(/^\uFEFF/, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function atualizarStatusArquivo(mensagem, tipo = '') {
+  const status = document.getElementById('fileStatus');
+  if (!status) return;
+  status.textContent = mensagem;
+  status.className = `file-status${tipo ? ' ' + tipo : ''}`;
+}
+
+function normalizarRegistros(registros) {
+  return registros.map(registro => {
+    const normalizado = {};
+    Object.entries(registro).forEach(([cabecalhoOriginal, valor]) => {
+      const cabecalhoLimpo = String(cabecalhoOriginal).replace(/^\uFEFF/, '').trim();
+      if (!cabecalhoLimpo) return;
+      normalizado[cabecalhoLimpo] = valor;
+      const canonico = ALIASES_CABECALHO.get(chaveCabecalho(cabecalhoLimpo));
+      if (canonico && (normalizado[canonico] === undefined || normalizado[canonico] === '')) {
+        normalizado[canonico] = valor;
+      }
+    });
+    return normalizado;
+  }).filter(registro => Object.values(registro).some(v => String(v ?? '').trim() !== ''));
+}
+
+function localizarLinhaCabecalho(matriz) {
+  let melhorIndice = -1;
+  let melhorPontuacao = -1;
+  const limite = Math.min(matriz.length, 40);
+
+  for (let i = 0; i < limite; i++) {
+    const celulas = (matriz[i] || []).map(v => String(v ?? '').trim());
+    const preenchidas = celulas.filter(Boolean);
+    if (preenchidas.length === 0) continue;
+    const reconhecidas = celulas.filter(v => ALIASES_CABECALHO.has(chaveCabecalho(v))).length;
+    const pontuacao = reconhecidas * 100 + Math.min(preenchidas.length, 20);
+    if (pontuacao > melhorPontuacao) {
+      melhorPontuacao = pontuacao;
+      melhorIndice = i;
+    }
+  }
+  return melhorIndice;
+}
+
+function matrizParaRegistros(matriz) {
+  const indiceCabecalho = localizarLinhaCabecalho(matriz);
+  if (indiceCabecalho < 0) return [];
+
+  const usados = new Map();
+  const cabecalhos = (matriz[indiceCabecalho] || []).map((valor, indice) => {
+    const base = String(valor ?? '').replace(/^\uFEFF/, '').trim() || `Coluna_${indice + 1}`;
+    const repeticoes = usados.get(base) || 0;
+    usados.set(base, repeticoes + 1);
+    return repeticoes === 0 ? base : `${base}_${repeticoes + 1}`;
+  });
+
+  const registros = matriz.slice(indiceCabecalho + 1).map(linha => {
+    const registro = {};
+    cabecalhos.forEach((cabecalho, indice) => { registro[cabecalho] = linha?.[indice] ?? ''; });
+    return registro;
+  });
+  return normalizarRegistros(registros);
+}
+
+function detectarSeparadorCSV(texto) {
+  const candidatos = [';', '\t', ',', '|'];
+  const amostra = texto.slice(0, 50000);
+  const contagens = new Map(candidatos.map(c => [c, 0]));
+  let entreAspas = false;
+
+  for (let i = 0; i < amostra.length; i++) {
+    const ch = amostra[i];
+    if (ch === '"') {
+      if (entreAspas && amostra[i + 1] === '"') i++;
+      else entreAspas = !entreAspas;
+    } else if (!entreAspas && contagens.has(ch)) {
+      contagens.set(ch, contagens.get(ch) + 1);
+    }
+  }
+  return candidatos.sort((a, b) => contagens.get(b) - contagens.get(a))[0];
+}
+
+function analisarCSV(texto) {
+  const separador = detectarSeparadorCSV(texto);
+  const linhas = [];
+  let linha = [];
+  let celula = '';
+  let entreAspas = false;
+
+  for (let i = 0; i < texto.length; i++) {
+    const ch = texto[i];
+    if (ch === '"') {
+      if (entreAspas && texto[i + 1] === '"') {
+        celula += '"';
+        i++;
+      } else {
+        entreAspas = !entreAspas;
+      }
+    } else if (ch === separador && !entreAspas) {
+      linha.push(celula);
+      celula = '';
+    } else if ((ch === '\n' || ch === '\r') && !entreAspas) {
+      if (ch === '\r' && texto[i + 1] === '\n') i++;
+      linha.push(celula);
+      if (linha.some(v => String(v).trim() !== '')) linhas.push(linha);
+      linha = [];
+      celula = '';
+    } else {
+      celula += ch;
+    }
+  }
+  linha.push(celula);
+  if (linha.some(v => String(v).trim() !== '')) linhas.push(linha);
+  return linhas;
+}
+
+async function lerTextoArquivo(file) {
+  const buffer = await file.arrayBuffer();
+  let texto = new TextDecoder('utf-8').decode(buffer);
+  if (texto.includes('\uFFFD')) {
+    try { texto = new TextDecoder('windows-1252').decode(buffer); } catch (_) { /* usa UTF-8 */ }
+  }
+  return texto.replace(/^\uFEFF/, '');
+}
+
+function carregarScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('Falha ao baixar o leitor Excel.'));
+    document.head.appendChild(script);
+  });
+}
+
+async function garantirLeitorExcel() {
+  if (typeof XLSX !== 'undefined') return;
+  try {
+    await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  } catch (_) {
+    throw new Error('O leitor de Excel não carregou. Conecte o aparelho à internet e abra o HTML novamente, ou use um arquivo CSV.');
+  }
+  if (typeof XLSX === 'undefined') {
+    throw new Error('O leitor de Excel não ficou disponível. Use CSV ou tente abrir novamente com internet.');
+  }
+}
+
+function escolherPlanilha(wb) {
+  let melhor = null;
+  for (const nomeAba of wb.SheetNames || []) {
+    const ws = wb.Sheets[nomeAba];
+    if (!ws) continue;
+    const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, blankrows: false });
+    const registros = matrizParaRegistros(matriz);
+    if (registros.length === 0) continue;
+    const campos = new Set(Object.keys(registros[0] || {}));
+    const reconhecidos = ['Ubicacion', 'Pieza', 'Descripcion1', 'label', 'labelorigin', 'CantidadTotal', 'name', 'label2']
+      .filter(c => campos.has(c)).length;
+    const pontuacao = reconhecidos * 1000000 + registros.length;
+    if (!melhor || pontuacao > melhor.pontuacao) melhor = { nomeAba, registros, pontuacao };
+  }
+  if (!melhor) throw new Error('Nenhuma aba com dados foi encontrada no arquivo.');
+  return melhor;
+}
+
+function validarRegistros(registros) {
+  if (!Array.isArray(registros) || registros.length === 0) {
+    throw new Error('O arquivo não possui linhas de dados.');
+  }
+  const campos = new Set(registros.slice(0, 100).flatMap(r => Object.keys(r)));
+  const inventario = campos.has('Pieza') && (campos.has('Ubicacion') || campos.has('Descripcion1'));
+  const posicoesLivres = campos.has('name') && campos.has('label2');
+  if (!inventario && !posicoesLivres) {
+    const encontrados = [...campos].slice(0, 12).join(', ') || 'nenhum';
+    throw new Error(`Cabeçalhos não reconhecidos. Esperado: Ubicacion/Pieza ou name/label2. Encontrado: ${encontrados}.`);
+  }
+}
+
+function concluirCarregamento(file, registros, nomeAba = '') {
+  validarRegistros(registros);
+  dados = registros;
+  ultimoFiltro = [];
+  ordemMateriais = [];
+
+  const tabela = document.getElementById('tabela');
+  tabela.innerHTML = '';
+  const tr = tabela.insertRow();
+  const td = tr.insertCell();
+  td.textContent = `Arquivo pronto: ${file.name} (${dados.length} linhas). Digite a busca e clique em Buscar.`;
+  document.getElementById('printArea').innerHTML = '';
+
+  const detalheAba = nomeAba ? ` • Aba: ${nomeAba}` : '';
+  atualizarStatusArquivo(`${file.name} • ${dados.length} linhas${detalheAba}`, 'success');
+  alert(`Arquivo carregado com sucesso!\nLinhas: ${dados.length}${nomeAba ? `\nAba: ${nomeAba}` : ''}`);
+}
+
 document.getElementById('fileInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const nome = file.name.toLowerCase();
+  atualizarStatusArquivo(`Lendo ${file.name}...`, 'loading');
   try {
-    if (nome.endsWith('.csv')) {
-      if (typeof Papa !== 'undefined') {
-        Papa.parse(file, {
-          header: true, skipEmptyLines: true,
-          complete : (res) => { dados = res.data; alert('Arquivo carregado! Linhas: ' + dados.length); },
-          error    : (err) => alert('Erro ao ler CSV: ' + (err?.message || err))
-        });
-      } else if (typeof XLSX !== 'undefined') {
-        const text = await file.text();
-        const wb   = XLSX.read(text, { type: 'string' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        dados = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
-        alert('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
-      } else {
-        alert('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.');
-      }
-    } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
-      if (typeof XLSX === 'undefined') { alert('SheetJS não carregou.'); return; }
-      const buf   = await file.arrayBuffer();
-      const wb    = XLSX.read(buf, { type: 'array' });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      dados = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      alert('Arquivo carregado! Linhas: ' + dados.length);
+    if (nome.endsWith('.csv') || nome.endsWith('.tsv')) {
+      const texto = await lerTextoArquivo(file);
+      const registros = matrizParaRegistros(analisarCSV(texto));
+      concluirCarregamento(file, registros);
+    } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls') || nome.endsWith('.xlt')) {
+      await garantirLeitorExcel();
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+      const planilha = escolherPlanilha(wb);
+      concluirCarregamento(file, planilha.registros, planilha.nomeAba);
     } else {
-      alert('Formato não suportado. Use CSV, XLSX ou XLS.');
+      throw new Error('Formato não suportado. Use CSV, TSV, XLSX, XLS ou XLT.');
     }
   } catch (err) {
-    alert('Erro ao carregar: ' + (err?.message || err));
+    console.error('Erro ao carregar arquivo:', err);
+    const mensagem = err?.message || String(err);
+    dados = [];
+    ultimoFiltro = [];
+    atualizarStatusArquivo(`Erro: ${mensagem}`, 'error');
+    alert('Erro ao carregar: ' + mensagem);
+    e.target.value = '';
   }
 });
 
