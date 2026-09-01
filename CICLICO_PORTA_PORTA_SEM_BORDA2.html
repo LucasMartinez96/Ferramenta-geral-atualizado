@@ -58,6 +58,102 @@ button { cursor: pointer; border: none; }
 .file-status.error   { color: #991b1b; background: #fee2e2; }
 .file-status.loading { color: #1d4ed8; background: #dbeafe; }
 
+.porta-palete-filtros {
+  margin: 10px 0;
+}
+.filtros-palete-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.filtro-palete-caixa {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid;
+  border-radius: 10px;
+}
+.filtro-palete-caixa.nivel-caixa {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+.filtro-palete-caixa.intervalo-caixa {
+  border-color: #bbf7d0;
+  background: #f7fff9;
+}
+.filtro-palete-caixa .titulo-filtro {
+  display: block;
+  margin-bottom: 4px;
+  color: #1e3a5f;
+  font-size: 14px;
+  font-weight: 800;
+}
+.filtro-palete-caixa .subtitulo-filtro {
+  display: block;
+  margin-bottom: 12px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.filtros-acoes-gerais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.filtros-acoes-gerais .filter-summary {
+  flex: 1 1 360px;
+  margin-top: 0;
+}
+.niveis-opcoes {
+  display: flex;
+  flex: 1 1 420px;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 34px;
+  align-items: center;
+}
+.nivel-chip { cursor: pointer; }
+.nivel-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.nivel-chip span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 7px 10px;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.nivel-chip input:checked + span {
+  color: #fff;
+  border-color: #1a73e8;
+  background: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, .15);
+}
+.range-input { min-width: 220px; flex: 1 1 220px; }
+.filter-summary {
+  display: block;
+  margin-top: 5px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  color: #475569;
+  background: #eef2f7;
+  font-size: 12px;
+  font-weight: 700;
+}
+.filter-summary.active { color: #166534; background: #dcfce7; }
+.filter-summary.error  { color: #991b1b; background: #fee2e2; }
+
+@media (max-width: 820px) {
+  .filtros-palete-grid { grid-template-columns: 1fr; }
+  .range-input { width: 100%; min-width: 0; flex-basis: 100%; }
+  .filtros-acoes-gerais .primary { width: 100%; }
+}
+
 .btn-lg {
   min-width: 180px;
   padding: 10px 16px;
@@ -329,6 +425,39 @@ td.num { text-align: right; }
       <label><input type="radio" name="lado" value="impar"><span>Ímpar</span></label>
     </div>
   </div>
+  <div class="porta-palete-filtros">
+    <div class="filtros-palete-grid">
+      <section class="filtro-palete-caixa nivel-caixa" aria-labelledby="tituloFiltroNivel">
+        <span id="tituloFiltroNivel" class="titulo-filtro">1. Selecionar níveis</span>
+        <span class="subtitulo-filtro">Marque um ou vários níveis. Sem seleção, serão considerados todos os níveis.</span>
+        <div class="row">
+          <div id="niveisOpcoes" class="niveis-opcoes">
+            <span class="muted">Carregue o arquivo para visualizar os níveis disponíveis.</span>
+          </div>
+        </div>
+        <button class="alt" id="btnTodosNiveis" type="button">Usar todos os níveis</button>
+      </section>
+
+      <section class="filtro-palete-caixa intervalo-caixa" aria-labelledby="tituloFiltroIntervalo">
+        <span id="tituloFiltroIntervalo" class="titulo-filtro">2. Definir início e fim</span>
+        <span class="subtitulo-filtro">Informe o primeiro e o último endereço que deseja inventariar.</span>
+        <div class="row">
+          <label class="muted" for="enderecoInicio">Endereço inicial:</label>
+          <input id="enderecoInicio" class="range-input" type="text" placeholder="Ex.: 1-002-0004-00" autocomplete="off" />
+        </div>
+        <div class="row">
+          <label class="muted" for="enderecoFim">Endereço final:</label>
+          <input id="enderecoFim" class="range-input" type="text" placeholder="Ex.: 1-002-0030-00" autocomplete="off" />
+        </div>
+        <button class="alt" id="btnLimparIntervalo" type="button">Limpar início e fim</button>
+      </section>
+    </div>
+
+    <div class="filtros-acoes-gerais">
+      <button class="primary" id="btnAplicarFiltrosPalete" type="button">Aplicar filtros selecionados</button>
+      <span id="filtroPaleteStatus" class="filter-summary" role="status" aria-live="polite">Todos os níveis • Sem intervalo.</span>
+    </div>
+  </div>
   <div class="row">
     <label class="muted" for="dataManual">Data do PDF:</label>
     <input id="dataManual" type="date" />
@@ -482,16 +611,168 @@ function filtraPorLado(arr) {
   });
 }
 
+/* ── Filtros Porta-Palete: nível e intervalo ──
+   Exemplo de endereço: 1-002-0004-10
+   Base usada no intervalo: 1-002-0004
+   Nível usado na seleção: 10 */
+function decomporEndereco(endereco) {
+  const texto = String(endereco ?? '').trim();
+  if (!texto) return null;
+  const partes = texto.split('-').map(p => p.trim()).filter(Boolean);
+  if (partes.length < 3) return null;
+  const possuiNivel = partes.length >= 4;
+  return {
+    texto,
+    base: possuiNivel ? partes.slice(0, -1) : partes,
+    nivel: possuiNivel ? partes[partes.length - 1] : ''
+  };
+}
+
+function compararPartesEndereco(a, b) {
+  const limite = Math.max(a.length, b.length);
+  for (let i = 0; i < limite; i++) {
+    const parteA = String(a[i] ?? '');
+    const parteB = String(b[i] ?? '');
+    const comparacao = parteA.localeCompare(parteB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+    if (comparacao !== 0) return comparacao;
+  }
+  return 0;
+}
+
+function niveisSelecionados() {
+  return [...document.querySelectorAll('input[name="nivelFiltro"]:checked')]
+    .map(input => String(input.value).trim())
+    .filter(Boolean);
+}
+
+function obterIntervaloEndereco() {
+  const inicioTexto = (document.getElementById('enderecoInicio')?.value || '').trim();
+  const fimTexto = (document.getElementById('enderecoFim')?.value || '').trim();
+  const inicio = inicioTexto ? decomporEndereco(inicioTexto) : null;
+  const fim = fimTexto ? decomporEndereco(fimTexto) : null;
+
+  if (inicioTexto && !inicio) throw new Error('Endereço inicial inválido. Use o formato 1-002-0004-00.');
+  if (fimTexto && !fim) throw new Error('Endereço final inválido. Use o formato 1-002-0030-00.');
+  if (inicio && fim && compararPartesEndereco(inicio.base, fim.base) > 0) {
+    throw new Error('O endereço inicial está depois do endereço final. Confira o intervalo.');
+  }
+  return { inicio, fim, inicioTexto, fimTexto };
+}
+
+function aplicarFiltrosPortaPalete(linhas, campoEndereco = 'Ubicacion') {
+  const niveis = new Set(niveisSelecionados());
+  const intervalo = obterIntervaloEndereco();
+  const temFiltroNivel = niveis.size > 0;
+  const temIntervalo = Boolean(intervalo.inicio || intervalo.fim);
+  if (!temFiltroNivel && !temIntervalo) return linhas;
+
+  return linhas.filter(linha => {
+    const endereco = decomporEndereco(linha?.[campoEndereco]);
+    if (!endereco) return false;
+    if (temFiltroNivel && !niveis.has(endereco.nivel)) return false;
+    if (intervalo.inicio && compararPartesEndereco(endereco.base, intervalo.inicio.base) < 0) return false;
+    if (intervalo.fim && compararPartesEndereco(endereco.base, intervalo.fim.base) > 0) return false;
+    return true;
+  });
+}
+
+function escaparHTML(valor) {
+  return String(valor ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function descricaoFiltrosAtivos() {
+  const niveis = niveisSelecionados();
+  const inicio = (document.getElementById('enderecoInicio')?.value || '').trim();
+  const fim = (document.getElementById('enderecoFim')?.value || '').trim();
+  const partes = [];
+  if (niveis.length) partes.push(`Níveis: ${niveis.join(', ')}`);
+  if (inicio || fim) partes.push(`Intervalo: ${inicio || 'início'} até ${fim || 'fim'}`);
+  return partes.join(' • ');
+}
+
+function atualizarResumoFiltros(quantidade = null, erro = '') {
+  const status = document.getElementById('filtroPaleteStatus');
+  if (!status) return;
+  if (erro) {
+    status.textContent = erro;
+    status.className = 'filter-summary error';
+    return;
+  }
+  const niveis = niveisSelecionados();
+  const inicio = (document.getElementById('enderecoInicio')?.value || '').trim();
+  const fim = (document.getElementById('enderecoFim')?.value || '').trim();
+  const nivelTexto = niveis.length ? `Níveis: ${niveis.join(', ')}` : 'Todos os níveis';
+  const intervaloTexto = (inicio || fim) ? `Intervalo: ${inicio || 'início'} até ${fim || 'fim'}` : 'Sem intervalo';
+  const quantidadeTexto = Number.isInteger(quantidade) ? ` • ${quantidade} registro(s)` : '';
+  status.textContent = `${nivelTexto} • ${intervaloTexto}${quantidadeTexto}.`;
+  status.className = `filter-summary${(niveis.length || inicio || fim) ? ' active' : ''}`;
+}
+
+function preencherNiveisDisponiveis(linhas) {
+  const container = document.getElementById('niveisOpcoes');
+  if (!container) return;
+  container.innerHTML = '';
+  const niveis = [...new Set(linhas.map(linha => {
+    const endereco = decomporEndereco(linha?.Ubicacion ?? linha?.name);
+    return endereco?.nivel || '';
+  }).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' }));
+
+  if (niveis.length === 0) {
+    const aviso = document.createElement('span');
+    aviso.className = 'muted';
+    aviso.textContent = 'Nenhum nível foi identificado nos endereços do arquivo.';
+    container.appendChild(aviso);
+    atualizarResumoFiltros();
+    return;
+  }
+
+  niveis.forEach(nivel => {
+    const label = document.createElement('label');
+    label.className = 'nivel-chip';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = 'nivelFiltro';
+    input.value = nivel;
+    input.addEventListener('change', () => atualizarResumoFiltros());
+    const span = document.createElement('span');
+    span.textContent = nivel;
+    label.appendChild(input);
+    label.appendChild(span);
+    container.appendChild(label);
+  });
+  atualizarResumoFiltros();
+}
+
+function prepararFiltrosParaImpressao() {
+  if (!Array.isArray(dados) || dados.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Carregue primeiro o arquivo.';
+    return false;
+  }
+  const aplicado = montarTabela();
+  if (!aplicado || ultimoFiltro.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Nenhum endereço encontrado com os filtros selecionados.';
+    return false;
+  }
+  return true;
+}
+
 /* ── Cabeçalho da folha ── */
 function cabecalho(titulo) {
   const { data, hora } = dataHora();
   const src = getLogo();
+  const filtrosAtivos = descricaoFiltrosAtivos();
   return `
   <div class="page-header">
     <div class="hdr">
       <div class="hdr-left">
         <div class="titulo">${titulo}</div>
         <div class="dh">${data} • ${hora}</div>
+        ${filtrosAtivos ? `<div class="dh">${escaparHTML(filtrosAtivos)}</div>` : ''}
       </div>
       <div class="hdr-right"><img src="${src}" alt="Logo"></div>
     </div>
@@ -691,10 +972,7 @@ const byUbicacionAZ = (a, b) =>
 
 /* ── Gerar cadernos QTD / SQTD ── */
 function gerarCadernos(tipo) {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const ordenado = [...ultimoFiltro].sort(byUbicacionAZ);
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
@@ -717,10 +995,7 @@ function gerarCadernos(tipo) {
 
 /* ── Gerar ambos (QTD + SQTD) ── */
 function gerarAmbos() {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const ordenado  = [...ultimoFiltro].sort(byUbicacionAZ);
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
@@ -756,10 +1031,7 @@ function gerarAmbos() {
 
 /* ── Embalagem por Posição ── */
 function gerarEmbalagemPosicao() {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const map = new Map();
   for (const l of ultimoFiltro) {
     const pos    = l.Ubicacion   || '';
@@ -797,10 +1069,7 @@ function gerarEmbalagemPosicao() {
 
 /* ── Inventário Porta-Porta ── */
 function gerarPortaPorta() {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const ordenado = [...ultimoFiltro].sort(byUbicacionAZ);
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
@@ -855,7 +1124,9 @@ function gerarPortaPorta() {
       const prefixo = (document.getElementById('searchPos')?.value || '').trim().toLowerCase();
       let livres = dados.filter(l => !ehVazio(l.name) && ehVazio(l.label2));
       if (prefixo) livres = livres.filter(l => String(l.name).toLowerCase().startsWith(prefixo));
+      livres = aplicarFiltrosPortaPalete(livres, 'name');
       livres.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR', { numeric: true, sensitivity: 'base' }));
+      atualizarResumoFiltros(livres.length);
 
       const tabela = document.getElementById('tabela');
       tabela.innerHTML = '';
@@ -882,6 +1153,7 @@ function gerarPortaPorta() {
       numerarGrupo('poslivre');
     } catch (err) {
       console.error('Erro gerarPosicoesLivres:', err);
+      atualizarResumoFiltros(null, err?.message || String(err));
       alert('Erro ao gerar Posições Livres: ' + (err?.message || err));
     }
   }
@@ -912,7 +1184,22 @@ function montarTabela() {
     return termos.some(t => pieza === t || desc.includes(t));
   });
   if (termoPos) base = base.filter(l => String(l.Ubicacion || '').toLowerCase().startsWith(termoPos));
+  try {
+    base = aplicarFiltrosPortaPalete(base, 'Ubicacion');
+  } catch (err) {
+    ultimoFiltro = [];
+    const mensagem = err?.message || String(err);
+    tabela.innerHTML = '';
+    const tr = tabela.insertRow();
+    const td = tr.insertCell();
+    td.textContent = mensagem;
+    td.style.color = '#b00020';
+    atualizarResumoFiltros(null, mensagem);
+    alert(mensagem);
+    return false;
+  }
   ultimoFiltro = filtraPorLado(base);
+  atualizarResumoFiltros(ultimoFiltro.length);
 
   // Guarda a ordem dos materiais (Pieza) exatamente na sequência em que os
   // códigos foram digitados na busca, para uso exclusivo na separação da
@@ -950,7 +1237,7 @@ function montarTabela() {
       td.style.color = '#b00020';
       td.style.fontStyle = 'italic';
     }
-    return;
+    return true;
   }
 
   const header = tabela.insertRow();
@@ -980,6 +1267,7 @@ function montarTabela() {
     tdAviso.style.fontStyle = 'italic';
     tdAviso.textContent = 'Códigos não encontrados: ' + naoEncontrados.join(', ');
   }
+  return true;
 }
 
 /* ── Carregamento de arquivo ── */
@@ -1190,12 +1478,15 @@ function concluirCarregamento(file, registros, nomeAba = '') {
   dados = registros;
   ultimoFiltro = [];
   ordemMateriais = [];
+  document.getElementById('enderecoInicio').value = '';
+  document.getElementById('enderecoFim').value = '';
+  preencherNiveisDisponiveis(dados);
 
   const tabela = document.getElementById('tabela');
   tabela.innerHTML = '';
   const tr = tabela.insertRow();
   const td = tr.insertCell();
-  td.textContent = `Arquivo pronto: ${file.name} (${dados.length} linhas). Digite a busca e clique em Buscar.`;
+  td.textContent = `Arquivo pronto: ${file.name} (${dados.length} linhas). Escolha os níveis e/ou o intervalo e aplique os filtros.`;
   document.getElementById('printArea').innerHTML = '';
 
   const detalheAba = nomeAba ? ` • Aba: ${nomeAba}` : '';
@@ -1235,8 +1526,22 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
 
 /* ── Event listeners ── */
 document.getElementById('btnBuscar').addEventListener('click', montarTabela);
+document.getElementById('btnAplicarFiltrosPalete').addEventListener('click', montarTabela);
 document.getElementById('search').addEventListener('keypress',   (e) => { if (e.key === 'Enter') montarTabela(); });
 document.getElementById('searchPos').addEventListener('keypress',(e) => { if (e.key === 'Enter') montarTabela(); });
+document.getElementById('enderecoInicio').addEventListener('keypress', (e) => { if (e.key === 'Enter') montarTabela(); });
+document.getElementById('enderecoFim').addEventListener('keypress',    (e) => { if (e.key === 'Enter') montarTabela(); });
+document.getElementById('enderecoInicio').addEventListener('input', () => atualizarResumoFiltros());
+document.getElementById('enderecoFim').addEventListener('input',    () => atualizarResumoFiltros());
+document.getElementById('btnTodosNiveis').addEventListener('click', () => {
+  document.querySelectorAll('input[name="nivelFiltro"]:checked').forEach(input => { input.checked = false; });
+  if (dados.length) montarTabela(); else atualizarResumoFiltros();
+});
+document.getElementById('btnLimparIntervalo').addEventListener('click', () => {
+  document.getElementById('enderecoInicio').value = '';
+  document.getElementById('enderecoFim').value = '';
+  if (dados.length) montarTabela(); else atualizarResumoFiltros();
+});
 document.querySelectorAll('input[name="lado"]').forEach(r => r.addEventListener('change', montarTabela));
 
 document.getElementById('btnCiclicoQtd').addEventListener('click',      () => gerarCadernos('qtd'));
