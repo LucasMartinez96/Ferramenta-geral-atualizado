@@ -510,6 +510,208 @@ let ultimoFiltro = [];
 // usada apenas para separar a impressão por material (um relatório
 // completo por material, em sequência), sem alterar a lógica de busca.
 let ordemMateriais = [];
+let ultimaExclusaoTransitoria = 0;
+
+/* Posições transitórias fornecidas no ARM - Layout (2).csv.
+   Elas são removidas automaticamente antes de qualquer busca ou impressão. */
+const POSICOES_TRANSITORIAS = Object.freeze([
+  "EXP/AFTER/RES/F1",
+  "AF1-7136COF-Aguardando Disposi?ao da Qualidade",
+  "AF1-7138COF-Aguardando Disposi?ao da Qualidade",
+  "AFT-BUF-EXP",
+  "AFTER",
+  "BLC-BUF-01",
+  "BLC-BUF-02",
+  "BRASIMET",
+  "BUF-EXP-01",
+  "BUF-EXP-02",
+  "BUF-EXP-03",
+  "BUF-EXP-04",
+  "BUF-EXP-05",
+  "BUF-EXP-06",
+  "BUF-EXP-07",
+  "BUF-EXP-08",
+  "BUF-EXP-09",
+  "BUF-EXP-10",
+  "BUF-EXP-11",
+  "BUF-EXP-12",
+  "BUF-EXP-13",
+  "BUF-EXP-14",
+  "BUF-EXP-15",
+  "BUF-EXP-16",
+  "BUF-EXP-17",
+  "BUF-EXP-18",
+  "BUF-EXP-19",
+  "BUF-EXP-20",
+  "BUF-EXP-21",
+  "BUF-EXP-22",
+  "BUF-EXP-23",
+  "BUF-EXP-24",
+  "BUF-EXP-25",
+  "BUF-EXP-26",
+  "BUF-EXP-27",
+  "CHECK OUT",
+  "COF",
+  "COM-METALURGIA",
+  "CPD-SALA ADM",
+  "DC1-7363DVC-Assistencia a Clientes",
+  "DC1-7365DVC-Assistencia a Clientes",
+  "DEVOLU??O-FAB2",
+  "DF1-7140DVF-Assistencia ao Fornecedor",
+  "DF1-7141DVF-Assistencia ao Fornecedor",
+  "DMO2",
+  "DOCA-1",
+  "DOCA-2",
+  "DOCA-3",
+  "DOCA-4",
+  "DOCA-5",
+  "DOCA-6",
+  "DOCA-7",
+  "DOCA-8",
+  "DVF",
+  "EIXOS SAIDA",
+  "ENVIOS A TERCEIRO",
+  "EPT-BUF-EXP-01",
+  "ESO-BUF-01",
+  "ESO-BUF-02",
+  "EX1-7160EXP-Almoxarifado da Expedi??o",
+  "EX1-7162EXP-Almoxarifado da Expedi??o",
+  "EX3-7360EXP-Alm da Expedi??o",
+  "EX3-7362EXP-Almoxarifado da Expedi??o",
+  "EXP AFTER/RESENDE/OUTROS F2",
+  "EXP-999-0000-00",
+  "FAB1-EXP-01",
+  "FAB1-EXP-02",
+  "FAB1-EXP-03",
+  "FAB1-EXP-04",
+  "FAB1-EXP-05",
+  "FAB1-EXP-06",
+  "FAB2-EXP-01",
+  "FAB2-EXP-02",
+  "FAB2-EXP-03",
+  "FAB2-EXP-04",
+  "FAB2-EXP-05",
+  "FAB3-EXP-01",
+  "FE1-7130FER-Ferramentaria",
+  "FE1-7134FER-Ferramentaria",
+  "FERRAMENTARIA",
+  "GRO-BUF-01",
+  "GRO-BUF-02",
+  "GRO-BUF-03",
+  "GRO-BUF-04",
+  "ID1-7112ALM-Almoxarifado de Componentes",
+  "ID1-7115ALM-Almoxarifado Material Terceiros em N/Poder",
+  "ID2-7312ALM-Almoxarifado de Componentes",
+  "ID2-7315ALM-Almoxarifado Material Terceiros em N/Poder",
+  "IN2-7307INSP-Material em Inspe??o de Recebimento",
+  "IN2-7310INSP-Material em Inspe?ao de Recebimento",
+  "LA1-7142LAY-Lay-Out",
+  "LA1-7144LAY-Lay-Out",
+  "LAP-BUF-01",
+  "LAYOUT",
+  "LCE-BUF-01",
+  "LCM-BUF-01",
+  "LE1-7345LEM-Laboratorio de Ensaios Mecanicos",
+  "LE1-7347LEM-Laboratorio de Ensaios Mecanicos",
+  "LEM",
+  "LINHA-PRO FAB1",
+  "LINHA-PRO FAB2",
+  "LMC-BUF-01",
+  "LMC-BUF-02",
+  "LMC-BUF-03",
+  "LMC-BUF-04",
+  "LMC-BUF-05",
+  "LMC-BUF-06",
+  "LSP-BUF-01",
+  "LU1-7154DMO-Material de Compras",
+  "LU1-7354DMO-Material de Compras",
+  "LUF-BUF-01",
+  "LUF-BUF-02",
+  "LUF-BUF-03",
+  "MDC-BUF-01",
+  "MDC-BUF-02",
+  "MDX-BUF-01",
+  "MDX-BUF-02",
+  "MDX-BUF-03",
+  "ME1-7148MET-Metalurgia",
+  "MO1-7120MON - Material Disponivel para Montagem",
+  "MO1-7120MONPH-Material Disponivel para Montagem",
+  "MO1-7122MON-Material Disponivel para Montagem",
+  "MO3-7320MON-Material Disponivel para Montagem",
+  "MO3-7320MONPH-Material Disponivel para Montagem",
+  "MO3-7322MON-Material Disponivel para Montagem",
+  "MOD-BUF-01",
+  "MOE-BUF-01",
+  "MOE-BUF-02",
+  "MOE-BUF-03",
+  "MOE-BUF-04",
+  "MOP-BUF-01",
+  "MOP-BUF-02",
+  "MOP-BUF-03",
+  "MOP-BUF-04",
+  "MOP-BUF-05",
+  "NAO CONFORME GE",
+  "NOSTOCK",
+  "PROCESO-AXLETECH",
+  "PROCESO-FAB1",
+  "PROCESO-FAB2",
+  "RE1-7131REC-Recupera??o",
+  "RE1-7135REC-Recupera??o",
+  "RECE_MP_MANUAL",
+  "RECE_PS_FAB1",
+  "RECE_PS_FAB2",
+  "RESENDE",
+  "RET",
+  "RI1-7102RIS-Material no Recebimento",
+  "RI1-7105RIS-Material no Recebimento",
+  "RI3-7302RIS-Material no Recebimento",
+  "RI3-7305RIS-Material no Recebimento",
+  "RIS",
+  "RT1-7190RET-Materiais Retidos",
+  "RT3-7390RET-Materiais Retidos",
+  "SM2-7212ALM-Almoxarifado de Componentes",
+  "SM2-7215ALM-Almoxarifado Material Terceiros em N/Poder",
+  "TCM-BUF-01",
+  "TCM-BUF-02",
+  "TCM-BUF-03",
+  "TE1-7117TER-Material em Terceiros para Testes",
+  "TE1-7119TER-Material em Terceiros para Testes",
+  "TRANSBORDO FAB2",
+  "TRANSBORDO KIT FRAC F1",
+  "WI1-7366DVR-Devolu??o de Resende para a Produ??o OS"
+]);
+
+function normalizarPosicaoTransitoria(valor) {
+  return String(valor ?? '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    // Corrige os caracteres de cedilha/acentuação perdidos no CSV de origem.
+    .replace(/\?\?/g, 'CA')
+    .replace(/\?/g, 'C')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s+/g, ' ');
+}
+
+const CHAVES_POSICOES_TRANSITORIAS = new Set(
+  POSICOES_TRANSITORIAS.map(normalizarPosicaoTransitoria)
+);
+
+function separarPosicoesTransitorias(registros) {
+  const validos = [];
+  let removidas = 0;
+  for (const registro of registros) {
+    const endereco = registro?.Ubicacion || registro?.name || '';
+    if (CHAVES_POSICOES_TRANSITORIAS.has(normalizarPosicaoTransitoria(endereco))) {
+      removidas++;
+    } else {
+      validos.push(registro);
+    }
+  }
+  return { validos, removidas };
+}
 
 /* ── Utilitários gerais ── */
 function chunkArray(arr, size) {
@@ -1475,7 +1677,9 @@ function validarRegistros(registros) {
 
 function concluirCarregamento(file, registros, nomeAba = '') {
   validarRegistros(registros);
-  dados = registros;
+  const separacao = separarPosicoesTransitorias(registros);
+  dados = separacao.validos;
+  ultimaExclusaoTransitoria = separacao.removidas;
   ultimoFiltro = [];
   ordemMateriais = [];
   document.getElementById('enderecoInicio').value = '';
@@ -1486,12 +1690,12 @@ function concluirCarregamento(file, registros, nomeAba = '') {
   tabela.innerHTML = '';
   const tr = tabela.insertRow();
   const td = tr.insertCell();
-  td.textContent = `Arquivo pronto: ${file.name} (${dados.length} linhas). Escolha os níveis e/ou o intervalo e aplique os filtros.`;
+  td.textContent = `Arquivo pronto: ${file.name} (${dados.length} linhas válidas; ${ultimaExclusaoTransitoria} linhas em posições transitórias removidas). Escolha os níveis e/ou o intervalo e aplique os filtros.`;
   document.getElementById('printArea').innerHTML = '';
 
   const detalheAba = nomeAba ? ` • Aba: ${nomeAba}` : '';
-  atualizarStatusArquivo(`${file.name} • ${dados.length} linhas${detalheAba}`, 'success');
-  alert(`Arquivo carregado com sucesso!\nLinhas: ${dados.length}${nomeAba ? `\nAba: ${nomeAba}` : ''}`);
+  atualizarStatusArquivo(`${file.name} • ${dados.length} linhas válidas • ${ultimaExclusaoTransitoria} linhas em posições transitórias removidas${detalheAba}`, 'success');
+  alert(`Arquivo carregado com sucesso!\nLinhas válidas: ${dados.length}\nLinhas em posições transitórias removidas: ${ultimaExclusaoTransitoria}${nomeAba ? `\nAba: ${nomeAba}` : ''}`);
 }
 
 document.getElementById('fileInput').addEventListener('change', async (e) => {
