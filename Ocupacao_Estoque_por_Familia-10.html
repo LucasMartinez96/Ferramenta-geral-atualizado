@@ -727,7 +727,7 @@ let CURRENT_POSITIONS = POSITIONS.slice();
 
 // Ajuste fixo de capacidade (valores conferidos manualmente), por índice de GROUPS.
 // Não altera POSITIONS, ocupação ou qualquer outra lógica — apenas fixa a coluna Capacidade.
-const CAPACITY_OVERRIDES = {0:231,1:694,2:1819,3:480,4:504,6:898,7:3475,8:900,9:1095,10:528,11:120,12:240,13:960,14:762,15:286,16:210,17:391,18:615,19:270,20:1264};
+const CAPACITY_OVERRIDES = {0:231,1:694,2:1819,3:480,4:390,5:197,6:770,7:2990,8:893,9:948,10:460,11:120,12:240,13:720,14:762,15:150,16:210,17:391,18:615,19:0,20:1264};
 
 function computeGroups(qtyByPos) {
   const agg = CURRENT_GROUPS.map(g => ({ tipo: g.tipo, familia: g.familia, capacidade: 0, ocupado: 0 }));
