@@ -43,6 +43,117 @@ input, button, select {
 input[type="file"] { padding: 6px; }
 button { cursor: pointer; border: none; }
 
+.file-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  background: #eef2f7;
+}
+.file-status.success { color: #166534; background: #dcfce7; }
+.file-status.error   { color: #991b1b; background: #fee2e2; }
+.file-status.loading { color: #1d4ed8; background: #dbeafe; }
+
+.porta-palete-filtros {
+  margin: 10px 0;
+}
+.filtros-palete-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.filtro-palete-caixa {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid;
+  border-radius: 10px;
+}
+.filtro-palete-caixa.nivel-caixa {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+.filtro-palete-caixa.intervalo-caixa {
+  border-color: #bbf7d0;
+  background: #f7fff9;
+}
+.filtro-palete-caixa .titulo-filtro {
+  display: block;
+  margin-bottom: 4px;
+  color: #1e3a5f;
+  font-size: 14px;
+  font-weight: 800;
+}
+.filtro-palete-caixa .subtitulo-filtro {
+  display: block;
+  margin-bottom: 12px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.filtros-acoes-gerais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.filtros-acoes-gerais .filter-summary {
+  flex: 1 1 360px;
+  margin-top: 0;
+}
+.niveis-opcoes {
+  display: flex;
+  flex: 1 1 420px;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 34px;
+  align-items: center;
+}
+.nivel-chip { cursor: pointer; }
+.nivel-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.nivel-chip span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 7px 10px;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.nivel-chip input:checked + span {
+  color: #fff;
+  border-color: #1a73e8;
+  background: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, .15);
+}
+.range-input { min-width: 220px; flex: 1 1 220px; }
+.filter-summary {
+  display: block;
+  margin-top: 5px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  color: #475569;
+  background: #eef2f7;
+  font-size: 12px;
+  font-weight: 700;
+}
+.filter-summary.active { color: #166534; background: #dcfce7; }
+.filter-summary.error  { color: #991b1b; background: #fee2e2; }
+
+@media (max-width: 820px) {
+  .filtros-palete-grid { grid-template-columns: 1fr; }
+  .range-input { width: 100%; min-width: 0; flex-basis: 100%; }
+  .filtros-acoes-gerais .primary { width: 100%; }
+}
+
 .btn-lg {
   min-width: 180px;
   padding: 10px 16px;
@@ -300,8 +411,9 @@ td.num { text-align: right; }
 
 <div id="controles" class="card">
   <div class="row">
-    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
-    <span class="muted">Carregue CSV, XLSX ou XLS.</span>
+    <input type="file" id="fileInput" accept=".csv,.tsv,.xlsx,.xls,.xlt">
+    <span class="muted">Carregue CSV, TSV, XLSX, XLS ou XLT.</span>
+    <span id="fileStatus" class="file-status" role="status" aria-live="polite">Nenhum arquivo carregado.</span>
   </div>
   <div class="row">
     <input id="search" type="text" placeholder="Buscar por Código (Pieza) ou Descrição — vários códigos: 123456;789012" />
@@ -311,6 +423,39 @@ td.num { text-align: right; }
       <label><input type="radio" name="lado" value="todos" checked><span>Todos</span></label>
       <label><input type="radio" name="lado" value="par"><span>Par</span></label>
       <label><input type="radio" name="lado" value="impar"><span>Ímpar</span></label>
+    </div>
+  </div>
+  <div class="porta-palete-filtros">
+    <div class="filtros-palete-grid">
+      <section class="filtro-palete-caixa nivel-caixa" aria-labelledby="tituloFiltroNivel">
+        <span id="tituloFiltroNivel" class="titulo-filtro">1. Selecionar níveis</span>
+        <span class="subtitulo-filtro">Marque um ou vários níveis. Sem seleção, serão considerados todos os níveis.</span>
+        <div class="row">
+          <div id="niveisOpcoes" class="niveis-opcoes">
+            <span class="muted">Carregue o arquivo para visualizar os níveis disponíveis.</span>
+          </div>
+        </div>
+        <button class="alt" id="btnTodosNiveis" type="button">Usar todos os níveis</button>
+      </section>
+
+      <section class="filtro-palete-caixa intervalo-caixa" aria-labelledby="tituloFiltroIntervalo">
+        <span id="tituloFiltroIntervalo" class="titulo-filtro">2. Definir início e fim</span>
+        <span class="subtitulo-filtro">Informe o primeiro e o último endereço que deseja inventariar.</span>
+        <div class="row">
+          <label class="muted" for="enderecoInicio">Endereço inicial:</label>
+          <input id="enderecoInicio" class="range-input" type="text" placeholder="Ex.: 1-002-0004-00" autocomplete="off" />
+        </div>
+        <div class="row">
+          <label class="muted" for="enderecoFim">Endereço final:</label>
+          <input id="enderecoFim" class="range-input" type="text" placeholder="Ex.: 1-002-0030-00" autocomplete="off" />
+        </div>
+        <button class="alt" id="btnLimparIntervalo" type="button">Limpar início e fim</button>
+      </section>
+    </div>
+
+    <div class="filtros-acoes-gerais">
+      <button class="primary" id="btnAplicarFiltrosPalete" type="button">Aplicar filtros selecionados</button>
+      <span id="filtroPaleteStatus" class="filter-summary" role="status" aria-live="polite">Todos os níveis • Sem intervalo.</span>
     </div>
   </div>
   <div class="row">
@@ -353,7 +498,7 @@ td.num { text-align: right; }
 
 <!-- Bibliotecas externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.20.2/xlsx.full.min.js"      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <script>
 'use strict';
@@ -365,6 +510,208 @@ let ultimoFiltro = [];
 // usada apenas para separar a impressão por material (um relatório
 // completo por material, em sequência), sem alterar a lógica de busca.
 let ordemMateriais = [];
+let ultimaExclusaoTransitoria = 0;
+
+/* Posições transitórias fornecidas no ARM - Layout (2).csv.
+   Elas são removidas automaticamente antes de qualquer busca ou impressão. */
+const POSICOES_TRANSITORIAS = Object.freeze([
+  "EXP/AFTER/RES/F1",
+  "AF1-7136COF-Aguardando Disposi?ao da Qualidade",
+  "AF1-7138COF-Aguardando Disposi?ao da Qualidade",
+  "AFT-BUF-EXP",
+  "AFTER",
+  "BLC-BUF-01",
+  "BLC-BUF-02",
+  "BRASIMET",
+  "BUF-EXP-01",
+  "BUF-EXP-02",
+  "BUF-EXP-03",
+  "BUF-EXP-04",
+  "BUF-EXP-05",
+  "BUF-EXP-06",
+  "BUF-EXP-07",
+  "BUF-EXP-08",
+  "BUF-EXP-09",
+  "BUF-EXP-10",
+  "BUF-EXP-11",
+  "BUF-EXP-12",
+  "BUF-EXP-13",
+  "BUF-EXP-14",
+  "BUF-EXP-15",
+  "BUF-EXP-16",
+  "BUF-EXP-17",
+  "BUF-EXP-18",
+  "BUF-EXP-19",
+  "BUF-EXP-20",
+  "BUF-EXP-21",
+  "BUF-EXP-22",
+  "BUF-EXP-23",
+  "BUF-EXP-24",
+  "BUF-EXP-25",
+  "BUF-EXP-26",
+  "BUF-EXP-27",
+  "CHECK OUT",
+  "COF",
+  "COM-METALURGIA",
+  "CPD-SALA ADM",
+  "DC1-7363DVC-Assistencia a Clientes",
+  "DC1-7365DVC-Assistencia a Clientes",
+  "DEVOLU??O-FAB2",
+  "DF1-7140DVF-Assistencia ao Fornecedor",
+  "DF1-7141DVF-Assistencia ao Fornecedor",
+  "DMO2",
+  "DOCA-1",
+  "DOCA-2",
+  "DOCA-3",
+  "DOCA-4",
+  "DOCA-5",
+  "DOCA-6",
+  "DOCA-7",
+  "DOCA-8",
+  "DVF",
+  "EIXOS SAIDA",
+  "ENVIOS A TERCEIRO",
+  "EPT-BUF-EXP-01",
+  "ESO-BUF-01",
+  "ESO-BUF-02",
+  "EX1-7160EXP-Almoxarifado da Expedi??o",
+  "EX1-7162EXP-Almoxarifado da Expedi??o",
+  "EX3-7360EXP-Alm da Expedi??o",
+  "EX3-7362EXP-Almoxarifado da Expedi??o",
+  "EXP AFTER/RESENDE/OUTROS F2",
+  "EXP-999-0000-00",
+  "FAB1-EXP-01",
+  "FAB1-EXP-02",
+  "FAB1-EXP-03",
+  "FAB1-EXP-04",
+  "FAB1-EXP-05",
+  "FAB1-EXP-06",
+  "FAB2-EXP-01",
+  "FAB2-EXP-02",
+  "FAB2-EXP-03",
+  "FAB2-EXP-04",
+  "FAB2-EXP-05",
+  "FAB3-EXP-01",
+  "FE1-7130FER-Ferramentaria",
+  "FE1-7134FER-Ferramentaria",
+  "FERRAMENTARIA",
+  "GRO-BUF-01",
+  "GRO-BUF-02",
+  "GRO-BUF-03",
+  "GRO-BUF-04",
+  "ID1-7112ALM-Almoxarifado de Componentes",
+  "ID1-7115ALM-Almoxarifado Material Terceiros em N/Poder",
+  "ID2-7312ALM-Almoxarifado de Componentes",
+  "ID2-7315ALM-Almoxarifado Material Terceiros em N/Poder",
+  "IN2-7307INSP-Material em Inspe??o de Recebimento",
+  "IN2-7310INSP-Material em Inspe?ao de Recebimento",
+  "LA1-7142LAY-Lay-Out",
+  "LA1-7144LAY-Lay-Out",
+  "LAP-BUF-01",
+  "LAYOUT",
+  "LCE-BUF-01",
+  "LCM-BUF-01",
+  "LE1-7345LEM-Laboratorio de Ensaios Mecanicos",
+  "LE1-7347LEM-Laboratorio de Ensaios Mecanicos",
+  "LEM",
+  "LINHA-PRO FAB1",
+  "LINHA-PRO FAB2",
+  "LMC-BUF-01",
+  "LMC-BUF-02",
+  "LMC-BUF-03",
+  "LMC-BUF-04",
+  "LMC-BUF-05",
+  "LMC-BUF-06",
+  "LSP-BUF-01",
+  "LU1-7154DMO-Material de Compras",
+  "LU1-7354DMO-Material de Compras",
+  "LUF-BUF-01",
+  "LUF-BUF-02",
+  "LUF-BUF-03",
+  "MDC-BUF-01",
+  "MDC-BUF-02",
+  "MDX-BUF-01",
+  "MDX-BUF-02",
+  "MDX-BUF-03",
+  "ME1-7148MET-Metalurgia",
+  "MO1-7120MON - Material Disponivel para Montagem",
+  "MO1-7120MONPH-Material Disponivel para Montagem",
+  "MO1-7122MON-Material Disponivel para Montagem",
+  "MO3-7320MON-Material Disponivel para Montagem",
+  "MO3-7320MONPH-Material Disponivel para Montagem",
+  "MO3-7322MON-Material Disponivel para Montagem",
+  "MOD-BUF-01",
+  "MOE-BUF-01",
+  "MOE-BUF-02",
+  "MOE-BUF-03",
+  "MOE-BUF-04",
+  "MOP-BUF-01",
+  "MOP-BUF-02",
+  "MOP-BUF-03",
+  "MOP-BUF-04",
+  "MOP-BUF-05",
+  "NAO CONFORME GE",
+  "NOSTOCK",
+  "PROCESO-AXLETECH",
+  "PROCESO-FAB1",
+  "PROCESO-FAB2",
+  "RE1-7131REC-Recupera??o",
+  "RE1-7135REC-Recupera??o",
+  "RECE_MP_MANUAL",
+  "RECE_PS_FAB1",
+  "RECE_PS_FAB2",
+  "RESENDE",
+  "RET",
+  "RI1-7102RIS-Material no Recebimento",
+  "RI1-7105RIS-Material no Recebimento",
+  "RI3-7302RIS-Material no Recebimento",
+  "RI3-7305RIS-Material no Recebimento",
+  "RIS",
+  "RT1-7190RET-Materiais Retidos",
+  "RT3-7390RET-Materiais Retidos",
+  "SM2-7212ALM-Almoxarifado de Componentes",
+  "SM2-7215ALM-Almoxarifado Material Terceiros em N/Poder",
+  "TCM-BUF-01",
+  "TCM-BUF-02",
+  "TCM-BUF-03",
+  "TE1-7117TER-Material em Terceiros para Testes",
+  "TE1-7119TER-Material em Terceiros para Testes",
+  "TRANSBORDO FAB2",
+  "TRANSBORDO KIT FRAC F1",
+  "WI1-7366DVR-Devolu??o de Resende para a Produ??o OS"
+]);
+
+function normalizarPosicaoTransitoria(valor) {
+  return String(valor ?? '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    // Corrige os caracteres de cedilha/acentuação perdidos no CSV de origem.
+    .replace(/\?\?/g, 'CA')
+    .replace(/\?/g, 'C')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s+/g, ' ');
+}
+
+const CHAVES_POSICOES_TRANSITORIAS = new Set(
+  POSICOES_TRANSITORIAS.map(normalizarPosicaoTransitoria)
+);
+
+function separarPosicoesTransitorias(registros) {
+  const validos = [];
+  let removidas = 0;
+  for (const registro of registros) {
+    const endereco = registro?.Ubicacion || registro?.name || '';
+    if (CHAVES_POSICOES_TRANSITORIAS.has(normalizarPosicaoTransitoria(endereco))) {
+      removidas++;
+    } else {
+      validos.push(registro);
+    }
+  }
+  return { validos, removidas };
+}
 
 /* ── Utilitários gerais ── */
 function chunkArray(arr, size) {
@@ -398,14 +745,6 @@ function chunksPorFabrica(linhas) {
       fab12.push(l);
     }
   }
-<<<<<<< HEAD
-  const blocos12 = chunkArray(fab12, LPP);
-  const blocos3  = chunkArray(fab3, LPP);
-  blocos12.forEach(b => { b._fabGrupo = 'fab12'; });
-  blocos3.forEach(b => { b._fabGrupo = 'fab3'; });
-  return [...blocos12, ...blocos3];
-=======
-
   const blocos12 = chunkArray(fab12, LPP);
   const blocos3  = chunkArray(fab3, LPP);
   const blocos4  = chunkArray(fab4, LPP);
@@ -415,7 +754,6 @@ function chunksPorFabrica(linhas) {
   blocos4.forEach(b => { b._fabGrupo = 'fab4'; });
 
   return [...blocos12, ...blocos3, ...blocos4];
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
 }
 
 function dataHora() {
@@ -475,16 +813,168 @@ function filtraPorLado(arr) {
   });
 }
 
+/* ── Filtros Porta-Palete: nível e intervalo ──
+   Exemplo de endereço: 1-002-0004-10
+   Base usada no intervalo: 1-002-0004
+   Nível usado na seleção: 10 */
+function decomporEndereco(endereco) {
+  const texto = String(endereco ?? '').trim();
+  if (!texto) return null;
+  const partes = texto.split('-').map(p => p.trim()).filter(Boolean);
+  if (partes.length < 3) return null;
+  const possuiNivel = partes.length >= 4;
+  return {
+    texto,
+    base: possuiNivel ? partes.slice(0, -1) : partes,
+    nivel: possuiNivel ? partes[partes.length - 1] : ''
+  };
+}
+
+function compararPartesEndereco(a, b) {
+  const limite = Math.max(a.length, b.length);
+  for (let i = 0; i < limite; i++) {
+    const parteA = String(a[i] ?? '');
+    const parteB = String(b[i] ?? '');
+    const comparacao = parteA.localeCompare(parteB, 'pt-BR', { numeric: true, sensitivity: 'base' });
+    if (comparacao !== 0) return comparacao;
+  }
+  return 0;
+}
+
+function niveisSelecionados() {
+  return [...document.querySelectorAll('input[name="nivelFiltro"]:checked')]
+    .map(input => String(input.value).trim())
+    .filter(Boolean);
+}
+
+function obterIntervaloEndereco() {
+  const inicioTexto = (document.getElementById('enderecoInicio')?.value || '').trim();
+  const fimTexto = (document.getElementById('enderecoFim')?.value || '').trim();
+  const inicio = inicioTexto ? decomporEndereco(inicioTexto) : null;
+  const fim = fimTexto ? decomporEndereco(fimTexto) : null;
+
+  if (inicioTexto && !inicio) throw new Error('Endereço inicial inválido. Use o formato 1-002-0004-00.');
+  if (fimTexto && !fim) throw new Error('Endereço final inválido. Use o formato 1-002-0030-00.');
+  if (inicio && fim && compararPartesEndereco(inicio.base, fim.base) > 0) {
+    throw new Error('O endereço inicial está depois do endereço final. Confira o intervalo.');
+  }
+  return { inicio, fim, inicioTexto, fimTexto };
+}
+
+function aplicarFiltrosPortaPalete(linhas, campoEndereco = 'Ubicacion') {
+  const niveis = new Set(niveisSelecionados());
+  const intervalo = obterIntervaloEndereco();
+  const temFiltroNivel = niveis.size > 0;
+  const temIntervalo = Boolean(intervalo.inicio || intervalo.fim);
+  if (!temFiltroNivel && !temIntervalo) return linhas;
+
+  return linhas.filter(linha => {
+    const endereco = decomporEndereco(linha?.[campoEndereco]);
+    if (!endereco) return false;
+    if (temFiltroNivel && !niveis.has(endereco.nivel)) return false;
+    if (intervalo.inicio && compararPartesEndereco(endereco.base, intervalo.inicio.base) < 0) return false;
+    if (intervalo.fim && compararPartesEndereco(endereco.base, intervalo.fim.base) > 0) return false;
+    return true;
+  });
+}
+
+function escaparHTML(valor) {
+  return String(valor ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function descricaoFiltrosAtivos() {
+  const niveis = niveisSelecionados();
+  const inicio = (document.getElementById('enderecoInicio')?.value || '').trim();
+  const fim = (document.getElementById('enderecoFim')?.value || '').trim();
+  const partes = [];
+  if (niveis.length) partes.push(`Níveis: ${niveis.join(', ')}`);
+  if (inicio || fim) partes.push(`Intervalo: ${inicio || 'início'} até ${fim || 'fim'}`);
+  return partes.join(' • ');
+}
+
+function atualizarResumoFiltros(quantidade = null, erro = '') {
+  const status = document.getElementById('filtroPaleteStatus');
+  if (!status) return;
+  if (erro) {
+    status.textContent = erro;
+    status.className = 'filter-summary error';
+    return;
+  }
+  const niveis = niveisSelecionados();
+  const inicio = (document.getElementById('enderecoInicio')?.value || '').trim();
+  const fim = (document.getElementById('enderecoFim')?.value || '').trim();
+  const nivelTexto = niveis.length ? `Níveis: ${niveis.join(', ')}` : 'Todos os níveis';
+  const intervaloTexto = (inicio || fim) ? `Intervalo: ${inicio || 'início'} até ${fim || 'fim'}` : 'Sem intervalo';
+  const quantidadeTexto = Number.isInteger(quantidade) ? ` • ${quantidade} registro(s)` : '';
+  status.textContent = `${nivelTexto} • ${intervaloTexto}${quantidadeTexto}.`;
+  status.className = `filter-summary${(niveis.length || inicio || fim) ? ' active' : ''}`;
+}
+
+function preencherNiveisDisponiveis(linhas) {
+  const container = document.getElementById('niveisOpcoes');
+  if (!container) return;
+  container.innerHTML = '';
+  const niveis = [...new Set(linhas.map(linha => {
+    const endereco = decomporEndereco(linha?.Ubicacion ?? linha?.name);
+    return endereco?.nivel || '';
+  }).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' }));
+
+  if (niveis.length === 0) {
+    const aviso = document.createElement('span');
+    aviso.className = 'muted';
+    aviso.textContent = 'Nenhum nível foi identificado nos endereços do arquivo.';
+    container.appendChild(aviso);
+    atualizarResumoFiltros();
+    return;
+  }
+
+  niveis.forEach(nivel => {
+    const label = document.createElement('label');
+    label.className = 'nivel-chip';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = 'nivelFiltro';
+    input.value = nivel;
+    input.addEventListener('change', () => atualizarResumoFiltros());
+    const span = document.createElement('span');
+    span.textContent = nivel;
+    label.appendChild(input);
+    label.appendChild(span);
+    container.appendChild(label);
+  });
+  atualizarResumoFiltros();
+}
+
+function prepararFiltrosParaImpressao() {
+  if (!Array.isArray(dados) || dados.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Carregue primeiro o arquivo.';
+    return false;
+  }
+  const aplicado = montarTabela();
+  if (!aplicado || ultimoFiltro.length === 0) {
+    document.getElementById('printArea').innerHTML = 'Nenhum endereço encontrado com os filtros selecionados.';
+    return false;
+  }
+  return true;
+}
+
 /* ── Cabeçalho da folha ── */
 function cabecalho(titulo) {
   const { data, hora } = dataHora();
   const src = getLogo();
+  const filtrosAtivos = descricaoFiltrosAtivos();
   return `
   <div class="page-header">
     <div class="hdr">
       <div class="hdr-left">
         <div class="titulo">${titulo}</div>
         <div class="dh">${data} • ${hora}</div>
+        ${filtrosAtivos ? `<div class="dh">${escaparHTML(filtrosAtivos)}</div>` : ''}
       </div>
       <div class="hdr-right"><img src="${src}" alt="Logo"></div>
     </div>
@@ -628,27 +1118,6 @@ function tabelaEmbalagemHTML(linhas) {
    material. data-grupo/data-fabgrupo continuam intactos (CSS de impressão
    e layout não são afetados). */
 function numerarGrupo(grupo) {
-<<<<<<< HEAD
-  ['fab12', 'fab3'].forEach(fabGrupo => {
-    const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"]`)];
-    const total  = sheets.length;
-    if (total === 0) return;
-    sheets.forEach((sheet, idx) => {
-      let footer = sheet.querySelector('.page-footer');
-      if (!footer) {
-        footer = document.createElement('div');
-        footer.className = 'page-footer';
-        sheet.appendChild(footer);
-      }
-      footer.textContent = `Página ${idx + 1} de ${total}`;
-
-      /* Assinatura do Inventariante: somente na primeira
-         página de cada relatório (cabeçalho — título, data,
-         hora e logo — permanece em todas as páginas). */
-      if (idx > 0) {
-        sheet.querySelector('.inventariante')?.remove();
-      }
-=======
   const materiais = [...new Set(
     [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"]`)]
       .map(s => s.getAttribute('data-mat') || '0')
@@ -656,7 +1125,8 @@ function numerarGrupo(grupo) {
 
   materiais.forEach(matId => {
     ['fab12', 'fab3', 'fab4'].forEach(fabGrupo => {
-      const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"][data-mat="${matId}"]`)];
+      const sheets = [...document.querySelectorAll(`.sheet[data-grupo="${grupo}"][data-fabgrupo="${fabGrupo}"]`)]
+        .filter(s => (s.getAttribute('data-mat') || '0') === matId);
       const total  = sheets.length;
       if (total === 0) return;
       sheets.forEach((sheet, idx) => {
@@ -675,7 +1145,6 @@ function numerarGrupo(grupo) {
           sheet.querySelector('.inventariante')?.remove();
         }
       });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
     });
   });
 }
@@ -705,24 +1174,11 @@ const byUbicacionAZ = (a, b) =>
 
 /* ── Gerar cadernos QTD / SQTD ── */
 function gerarCadernos(tipo) {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const ordenado = [...ultimoFiltro].sort(byUbicacionAZ);
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-<<<<<<< HEAD
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', tipo);
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${cod}`;
-    section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-=======
   separarPorMaterial(ordenado).forEach((mat, matIdx) => {
     const titulo = `Inventário Cíclico (${tipo.toUpperCase()}) – Item: ${mat.cod}`;
     chunksPorFabrica(mat.linhas).forEach(bloco => {
@@ -734,7 +1190,6 @@ function gerarCadernos(tipo) {
       section.innerHTML = `${cabecalho(titulo)}${tabelaHTML(bloco, tipo === 'qtd')}<div class="page-footer"></div>`;
       printArea.appendChild(section);
     });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo(tipo);
@@ -742,32 +1197,11 @@ function gerarCadernos(tipo) {
 
 /* ── Gerar ambos (QTD + SQTD) ── */
 function gerarAmbos() {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const ordenado  = [...ultimoFiltro].sort(byUbicacionAZ);
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-<<<<<<< HEAD
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', 'qtd');
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    section.innerHTML = `${cabecalho(`Inventário Cíclico (QTD) – Item: ${cod}`)}${tabelaHTML(bloco, true)}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-  });
-
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', 'sqtd');
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-=======
   const materiais = separarPorMaterial(ordenado);
 
   materiais.forEach((mat, matIdx) => {
@@ -790,7 +1224,6 @@ function gerarAmbos() {
       section.innerHTML = `${cabecalho(`Inventário Cíclico (SQTD) – Item: ${mat.cod}`)}${tabelaHTML(bloco, false)}<div class="page-footer"></div>`;
       printArea.appendChild(section);
     });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo('qtd');
@@ -800,10 +1233,7 @@ function gerarAmbos() {
 
 /* ── Embalagem por Posição ── */
 function gerarEmbalagemPosicao() {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const map = new Map();
   for (const l of ultimoFiltro) {
     const pos    = l.Ubicacion   || '';
@@ -841,25 +1271,11 @@ function gerarEmbalagemPosicao() {
 
 /* ── Inventário Porta-Porta ── */
 function gerarPortaPorta() {
-  if (ultimoFiltro.length === 0) {
-    document.getElementById('printArea').innerHTML = 'Pesquise primeiro.';
-    return;
-  }
+  if (!prepararFiltrosParaImpressao()) return;
   const ordenado = [...ultimoFiltro].sort(byUbicacionAZ);
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = '';
 
-<<<<<<< HEAD
-  chunksPorFabrica(ordenado).forEach(bloco => {
-    const section = document.createElement('section');
-    section.className = 'sheet';
-    section.setAttribute('data-grupo', 'porta');
-    section.setAttribute('data-fabgrupo', bloco._fabGrupo);
-    const linhaContada = '<div style="margin:6px 0;font-size:14px;">Linha contada: <span class="line" style="width:220px;"></span></div>';
-    const assinaturas  = '<div style="margin-top:20px;font-size:14px;">Auditor 1: <span class="line" style="width:200px;"></span><br><br>Auditor 2: <span class="line" style="width:200px;"></span></div>';
-    section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
-    printArea.appendChild(section);
-=======
   separarPorMaterial(ordenado).forEach((mat, matIdx) => {
     chunksPorFabrica(mat.linhas).forEach(bloco => {
       const section = document.createElement('section');
@@ -872,7 +1288,6 @@ function gerarPortaPorta() {
       section.innerHTML  = `${cabecalho('Inventário Porta-Porta (QTD)')}${linhaContada}${tabelaHTML(bloco, true)}${assinaturas}<div class="page-footer"></div>`;
       printArea.appendChild(section);
     });
->>>>>>> 2f799c5a4a6d2dabaccaa3500e71191209eb41e1
   });
 
   numerarGrupo('porta');
@@ -911,7 +1326,9 @@ function gerarPortaPorta() {
       const prefixo = (document.getElementById('searchPos')?.value || '').trim().toLowerCase();
       let livres = dados.filter(l => !ehVazio(l.name) && ehVazio(l.label2));
       if (prefixo) livres = livres.filter(l => String(l.name).toLowerCase().startsWith(prefixo));
+      livres = aplicarFiltrosPortaPalete(livres, 'name');
       livres.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR', { numeric: true, sensitivity: 'base' }));
+      atualizarResumoFiltros(livres.length);
 
       const tabela = document.getElementById('tabela');
       tabela.innerHTML = '';
@@ -938,6 +1355,7 @@ function gerarPortaPorta() {
       numerarGrupo('poslivre');
     } catch (err) {
       console.error('Erro gerarPosicoesLivres:', err);
+      atualizarResumoFiltros(null, err?.message || String(err));
       alert('Erro ao gerar Posições Livres: ' + (err?.message || err));
     }
   }
@@ -968,7 +1386,22 @@ function montarTabela() {
     return termos.some(t => pieza === t || desc.includes(t));
   });
   if (termoPos) base = base.filter(l => String(l.Ubicacion || '').toLowerCase().startsWith(termoPos));
+  try {
+    base = aplicarFiltrosPortaPalete(base, 'Ubicacion');
+  } catch (err) {
+    ultimoFiltro = [];
+    const mensagem = err?.message || String(err);
+    tabela.innerHTML = '';
+    const tr = tabela.insertRow();
+    const td = tr.insertCell();
+    td.textContent = mensagem;
+    td.style.color = '#b00020';
+    atualizarResumoFiltros(null, mensagem);
+    alert(mensagem);
+    return false;
+  }
   ultimoFiltro = filtraPorLado(base);
+  atualizarResumoFiltros(ultimoFiltro.length);
 
   // Guarda a ordem dos materiais (Pieza) exatamente na sequência em que os
   // códigos foram digitados na busca, para uso exclusivo na separação da
@@ -1006,7 +1439,7 @@ function montarTabela() {
       td.style.color = '#b00020';
       td.style.fontStyle = 'italic';
     }
-    return;
+    return true;
   }
 
   const header = tabela.insertRow();
@@ -1036,49 +1469,283 @@ function montarTabela() {
     tdAviso.style.fontStyle = 'italic';
     tdAviso.textContent = 'Códigos não encontrados: ' + naoEncontrados.join(', ');
   }
+  return true;
 }
 
 /* ── Carregamento de arquivo ── */
+const ALIASES_CABECALHO = new Map([
+  ['ubicacion', 'Ubicacion'], ['location', 'Ubicacion'], ['localizacao', 'Ubicacion'],
+  ['endereco', 'Ubicacion'], ['posicao', 'Ubicacion'],
+  ['pieza', 'Pieza'], ['peca', 'Pieza'], ['codpro', 'Pieza'], ['codigo', 'Pieza'],
+  ['codigomaterial', 'Pieza'], ['item', 'Pieza'], ['material', 'Pieza'],
+  ['descripcion1', 'Descripcion1'], ['descripcion', 'Descripcion1'],
+  ['descricao', 'Descripcion1'], ['description', 'Descripcion1'],
+  ['label', 'label'], ['etiqueta', 'label'],
+  ['labelorigin', 'labelorigin'], ['labelorigem', 'labelorigin'],
+  ['etiquetaorigem', 'labelorigin'], ['etiquetaorigen', 'labelorigin'],
+  ['cantidadtotal', 'CantidadTotal'], ['cantidad', 'CantidadTotal'],
+  ['quantidade', 'CantidadTotal'], ['qtde', 'CantidadTotal'], ['qtd', 'CantidadTotal'],
+  ['quantity', 'CantidadTotal'],
+  ['name', 'name'], ['nome', 'name'],
+  ['label2', 'label2'], ['etiqueta2', 'label2']
+]);
+
+function chaveCabecalho(valor) {
+  return String(valor ?? '')
+    .replace(/^\uFEFF/, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function atualizarStatusArquivo(mensagem, tipo = '') {
+  const status = document.getElementById('fileStatus');
+  if (!status) return;
+  status.textContent = mensagem;
+  status.className = `file-status${tipo ? ' ' + tipo : ''}`;
+}
+
+function normalizarRegistros(registros) {
+  return registros.map(registro => {
+    const normalizado = {};
+    Object.entries(registro).forEach(([cabecalhoOriginal, valor]) => {
+      const cabecalhoLimpo = String(cabecalhoOriginal).replace(/^\uFEFF/, '').trim();
+      if (!cabecalhoLimpo) return;
+      normalizado[cabecalhoLimpo] = valor;
+      const canonico = ALIASES_CABECALHO.get(chaveCabecalho(cabecalhoLimpo));
+      if (canonico && (normalizado[canonico] === undefined || normalizado[canonico] === '')) {
+        normalizado[canonico] = valor;
+      }
+    });
+    return normalizado;
+  }).filter(registro => Object.values(registro).some(v => String(v ?? '').trim() !== ''));
+}
+
+function localizarLinhaCabecalho(matriz) {
+  let melhorIndice = -1;
+  let melhorPontuacao = -1;
+  const limite = Math.min(matriz.length, 40);
+
+  for (let i = 0; i < limite; i++) {
+    const celulas = (matriz[i] || []).map(v => String(v ?? '').trim());
+    const preenchidas = celulas.filter(Boolean);
+    if (preenchidas.length === 0) continue;
+    const reconhecidas = celulas.filter(v => ALIASES_CABECALHO.has(chaveCabecalho(v))).length;
+    const pontuacao = reconhecidas * 100 + Math.min(preenchidas.length, 20);
+    if (pontuacao > melhorPontuacao) {
+      melhorPontuacao = pontuacao;
+      melhorIndice = i;
+    }
+  }
+  return melhorIndice;
+}
+
+function matrizParaRegistros(matriz) {
+  const indiceCabecalho = localizarLinhaCabecalho(matriz);
+  if (indiceCabecalho < 0) return [];
+
+  const usados = new Map();
+  const cabecalhos = (matriz[indiceCabecalho] || []).map((valor, indice) => {
+    const base = String(valor ?? '').replace(/^\uFEFF/, '').trim() || `Coluna_${indice + 1}`;
+    const repeticoes = usados.get(base) || 0;
+    usados.set(base, repeticoes + 1);
+    return repeticoes === 0 ? base : `${base}_${repeticoes + 1}`;
+  });
+
+  const registros = matriz.slice(indiceCabecalho + 1).map(linha => {
+    const registro = {};
+    cabecalhos.forEach((cabecalho, indice) => { registro[cabecalho] = linha?.[indice] ?? ''; });
+    return registro;
+  });
+  return normalizarRegistros(registros);
+}
+
+function detectarSeparadorCSV(texto) {
+  const candidatos = [';', '\t', ',', '|'];
+  const amostra = texto.slice(0, 50000);
+  const contagens = new Map(candidatos.map(c => [c, 0]));
+  let entreAspas = false;
+
+  for (let i = 0; i < amostra.length; i++) {
+    const ch = amostra[i];
+    if (ch === '"') {
+      if (entreAspas && amostra[i + 1] === '"') i++;
+      else entreAspas = !entreAspas;
+    } else if (!entreAspas && contagens.has(ch)) {
+      contagens.set(ch, contagens.get(ch) + 1);
+    }
+  }
+  return candidatos.sort((a, b) => contagens.get(b) - contagens.get(a))[0];
+}
+
+function analisarCSV(texto) {
+  const separador = detectarSeparadorCSV(texto);
+  const linhas = [];
+  let linha = [];
+  let celula = '';
+  let entreAspas = false;
+
+  for (let i = 0; i < texto.length; i++) {
+    const ch = texto[i];
+    if (ch === '"') {
+      if (entreAspas && texto[i + 1] === '"') {
+        celula += '"';
+        i++;
+      } else {
+        entreAspas = !entreAspas;
+      }
+    } else if (ch === separador && !entreAspas) {
+      linha.push(celula);
+      celula = '';
+    } else if ((ch === '\n' || ch === '\r') && !entreAspas) {
+      if (ch === '\r' && texto[i + 1] === '\n') i++;
+      linha.push(celula);
+      if (linha.some(v => String(v).trim() !== '')) linhas.push(linha);
+      linha = [];
+      celula = '';
+    } else {
+      celula += ch;
+    }
+  }
+  linha.push(celula);
+  if (linha.some(v => String(v).trim() !== '')) linhas.push(linha);
+  return linhas;
+}
+
+async function lerTextoArquivo(file) {
+  const buffer = await file.arrayBuffer();
+  let texto = new TextDecoder('utf-8').decode(buffer);
+  if (texto.includes('\uFFFD')) {
+    try { texto = new TextDecoder('windows-1252').decode(buffer); } catch (_) { /* usa UTF-8 */ }
+  }
+  return texto.replace(/^\uFEFF/, '');
+}
+
+function carregarScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('Falha ao baixar o leitor Excel.'));
+    document.head.appendChild(script);
+  });
+}
+
+async function garantirLeitorExcel() {
+  if (typeof XLSX !== 'undefined') return;
+  try {
+    await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  } catch (_) {
+    throw new Error('O leitor de Excel não carregou. Conecte o aparelho à internet e abra o HTML novamente, ou use um arquivo CSV.');
+  }
+  if (typeof XLSX === 'undefined') {
+    throw new Error('O leitor de Excel não ficou disponível. Use CSV ou tente abrir novamente com internet.');
+  }
+}
+
+function escolherPlanilha(wb) {
+  let melhor = null;
+  for (const nomeAba of wb.SheetNames || []) {
+    const ws = wb.Sheets[nomeAba];
+    if (!ws) continue;
+    const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, blankrows: false });
+    const registros = matrizParaRegistros(matriz);
+    if (registros.length === 0) continue;
+    const campos = new Set(Object.keys(registros[0] || {}));
+    const reconhecidos = ['Ubicacion', 'Pieza', 'Descripcion1', 'label', 'labelorigin', 'CantidadTotal', 'name', 'label2']
+      .filter(c => campos.has(c)).length;
+    const pontuacao = reconhecidos * 1000000 + registros.length;
+    if (!melhor || pontuacao > melhor.pontuacao) melhor = { nomeAba, registros, pontuacao };
+  }
+  if (!melhor) throw new Error('Nenhuma aba com dados foi encontrada no arquivo.');
+  return melhor;
+}
+
+function validarRegistros(registros) {
+  if (!Array.isArray(registros) || registros.length === 0) {
+    throw new Error('O arquivo não possui linhas de dados.');
+  }
+  const campos = new Set(registros.slice(0, 100).flatMap(r => Object.keys(r)));
+  const inventario = campos.has('Pieza') && (campos.has('Ubicacion') || campos.has('Descripcion1'));
+  const posicoesLivres = campos.has('name') && campos.has('label2');
+  if (!inventario && !posicoesLivres) {
+    const encontrados = [...campos].slice(0, 12).join(', ') || 'nenhum';
+    throw new Error(`Cabeçalhos não reconhecidos. Esperado: Ubicacion/Pieza ou name/label2. Encontrado: ${encontrados}.`);
+  }
+}
+
+function concluirCarregamento(file, registros, nomeAba = '') {
+  validarRegistros(registros);
+  const separacao = separarPosicoesTransitorias(registros);
+  dados = separacao.validos;
+  ultimaExclusaoTransitoria = separacao.removidas;
+  ultimoFiltro = [];
+  ordemMateriais = [];
+  document.getElementById('enderecoInicio').value = '';
+  document.getElementById('enderecoFim').value = '';
+  preencherNiveisDisponiveis(dados);
+
+  const tabela = document.getElementById('tabela');
+  tabela.innerHTML = '';
+  const tr = tabela.insertRow();
+  const td = tr.insertCell();
+  td.textContent = `Arquivo pronto: ${file.name} (${dados.length} linhas válidas; ${ultimaExclusaoTransitoria} linhas em posições transitórias removidas). Escolha os níveis e/ou o intervalo e aplique os filtros.`;
+  document.getElementById('printArea').innerHTML = '';
+
+  const detalheAba = nomeAba ? ` • Aba: ${nomeAba}` : '';
+  atualizarStatusArquivo(`${file.name} • ${dados.length} linhas válidas • ${ultimaExclusaoTransitoria} linhas em posições transitórias removidas${detalheAba}`, 'success');
+  alert(`Arquivo carregado com sucesso!\nLinhas válidas: ${dados.length}\nLinhas em posições transitórias removidas: ${ultimaExclusaoTransitoria}${nomeAba ? `\nAba: ${nomeAba}` : ''}`);
+}
+
 document.getElementById('fileInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const nome = file.name.toLowerCase();
+  atualizarStatusArquivo(`Lendo ${file.name}...`, 'loading');
   try {
-    if (nome.endsWith('.csv')) {
-      if (typeof Papa !== 'undefined') {
-        Papa.parse(file, {
-          header: true, skipEmptyLines: true,
-          complete : (res) => { dados = res.data; alert('Arquivo carregado! Linhas: ' + dados.length); },
-          error    : (err) => alert('Erro ao ler CSV: ' + (err?.message || err))
-        });
-      } else if (typeof XLSX !== 'undefined') {
-        const text = await file.text();
-        const wb   = XLSX.read(text, { type: 'string' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        dados = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
-        alert('Arquivo CSV carregado via XLSX! Linhas: ' + dados.length);
-      } else {
-        alert('Não foi possível carregar o leitor de CSV (PapaParse) nem o XLSX.');
-      }
-    } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
-      if (typeof XLSX === 'undefined') { alert('SheetJS não carregou.'); return; }
-      const buf   = await file.arrayBuffer();
-      const wb    = XLSX.read(buf, { type: 'array' });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      dados = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      alert('Arquivo carregado! Linhas: ' + dados.length);
+    if (nome.endsWith('.csv') || nome.endsWith('.tsv')) {
+      const texto = await lerTextoArquivo(file);
+      const registros = matrizParaRegistros(analisarCSV(texto));
+      concluirCarregamento(file, registros);
+    } else if (nome.endsWith('.xlsx') || nome.endsWith('.xls') || nome.endsWith('.xlt')) {
+      await garantirLeitorExcel();
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+      const planilha = escolherPlanilha(wb);
+      concluirCarregamento(file, planilha.registros, planilha.nomeAba);
     } else {
-      alert('Formato não suportado. Use CSV, XLSX ou XLS.');
+      throw new Error('Formato não suportado. Use CSV, TSV, XLSX, XLS ou XLT.');
     }
   } catch (err) {
-    alert('Erro ao carregar: ' + (err?.message || err));
+    console.error('Erro ao carregar arquivo:', err);
+    const mensagem = err?.message || String(err);
+    dados = [];
+    ultimoFiltro = [];
+    atualizarStatusArquivo(`Erro: ${mensagem}`, 'error');
+    alert('Erro ao carregar: ' + mensagem);
+    e.target.value = '';
   }
 });
 
 /* ── Event listeners ── */
 document.getElementById('btnBuscar').addEventListener('click', montarTabela);
+document.getElementById('btnAplicarFiltrosPalete').addEventListener('click', montarTabela);
 document.getElementById('search').addEventListener('keypress',   (e) => { if (e.key === 'Enter') montarTabela(); });
 document.getElementById('searchPos').addEventListener('keypress',(e) => { if (e.key === 'Enter') montarTabela(); });
+document.getElementById('enderecoInicio').addEventListener('keypress', (e) => { if (e.key === 'Enter') montarTabela(); });
+document.getElementById('enderecoFim').addEventListener('keypress',    (e) => { if (e.key === 'Enter') montarTabela(); });
+document.getElementById('enderecoInicio').addEventListener('input', () => atualizarResumoFiltros());
+document.getElementById('enderecoFim').addEventListener('input',    () => atualizarResumoFiltros());
+document.getElementById('btnTodosNiveis').addEventListener('click', () => {
+  document.querySelectorAll('input[name="nivelFiltro"]:checked').forEach(input => { input.checked = false; });
+  if (dados.length) montarTabela(); else atualizarResumoFiltros();
+});
+document.getElementById('btnLimparIntervalo').addEventListener('click', () => {
+  document.getElementById('enderecoInicio').value = '';
+  document.getElementById('enderecoFim').value = '';
+  if (dados.length) montarTabela(); else atualizarResumoFiltros();
+});
 document.querySelectorAll('input[name="lado"]').forEach(r => r.addEventListener('change', montarTabela));
 
 document.getElementById('btnCiclicoQtd').addEventListener('click',      () => gerarCadernos('qtd'));
