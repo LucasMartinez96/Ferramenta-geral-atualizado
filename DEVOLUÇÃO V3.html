@@ -330,6 +330,7 @@ if(g2) g2.destroy();
  </body>
  </html>
 </template>
+<template id="legacy-version-2">
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -725,41 +726,41 @@ function render(){
         {
           type:'bar', label:'Embalagens',
           data: sortedLabels.map(d=>dataMap[d].emb),
-          backgroundColor:'#2dd4e8', yAxisID:'y', order:1,
+          backgroundColor:'#4f6df5', yAxisID:'y', order:1,
           borderRadius:4,
           barPercentage: barPct, categoryPercentage: catPct,
           datalabels:{
-            color:'#04141c', anchor:'center', align:'center', clamp:true, clip:false,
-            font:function(ctx){ const n=ctx.chart.data.labels.length; return {weight:'700', family:'IBM Plex Mono', size:n > 20 ? 8.5 : (n > 12 ? 9.5 : 11)}; },
-            backgroundColor:'rgba(238,241,250,0.85)', borderRadius:4,
-            padding:{top:2,bottom:2,left:5,right:5}
+            color:'#ffffff', anchor:'center', align:'center', clamp:true, clip:false,
+            font:function(ctx){ const n=ctx.chart.data.labels.length; return {weight:'bold', size:n > 20 ? 9 : (n > 12 ? 10 : 11)}; },
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
           }
         },
         {
           type:'line', label:'Peças',
           data: sortedLabels.map(d=>dataMap[d].pec),
-          borderColor:'#ffb454', backgroundColor:'transparent',
-          pointBackgroundColor:'#ffb454', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:6, pointHoverRadius:8,
+          borderColor:'#42d65f', backgroundColor:'transparent',
+          pointBackgroundColor:'#42d65f', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:6, pointHoverRadius:8,
           borderWidth:3.5, tension:0.25,
           yAxisID:'y1', order:0,
           datalabels:{
-            color:'#ffb454', anchor:'end', align:'top', offset:function(ctx){ return ctx.dataIndex % 2 === 0 ? 7 : 22; }, clamp:true, clip:false,
-            font:function(ctx){ const n=ctx.chart.data.labels.length; return {size:n > 20 ? 8.5 : (n > 12 ? 9.5 : 10.5), weight:'700', family:'IBM Plex Mono'}; },
-            backgroundColor:'rgba(10,13,20,0.8)', borderRadius:4,
-            padding:{top:3,bottom:3,left:6,right:6}
+            color:'#42d65f', anchor:'end', align:'top', offset:function(ctx){ return ctx.dataIndex % 2 === 0 ? 6 : 18; }, clamp:true, clip:false,
+            font:function(ctx){ const n=ctx.chart.data.labels.length; return {size:n > 20 ? 8.5 : (n > 12 ? 9.5 : 11), weight:'bold'}; },
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
           }
         }
       ]
     },
     options:{
       maintainAspectRatio:false,
-      layout:{ padding:{ top:48, right:8, left:2, bottom:0 } },
+      layout:{ padding:{ top:40, right:8, left:2, bottom:0 } },
       animation:{ duration:750, easing:'easeOutQuart' },
       plugins:{
         legend:{labels:{color:'#eef1fa',font:{family:'Inter',size:12}}},
         tooltip:{
           mode:'index', intersect:false,
-          backgroundColor:'#0f1420', borderColor:'#2dd4e8', borderWidth:1,
+          backgroundColor:'#0f1420', borderColor:'#4f6df5', borderWidth:1,
           padding:10, cornerRadius:6, displayColors:true,
           titleColor:'#eef1fa', titleFont:{family:'IBM Plex Mono',size:12.5,weight:'700'},
           bodyColor:'#eef1fa', bodyFont:{family:'IBM Plex Mono',size:12},
@@ -773,7 +774,7 @@ function render(){
         x:{ticks:{color:'#8894b3',maxRotation:45,minRotation:45,font:{family:'IBM Plex Mono',size:11}},grid:{color:'#1f2740'}},
         y:{beginAtZero:true, max:yMax, ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:11.5}}, grid:{color:'#1f2740'}},
         y1:{beginAtZero:true, max:y1Max, position:'right',
-          ticks:{color:'#ffb454',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
+          ticks:{color:'#42d65f',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
       },
       /* ── CHECK-OUT: Chart.js v4 → (event, elements) ── */
       onClick: function(event, elements){
@@ -807,41 +808,41 @@ function det(d){
         {
           type:'bar', label:'Embalagens',
           data:[o.f1.e, o.f3.e],
-          backgroundColor:'#2dd4e8', yAxisID:'y',
+          backgroundColor:'#4f6df5', yAxisID:'y',
           borderRadius:4,
           barPercentage:0.4, categoryPercentage:0.5,
           datalabels:{
-            color:'#04141c', anchor:'center', align:'center', clamp:true, clip:false,
-            font:{weight:'700', family:'IBM Plex Mono', size:13},
-            backgroundColor:'rgba(238,241,250,0.85)', borderRadius:4,
-            padding:{top:2,bottom:2,left:5,right:5}
+            color:'#ffffff', anchor:'center', align:'center', clamp:true, clip:false,
+            font:{weight:'bold', size:13},
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
           }
         },
         {
           type:'line', label:'Peças',
           data:[o.f1.p, o.f3.p],
-          borderColor:'#ffb454', backgroundColor:'transparent',
-          pointBackgroundColor:'#ffb454', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:7, pointHoverRadius:9,
+          borderColor:'#42d65f', backgroundColor:'transparent',
+          pointBackgroundColor:'#42d65f', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:7, pointHoverRadius:9,
           borderWidth:3.5,
           yAxisID:'y1',
           datalabels:{
-            color:'#ffb454', anchor:'end', align:'top', offset:10, clamp:true, clip:false,
-            font:{size:13, weight:'700', family:'IBM Plex Mono'},
-            backgroundColor:'rgba(10,13,20,0.8)', borderRadius:4,
-            padding:{top:3,bottom:3,left:6,right:6}
+            color:'#42d65f', anchor:'end', align:'top', offset:10, clamp:true, clip:false,
+            font:{size:13, weight:'bold'},
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
           }
         }
       ]
     },
     options:{
       maintainAspectRatio:false,
-      layout:{ padding:{ top:42, right:8, left:2, bottom:0 } },
+      layout:{ padding:{ top:36, right:8, left:2, bottom:0 } },
       animation:{ duration:750, easing:'easeOutQuart' },
       plugins:{
         legend:{labels:{color:'#eef1fa',font:{family:'Inter',size:12}}},
         tooltip:{
           mode:'index', intersect:false,
-          backgroundColor:'#0f1420', borderColor:'#2dd4e8', borderWidth:1,
+          backgroundColor:'#0f1420', borderColor:'#4f6df5', borderWidth:1,
           padding:10, cornerRadius:6, displayColors:true,
           titleColor:'#eef1fa', titleFont:{family:'IBM Plex Mono',size:12.5,weight:'700'},
           bodyColor:'#eef1fa', bodyFont:{family:'IBM Plex Mono',size:12},
@@ -855,7 +856,7 @@ function det(d){
         x:{ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:11.5}},grid:{color:'#1f2740'}},
         y:{beginAtZero:true, max:yMax, ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:11.5}}, grid:{color:'#1f2740'}},
         y1:{beginAtZero:true, max:y1Max, position:'right',
-          ticks:{color:'#ffb454',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
+          ticks:{color:'#42d65f',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
       }
     }
   });
@@ -863,6 +864,7 @@ function det(d){
 </script>
 </body>
 </html>
+</template>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1040,7 +1042,7 @@ button:active{transform:translateY(1px)}
 .pill.neutral::before{background:var(--muted)}
 
 .chart-box{
-  height:320px;
+  height:260px;
   margin-top:10px;
   position:relative;
   background:var(--surface-2);
@@ -1277,14 +1279,14 @@ function render(){
         {
           type:'bar', label:'Embalagens',
           data: sortedLabels.map(d=>dataMap[d].emb),
-          backgroundColor:'#2dd4e8', yAxisID:'y', order:1,
+          backgroundColor:'#4f6df5', yAxisID:'y', order:1,
           borderRadius:4,
           barPercentage: barPct, categoryPercentage: catPct,
           datalabels:{
-            color:'#04141c', anchor:'center', align:'center',
-            font:{weight:'700', family:'IBM Plex Mono', size:11.5},
-            backgroundColor:'rgba(238,241,250,0.85)', borderRadius:4,
-            padding:{top:2,bottom:2,left:5,right:5},
+            color:'#ffffff', anchor:'center', align:'center', clamp:true, clip:false,
+            font:function(ctx){ const n=ctx.chart.data.labels.length; return {weight:'bold', size:n > 20 ? 9 : (n > 12 ? 10 : 11)}; },
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
             formatter:function(v){ return v === 0 ? '' : v; },
             display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] !== 0; }
           }
@@ -1292,15 +1294,15 @@ function render(){
         {
           type:'line', label:'Peças',
           data: sortedLabels.map(d=>dataMap[d].pec),
-          borderColor:'#ffb454', backgroundColor:'transparent',
-          pointBackgroundColor:'#ffb454', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:5, pointHoverRadius:8,
+          borderColor:'#42d65f', backgroundColor:'transparent',
+          pointBackgroundColor:'#42d65f', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:5, pointHoverRadius:8,
           borderWidth:3, tension:0.25,
           yAxisID:'y1', order:0,
           datalabels:{
-            color:'#ffb454', anchor:'end', align:'top', offset:8,
-            font:{size:11, weight:'700', family:'IBM Plex Mono'},
-            backgroundColor:'rgba(10,13,20,0.85)', borderRadius:4,
-            padding:{top:3,bottom:3,left:5,right:5},
+            color:'#42d65f', anchor:'end', align:'top', offset:function(ctx){ return ctx.dataIndex % 2 === 0 ? 6 : 18; }, clamp:true, clip:false,
+            font:function(ctx){ const n=ctx.chart.data.labels.length; return {size:n > 20 ? 8.5 : (n > 12 ? 9.5 : 11), weight:'bold'}; },
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
             formatter:function(v){ return v === 0 ? '' : v; },
             display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] !== 0; }
           }
@@ -1309,13 +1311,13 @@ function render(){
     },
     options:{
       maintainAspectRatio:false,
-      layout:{ padding:{ top:36, right:8, left:2, bottom:0 } },
+      layout:{ padding:{ top:40, right:8, left:2, bottom:0 } },
       animation:{ duration:750, easing:'easeOutQuart' },
       plugins:{
         legend:{labels:{color:'#eef1fa',font:{family:'Inter',size:12}}},
         tooltip:{
           mode:'index', intersect:false,
-          backgroundColor:'#0f1420', borderColor:'#2dd4e8', borderWidth:1,
+          backgroundColor:'#0f1420', borderColor:'#4f6df5', borderWidth:1,
           padding:10, cornerRadius:6, displayColors:true,
           titleColor:'#eef1fa', titleFont:{family:'IBM Plex Mono',size:12.5,weight:'700'},
           bodyColor:'#eef1fa', bodyFont:{family:'IBM Plex Mono',size:12},
@@ -1326,10 +1328,10 @@ function render(){
         }
       },
       scales:{
-        x:{ticks:{color:'#8894b3',maxRotation:45,minRotation:45,font:{family:'IBM Plex Mono',size:10.5},autoSkip:false},grid:{color:'#1f2740'}},
+        x:{ticks:{color:'#8894b3',maxRotation:45,minRotation:45,font:{family:'IBM Plex Mono',size:11},autoSkip:false},grid:{color:'#1f2740'}},
         y:{beginAtZero:true, max:yMax, ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:11.5}}, grid:{color:'#1f2740'}},
         y1:{beginAtZero:true, max:y1Max, position:'right',
-          ticks:{color:'#ffb454',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
+          ticks:{color:'#42d65f',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
       },
       /* ── CHECK-OUT: Chart.js v4 → (event, elements) ── */
       onClick: function(event, elements){
@@ -1363,41 +1365,41 @@ function det(d){
         {
           type:'bar', label:'Embalagens',
           data:[o.f1.e, o.f3.e],
-          backgroundColor:'#2dd4e8', yAxisID:'y',
+          backgroundColor:'#4f6df5', yAxisID:'y',
           borderRadius:4,
           barPercentage:0.4, categoryPercentage:0.5,
           datalabels:{
-            color:'#04141c', anchor:'center', align:'center',
-            font:{weight:'700', family:'IBM Plex Mono', size:13},
-            backgroundColor:'rgba(238,241,250,0.85)', borderRadius:4,
-            padding:{top:2,bottom:2,left:5,right:5}
+            color:'#ffffff', anchor:'center', align:'center', clamp:true, clip:false,
+            font:{weight:'bold', size:13},
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
           }
         },
         {
           type:'line', label:'Peças',
           data:[o.f1.p, o.f3.p],
-          borderColor:'#ffb454', backgroundColor:'transparent',
-          pointBackgroundColor:'#ffb454', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:7, pointHoverRadius:9,
+          borderColor:'#42d65f', backgroundColor:'transparent',
+          pointBackgroundColor:'#42d65f', pointBorderColor:'#0a0d14', pointBorderWidth:2, pointRadius:7, pointHoverRadius:9,
           borderWidth:3.5,
           yAxisID:'y1',
           datalabels:{
-            color:'#ffb454', anchor:'end', align:'top', offset:10,
-            font:{size:13, weight:'700', family:'IBM Plex Mono'},
-            backgroundColor:'rgba(10,13,20,0.8)', borderRadius:4,
-            padding:{top:3,bottom:3,left:6,right:6}
+            color:'#42d65f', anchor:'end', align:'top', offset:10, clamp:true, clip:false,
+            font:{size:13, weight:'bold'},
+            backgroundColor:'transparent', borderRadius:0,
+            padding:0,
           }
         }
       ]
     },
     options:{
       maintainAspectRatio:false,
-      layout:{ padding:{ top:32, right:8, left:2, bottom:0 } },
+      layout:{ padding:{ top:36, right:8, left:2, bottom:0 } },
       animation:{ duration:750, easing:'easeOutQuart' },
       plugins:{
         legend:{labels:{color:'#eef1fa',font:{family:'Inter',size:12}}},
         tooltip:{
           mode:'index', intersect:false,
-          backgroundColor:'#0f1420', borderColor:'#2dd4e8', borderWidth:1,
+          backgroundColor:'#0f1420', borderColor:'#4f6df5', borderWidth:1,
           padding:10, cornerRadius:6, displayColors:true,
           titleColor:'#eef1fa', titleFont:{family:'IBM Plex Mono',size:12.5,weight:'700'},
           bodyColor:'#eef1fa', bodyFont:{family:'IBM Plex Mono',size:12},
@@ -1411,7 +1413,7 @@ function det(d){
         x:{ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:11.5}},grid:{color:'#1f2740'}},
         y:{beginAtZero:true, max:yMax, ticks:{color:'#8894b3',font:{family:'IBM Plex Mono',size:11.5}}, grid:{color:'#1f2740'}},
         y1:{beginAtZero:true, max:y1Max, position:'right',
-          ticks:{color:'#ffb454',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
+          ticks:{color:'#42d65f',font:{family:'IBM Plex Mono',size:11.5}}, grid:{drawOnChartArea:false}}
       }
     }
   });
