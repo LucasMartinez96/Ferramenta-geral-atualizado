@@ -1,0 +1,29 @@
+@media screen {
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios))::selection{background:rgba(37,99,235,.2);color:inherit}
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios))::-webkit-scrollbar,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) *::-webkit-scrollbar{width:10px;height:10px}
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios))::-webkit-scrollbar-thumb,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) *::-webkit-scrollbar-thumb{background:#cbd5e1;border:2px solid transparent;border-radius:999px;background-clip:padding-box}
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios))::-webkit-scrollbar-track,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) *::-webkit-scrollbar-track{background:transparent}
+
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) button:focus-visible,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) input:focus-visible,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) select:focus-visible,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) textarea:focus-visible,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#summaryBody),:has(#tabelaDesvios)) a:focus-visible{outline:3px solid rgba(37,99,235,.24)!important;outline-offset:2px}
+
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios)) button:disabled,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios)) input:disabled,
+  body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios)) select:disabled{cursor:not-allowed;opacity:.55}
+
+  @media(max-width:820px){
+    body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios)) button,
+    body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios)) input:not([type='checkbox']):not([type='radio']),
+    body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios)) select{min-height:42px}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    body.tool-standardized:is(:has(#grupos),:has(#itemSearch),:has(#tableSearch),:has(#kEmb),:has(#summaryBody),:has(#tabelaDesvios)) *{scroll-behavior:auto!important;transition-duration:.001ms!important;animation-duration:.001ms!important;animation-iteration-count:1!important}
+  }
+}
