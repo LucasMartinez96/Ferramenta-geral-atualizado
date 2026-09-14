@@ -2,6 +2,8 @@
  * Padronização visual conservadora das ferramentas existentes.
  * IMPORTANTE: somente tela. Não altera impressão/PDF e não contém lógica.
  */
+@import url('./impeccable-polish.css');
+
 @media screen {
   body.tool-standardized {
     font-family: var(--font-family-base, 'Segoe UI', Arial, sans-serif) !important;
