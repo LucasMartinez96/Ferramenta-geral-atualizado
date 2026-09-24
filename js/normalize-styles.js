@@ -42,6 +42,15 @@
     }catch(e){ /* camada visual opcional; nunca bloquear a ferramenta */ }
   }
 
+  function markKnownTools(){
+    try{
+      const title = document.querySelector('.app-header .title');
+      if(document.body && title && /SALA COFRE/i.test(title.textContent || '')){
+        document.body.classList.add('sala-cofre-polished');
+      }
+    }catch(e){ /* identificação visual opcional */ }
+  }
+
   function normalize(){
     attachVisualLayer();
 
@@ -72,6 +81,8 @@
       if(btn.classList.contains('warning')) btn.classList.add('btn-warning');
       if(btn.classList.contains('info')) btn.classList.add('btn-info');
     });
+
+    markKnownTools();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', normalize);
