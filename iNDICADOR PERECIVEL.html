@@ -1,30 +1,622 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dashboard de Perecíveis</title>
-<link rel="stylesheet" href="css/design-system.css">
-<script src="xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="js/toast.js"></script>
-<style>
-:root{--bg:#f5f7fb;--surface:#fff;--border:#dbe3ef;--text:#172033;--muted:#64748b;--navy:#172554;--blue:#1e3a8a;--red:#dc2626;--orange:#ea580c;--yellow:#ca8a04;--green:#15803d;--purple:#7c3aed}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-family-base,Inter,"Segoe UI",Arial,sans-serif)}button,input,select{font:inherit}:focus-visible{outline:3px solid #2563eb40;outline-offset:2px}.wrap{width:min(1480px,calc(100% - 32px));margin:24px auto 38px}.head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 20px;border-radius:16px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;box-shadow:0 12px 28px #1e3a8a2e}.brand{display:flex;align-items:center;gap:14px;min-width:0}.logo{width:56px;height:56px;border-radius:14px;background:#fff;display:grid;place-items:center;flex:0 0 auto}.logo img{max-width:88%;max-height:88%}.title h1{margin:0;font-size:clamp(20px,2vw,27px);letter-spacing:-.02em}.title p{margin:5px 0 0;color:#dbeafe;font-size:13px}.actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.chip,.upload{min-height:38px;border-radius:999px;padding:0 13px;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700}.chip{border:1px solid #ffffff38;background:#ffffff14}.dot{width:8px;height:8px;border-radius:50%;background:#fbbf24}.chip.ready .dot{background:#4ade80}.chip.error .dot{background:#f87171}.upload{border-radius:10px;background:#fff;color:var(--blue);cursor:pointer}.banner{display:none;margin-top:14px;padding:12px 14px;border:1px solid #fecaca;border-radius:12px;background:#fff1f2;color:#991b1b;font-size:14px}.banner.show{display:block}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}.kpi,.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 5px 14px #0f172a0d}.kpi{padding:15px 16px}.kl{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.kd{width:9px;height:9px;border-radius:50%}.kv{margin-top:9px;font-size:30px;font-weight:850;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.overview{display:grid;grid-template-columns:1.25fr .75fr;gap:14px;margin-top:14px}.ph{padding:16px 18px 0}.ph h2{margin:0;font-size:16px}.ph p{margin:4px 0 0;color:var(--muted);font-size:13px}.chart{height:260px;padding:10px 16px 16px}.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px 18px 18px}.sum{padding:12px;background:#f8fafc;border:1px solid #e5eaf2;border-radius:11px}.sl{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.sv{margin-top:5px;font-size:18px;font-weight:800}.data{margin-top:14px;overflow:hidden}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}.toolbar h2{margin:0;font-size:16px}.toolbar p{margin:4px 0 0;color:var(--muted);font-size:12px}.filters{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end;flex:1}.field,.clear{height:38px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--text);padding:0 11px;font-size:13px}.search{width:min(330px,100%)}.select{min-width:160px}.clear{font-weight:700;cursor:pointer}.tablewrap{overflow:auto;max-height:620px}table{width:100%;min-width:1120px;border-collapse:separate;border-spacing:0;font-size:13px}th{position:sticky;top:0;z-index:2;background:#f8fafc;color:#475569;text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.04em}td{padding:11px 12px;border-bottom:1px solid #edf1f6;vertical-align:top}tr:hover td{background:#f8fbff}.code{font-weight:800;color:var(--navy)}.desc{max-width:360px;line-height:1.35}.muted{color:var(--muted)}.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.badge{display:inline-flex;min-height:26px;align-items:center;border-radius:999px;padding:0 9px;font-size:11px;font-weight:800;white-space:nowrap}.vencido{background:#fee2e2;color:#991b1b}.d30{background:#ffedd5;color:#9a3412}.d60{background:#fef9c3;color:#854d0e}.ok{background:#dcfce7;color:#166534}.falta{background:#ede9fe;color:#5b21b6}.semdata{background:#e2e8f0;color:#334155}.empty{display:none;padding:42px;text-align:center;color:var(--muted)}.empty.show{display:block}footer{text-align:center;margin-top:25px;color:var(--muted);font-size:12px}@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.overview{grid-template-columns:1fr}}@media(max-width:760px){.wrap{width:calc(100% - 20px);margin-top:10px}.head{align-items:stretch;flex-direction:column}.actions{justify-content:flex-start}.kpis{grid-template-columns:repeat(2,1fr)}.filters{width:100%;justify-content:stretch}.field,.clear{width:100%}}@media(max-width:480px){.kpis,.summary{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#172554">
+  <title>Dashboard de Perecíveis</title>
+  <link rel="stylesheet" href="css/design-system.css">
+  <script src="xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="js/toast.js"></script>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --surface:#ffffff;
+      --surface-soft:#f8fafc;
+      --border:#dbe3ef;
+      --border-soft:#e8edf4;
+      --text:#172033;
+      --muted:#64748b;
+      --navy:#172554;
+      --blue:#1e3a8a;
+      --focus:#2563eb;
+      --red:#dc2626;
+      --orange:#ea580c;
+      --yellow:#ca8a04;
+      --green:#15803d;
+      --purple:#7c3aed;
+    }
+
+    *{box-sizing:border-box}
+    html{color-scheme:light}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:var(--font-family-base,Inter,"Segoe UI",Arial,sans-serif);
+      line-height:1.45;
+      text-rendering:optimizeLegibility;
+    }
+    button,input,select{font:inherit}
+    button{touch-action:manipulation}
+    ::selection{background:#dbeafe;color:#172554}
+    :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+    .sr-only{
+      position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+
+    .wrap{width:min(1480px,calc(100% - 32px));margin:24px auto 38px}
+    .head{
+      display:flex;align-items:center;justify-content:space-between;gap:18px;
+      padding:18px 20px;border-radius:16px;
+      background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;
+      box-shadow:0 12px 28px #1e3a8a2e;
+    }
+    .brand{display:flex;align-items:center;gap:14px;min-width:0}
+    .logo{
+      width:56px;height:56px;border-radius:14px;background:#fff;
+      display:grid;place-items:center;flex:0 0 auto;
+    }
+    .logo img{max-width:88%;max-height:88%;object-fit:contain}
+    .title{min-width:0}
+    .title h1{
+      margin:0;font-size:clamp(20px,2vw,27px);letter-spacing:-.02em;
+      line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .title p{margin:5px 0 0;color:#dbeafe;font-size:13px;font-variant-numeric:tabular-nums}
+    .actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+    .chip,.upload{
+      min-height:44px;display:inline-flex;align-items:center;gap:8px;
+      font-size:13px;font-weight:750;
+    }
+    .chip{
+      border:1px solid #ffffff38;background:#ffffff14;color:#fff;
+      border-radius:999px;padding:0 14px;
+    }
+    .dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;flex:0 0 auto}
+    .chip.ready .dot{background:#4ade80}
+    .chip.error .dot{background:#f87171}
+    .upload{
+      border:0;border-radius:10px;background:#fff;color:var(--blue);padding:0 16px;
+      cursor:pointer;box-shadow:0 1px 2px #0f172a1f;
+      transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+    }
+    .upload:hover{background:#f8fbff;box-shadow:0 4px 10px #0f172a26}
+    .upload:active{transform:translateY(1px)}
+    .upload:disabled{cursor:not-allowed;opacity:.58;box-shadow:none}
+
+    .banner{
+      display:none;margin-top:14px;padding:12px 14px;border:1px solid #fecaca;
+      border-radius:12px;background:#fff1f2;color:#991b1b;font-size:14px;
+    }
+    .banner.show{display:block}
+
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:16px}
+    .kpi,.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px}
+    .kpi{padding:15px 16px;min-width:0}
+    .kl{
+      display:flex;align-items:center;gap:8px;color:var(--muted);
+      font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+    }
+    .kd{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+    .kv{
+      margin-top:9px;font-size:30px;font-weight:850;letter-spacing:-.03em;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .overview{display:grid;grid-template-columns:1.25fr .75fr;gap:14px;margin-top:14px}
+    .ph{padding:16px 18px 0}
+    .ph h2{margin:0;font-size:16px;line-height:1.25}
+    .ph p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .chart{height:260px;padding:10px 16px 16px}
+    .summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px 18px 18px}
+    .sum{padding:12px;background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:11px}
+    .sl{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+    .sv{margin-top:5px;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+    .data{margin-top:14px;overflow:hidden}
+    .data[aria-busy="true"]{cursor:progress}
+    .toolbar{
+      display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+      padding:16px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;
+    }
+    .toolbar h2{margin:0;font-size:16px;line-height:1.25}
+    .toolbar p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .filters{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap;justify-content:flex-end;flex:1}
+    .filter{display:grid;gap:5px}
+    .filter-label{color:#475569;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+    .field,.clear{
+      min-height:44px;border:1px solid #cbd5e1;border-radius:10px;
+      background:#fff;color:var(--text);padding:0 12px;font-size:13px;
+    }
+    .field:hover:not(:disabled),.clear:hover:not(:disabled){border-color:#94a3b8}
+    .field:disabled,.clear:disabled{background:#f1f5f9;color:#94a3b8;cursor:not-allowed}
+    .search{width:min(330px,46vw)}
+    .select{min-width:170px}
+    .clear{font-weight:750;cursor:pointer}
+
+    .scroll-hint{display:none;margin:0;padding:10px 18px 0;color:var(--muted);font-size:12px}
+    .tablewrap{overflow:auto;max-height:620px;scrollbar-gutter:stable;overscroll-behavior-inline:contain}
+    table{width:100%;min-width:1120px;border-collapse:separate;border-spacing:0;font-size:13px}
+    caption{caption-side:top}
+    th{
+      position:sticky;top:0;z-index:2;background:var(--surface-soft);color:#475569;
+      text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);
+      font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+    }
+    td{padding:11px 12px;border-bottom:1px solid #edf1f6;vertical-align:top;background:#fff}
+    tbody tr:last-child td{border-bottom:0}
+    tbody tr:hover td{background:#f8fbff}
+    .code{font-weight:800;color:var(--navy);white-space:nowrap}
+    .desc{max-width:360px;line-height:1.35}
+    .muted{color:var(--muted)}
+    .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .badge{
+      display:inline-flex;min-height:26px;align-items:center;border-radius:999px;
+      padding:0 9px;font-size:11px;font-weight:800;white-space:nowrap;
+    }
+    .vencido{background:#fee2e2;color:#991b1b}
+    .d30{background:#ffedd5;color:#9a3412}
+    .d60{background:#fef9c3;color:#854d0e}
+    .ok{background:#dcfce7;color:#166534}
+    .falta{background:#ede9fe;color:#5b21b6}
+    .semdata{background:#e2e8f0;color:#334155}
+    .empty{display:none;padding:48px 24px;text-align:center;color:var(--muted)}
+    .empty.show{display:block}
+    .empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+
+    footer{text-align:center;margin-top:25px;color:var(--muted);font-size:12px}
+
+    @media(max-width:1100px){
+      .kpis{grid-template-columns:repeat(3,1fr)}
+      .overview{grid-template-columns:1fr}
+    }
+    @media(max-width:760px){
+      .wrap{width:calc(100% - 20px);margin-top:10px}
+      .head{align-items:stretch;flex-direction:column;padding:16px}
+      .actions{justify-content:stretch}
+      .chip,.upload{justify-content:center}
+      .kpis{grid-template-columns:repeat(2,1fr)}
+      .toolbar{display:block}
+      .toolbar>div:first-child{margin-bottom:14px}
+      .filters{width:100%;display:grid;grid-template-columns:1fr 1fr;justify-content:stretch}
+      .scroll-hint{display:block}
+      .filter:first-child{grid-column:1/-1}
+      .field,.clear,.search,.select{width:100%;min-width:0}
+      .clear{align-self:end}
+    }
+    @media(max-width:480px){
+      .kpis,.summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .kpis .kpi:last-child{grid-column:1/-1}
+      .filters{grid-template-columns:1fr}
+      .filter:first-child{grid-column:auto}
+      .title h1{white-space:normal}
+      .logo{width:50px;height:50px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
+    }
+  </style>
 </head>
 <body>
 <div class="wrap">
-<header class="head"><div class="brand"><div class="logo"><img src="Imagem1.png" alt="SESÉ"></div><div class="title"><h1>Dashboard de Perecíveis</h1><p><span id="date">--/--/----</span> · <span id="time">--:--:--</span></p></div></div><div class="actions"><span id="source" class="chip"><span class="dot"></span><span id="sourceText">Carregando base...</span></span><label class="upload" for="file">Carregar Excel</label><input id="file" type="file" accept=".xlsx,.xls" hidden></div></header>
-<div id="banner" class="banner" role="alert"></div>
-<section class="kpis"><div class="kpi"><div class="kl"><i class="kd" style="background:var(--red)"></i>Vencidos</div><div class="kv" id="v">0</div></div><div class="kpi"><div class="kl"><i class="kd" style="background:var(--orange)"></i>Até 30 dias</div><div class="kv" id="d30">0</div></div><div class="kpi"><div class="kl"><i class="kd" style="background:var(--yellow)"></i>31–60 dias</div><div class="kv" id="d60">0</div></div><div class="kpi"><div class="kl"><i class="kd" style="background:var(--green)"></i>OK</div><div class="kv" id="ok">0</div></div><div class="kpi"><div class="kl"><i class="kd" style="background:var(--purple)"></i>Em falta</div><div class="kv" id="falta">0</div></div></section>
-<section class="overview"><article class="panel"><div class="ph"><h2>Distribuição por faixa de validade</h2><p>Materiais únicos pelo vencimento mais próximo.</p></div><div class="chart"><canvas id="chart"></canvas></div></article><article class="panel"><div class="ph"><h2>Resumo da base</h2><p>Consolidado do arquivo carregado.</p></div><div class="summary"><div class="sum"><div class="sl">Materiais únicos</div><div class="sv" id="items">0</div></div><div class="sum"><div class="sl">Quantidade total</div><div class="sv" id="qty">0</div></div><div class="sum"><div class="sl">Etiquetas</div><div class="sv" id="labels">0</div></div><div class="sum"><div class="sl">Posições</div><div class="sv" id="positions">0</div></div><div class="sum"><div class="sl">Menor vencimento</div><div class="sv" id="minDate">--/--/----</div></div><div class="sum"><div class="sl">Maior vencimento</div><div class="sv" id="maxDate">--/--/----</div></div></div></article></section>
-<section class="panel data"><div class="toolbar"><div><h2>Materiais perecíveis</h2><p id="count">Nenhum dado carregado</p></div><div class="filters"><input id="search" class="field search" type="search" placeholder="Buscar material, descrição, posição ou fornecedor"><select id="status" class="field select"><option value="all">Todos os status</option><option value="vencido">Vencido</option><option value="d30">Até 30 dias</option><option value="d60">31–60 dias</option><option value="ok">OK</option><option value="falta">Em falta</option><option value="semdata">Sem validade</option></select><button id="clear" class="clear" type="button">Limpar filtros</button></div></div><div id="tablewrap" class="tablewrap"><table><thead><tr><th>Material</th><th>Descrição</th><th>Vencimento</th><th class="num">Quantidade</th><th class="num">Etiquetas</th><th>Posições</th><th class="num">Dias</th><th>Status</th></tr></thead><tbody id="body"></tbody></table></div><div id="empty" class="empty">Nenhum material encontrado. Ajuste os filtros ou carregue outra base.</div></section>
-<footer>Desenvolvido por <strong>Lucas Martinez</strong></footer>
+  <header class="head">
+    <div class="brand">
+      <div class="logo"><img src="Imagem1.png" alt="SESÉ"></div>
+      <div class="title">
+        <h1>Dashboard de Perecíveis</h1>
+        <p><span id="date">--/--/----</span> · <span id="time">--:--:--</span></p>
+      </div>
+    </div>
+    <div class="actions">
+      <span id="source" class="chip" role="status" aria-live="polite" aria-atomic="true">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="sourceText">Carregando base...</span>
+      </span>
+      <button id="uploadBtn" class="upload" type="button">Carregar Excel</button>
+      <input id="file" type="file" accept=".xlsx,.xls" hidden aria-label="Selecionar arquivo Excel de perecíveis">
+    </div>
+  </header>
+
+  <div id="banner" class="banner" role="alert" aria-live="assertive"></div>
+
+  <section class="kpis" aria-label="Indicadores de validade">
+    <div class="kpi"><div class="kl"><i class="kd" style="background:var(--red)" aria-hidden="true"></i>Vencidos</div><div class="kv" id="v">0</div></div>
+    <div class="kpi"><div class="kl"><i class="kd" style="background:var(--orange)" aria-hidden="true"></i>Até 30 dias</div><div class="kv" id="d30">0</div></div>
+    <div class="kpi"><div class="kl"><i class="kd" style="background:var(--yellow)" aria-hidden="true"></i>31–60 dias</div><div class="kv" id="d60">0</div></div>
+    <div class="kpi"><div class="kl"><i class="kd" style="background:var(--green)" aria-hidden="true"></i>OK</div><div class="kv" id="ok">0</div></div>
+    <div class="kpi"><div class="kl"><i class="kd" style="background:var(--purple)" aria-hidden="true"></i>Em falta</div><div class="kv" id="falta">0</div></div>
+  </section>
+
+  <section class="overview">
+    <article class="panel">
+      <div class="ph">
+        <h2>Distribuição por faixa de validade</h2>
+        <p>Materiais únicos pelo vencimento mais próximo.</p>
+      </div>
+      <div class="chart">
+        <canvas id="chart" role="img" aria-label="Gráfico de distribuição por faixa de validade">Seu navegador não suporta o gráfico.</canvas>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="ph">
+        <h2>Resumo da base</h2>
+        <p>Consolidado do arquivo carregado.</p>
+      </div>
+      <div class="summary">
+        <div class="sum"><div class="sl">Materiais únicos</div><div class="sv" id="items">0</div></div>
+        <div class="sum"><div class="sl">Quantidade total</div><div class="sv" id="qty">0</div></div>
+        <div class="sum"><div class="sl">Etiquetas</div><div class="sv" id="labels">0</div></div>
+        <div class="sum"><div class="sl">Posições</div><div class="sv" id="positions">0</div></div>
+        <div class="sum"><div class="sl">Menor vencimento</div><div class="sv" id="minDate">--/--/----</div></div>
+        <div class="sum"><div class="sl">Maior vencimento</div><div class="sv" id="maxDate">--/--/----</div></div>
+      </div>
+    </article>
+  </section>
+
+  <section id="dataPanel" class="panel data" aria-busy="true">
+    <div class="toolbar">
+      <div>
+        <h2>Materiais perecíveis</h2>
+        <p id="count" aria-live="polite">Carregando dados...</p>
+      </div>
+      <div class="filters" aria-label="Filtros da tabela">
+        <label class="filter">
+          <span class="filter-label">Buscar</span>
+          <input id="search" class="field search" type="search" placeholder="Material, descrição, posição ou fornecedor" autocomplete="off" disabled>
+        </label>
+        <label class="filter">
+          <span class="filter-label">Status</span>
+          <select id="status" class="field select" disabled>
+            <option value="all">Todos os status</option>
+            <option value="vencido">Vencido</option>
+            <option value="d30">Até 30 dias</option>
+            <option value="d60">31–60 dias</option>
+            <option value="ok">OK</option>
+            <option value="falta">Em falta</option>
+            <option value="semdata">Sem validade</option>
+          </select>
+        </label>
+        <button id="clear" class="clear" type="button" disabled>Limpar filtros</button>
+      </div>
+    </div>
+
+    <p class="scroll-hint" aria-hidden="true">Deslize para o lado para ver todas as colunas.</p>
+    <div id="tablewrap" class="tablewrap">
+      <table>
+        <caption class="sr-only">Materiais perecíveis consolidados por código</caption>
+        <thead>
+          <tr>
+            <th scope="col">Material</th>
+            <th scope="col">Descrição</th>
+            <th scope="col">Vencimento</th>
+            <th scope="col" class="num">Quantidade</th>
+            <th scope="col" class="num">Etiquetas</th>
+            <th scope="col">Posições</th>
+            <th scope="col" class="num">Dias</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+    <div id="empty" class="empty">
+      <strong>Nenhum material encontrado</strong>
+      Ajuste os filtros ou carregue outra base.
+    </div>
+  </section>
+
+  <footer>Desenvolvido por <strong>Lucas Martinez</strong></footer>
 </div>
+
 <script>
-(()=>{'use strict';const BASE='Base%20perecivel.xlsx',DAY=86400000,$=id=>document.getElementById(id),norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase(),fmt=n=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n)||0),dateBR=d=>d instanceof Date&&!isNaN(d)?d.toLocaleDateString('pt-BR'):'--/--/----';let chart=null,all=[];function toast(m,t='info'){if(typeof window.showToast==='function')showToast(m,t)}function source(t,s=''){const e=$('source');e.classList.remove('ready','error');if(s)e.classList.add(s);$('sourceText').textContent=t}function banner(t=''){const e=$('banner');e.textContent=t;e.classList.toggle('show',!!t)}function clock(){const n=new Date();$('date').textContent=n.toLocaleDateString('pt-BR');$('time').textContent=n.toLocaleTimeString('pt-BR')}clock();setInterval(clock,1000);
-function col(headers,names){const hs=headers.map(raw=>({raw,key:norm(raw)}));for(const n of names){const x=hs.find(h=>h.key===norm(n));if(x)return x.raw}for(const n of names){const k=norm(n),x=hs.find(h=>h.key.includes(k));if(x)return x.raw}return null}function num(v){if(typeof v==='number')return isFinite(v)?v:0;if(v==null||v==='')return 0;let s=String(v).trim().replace(/\s/g,'');if(s.includes(',')&&s.includes('.'))s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');else if(s.includes(','))s=s.replace(',','.');s=s.replace(/[^0-9.\-]/g,'');const n=Number(s);return isFinite(n)?n:0}function order(data,c){let d=0,m=0;for(const r of data){if(typeof r[c]!=='string')continue;const x=r[c].trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(!x)continue;const a=+x[1],b=+x[2];if(a>12&&b<=12)d++;if(b>12&&a<=12)m++}return m>d?'MDY':'DMY'}function parseDate(v,o='DMY'){if(v==null||v==='')return null;if(v instanceof Date)return isNaN(v)?null:v;if(typeof v==='number'){const d=XLSX?.SSF?.parse_date_code?.(v);return d?.y?new Date(d.y,d.m-1,d.d,d.H||0,d.M||0,Math.floor(d.S||0)):new Date(new Date(1899,11,30).getTime()+v*DAY)}const s=String(v).trim(),iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(iso)return new Date(+iso[1],+iso[2]-1,+iso[3]);const x=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i);if(!x){const a=new Date(s);return isNaN(a)?null:a}let a=+x[1],b=+x[2],y=+x[3],h=+(x[4]||0),mi=+(x[5]||0),se=+(x[6]||0),ap=(x[7]||'').toUpperCase();if(y<100)y+=2000;if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;let day,month;if(a>12&&b<=12){day=a;month=b}else if(b>12&&a<=12){month=a;day=b}else if(o==='MDY'){month=a;day=b}else{day=a;month=b}const r=new Date(y,month-1,day,h,mi,se);return r.getFullYear()===y&&r.getMonth()===month-1&&r.getDate()===day?r:null}function cls(days,qty){if(qty<=0)return['falta','Em falta'];if(days==null)return['semdata','Sem validade'];if(days<0)return['vencido','Vencido'];if(days<=30)return['d30','Até 30 dias'];if(days<=60)return['d60','31–60 dias'];return['ok','OK']}
-function workbook(buf){if(!window.XLSX)throw Error('Biblioteca de Excel não carregada.');const wb=XLSX.read(buf,{type:'array',cellDates:false});for(const n of wb.SheetNames){const rows=XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:''});if(rows.length)return rows}return[]}function process(data){if(!data.length)throw Error('Nenhuma linha de dados encontrada.');const h=Object.keys(data[0]),exp=col(h,['Expirationdate','validade','vencimento','exp']),piece=col(h,['Peças','Pecas','material','produto','codigo','item'])||h[0],desc=col(h,['Descrição','Descricao','description']),qty=col(h,['Quantidade total','quantidade','qtd','qty']),label=col(h,['Etiqueta1','etiqueta 1','label2','label','etiqueta']),pos=col(h,['Posição','Posicao','location','endereco']),sup=col(h,['Origen1','origem','fornecedor','supplier']);if(!exp)throw Error('Coluna de validade não encontrada.');if(!qty)throw Error('Coluna de quantidade não encontrada.');const o=order(data,exp),today=new Date();today.setHours(0,0,0,0);const map=new Map(),labs=new Set(),poss=new Set();for(const r of data){const p=String(r[piece]??'').trim()||'Sem identificação',q=num(r[qty]),e=parseDate(r[exp],o),d=desc?String(r[desc]??'').trim():'',l=label?String(r[label]??'').trim():'',ps=pos?String(r[pos]??'').trim():'',s=sup?String(r[sup]??'').trim():'';if(l)labs.add(l);if(ps)poss.add(ps);if(!map.has(p))map.set(p,{piece:p,desc:'',qty:0,exp:null,labels:new Set(),positions:new Set(),suppliers:new Set()});const it=map.get(p);it.qty+=q;if(!it.desc&&d)it.desc=d;if(l)it.labels.add(l);if(ps)it.positions.add(ps);if(s)it.suppliers.add(s);if(e&&(!it.exp||e<it.exp))it.exp=e}all=[...map.values()].map(it=>{const days=it.exp?Math.ceil((it.exp-today)/DAY):null,[c,f]=cls(days,it.qty);return{...it,days,cls:c,faixa:f,positionsText:[...it.positions].sort().join(', '),suppliersText:[...it.suppliers].sort().join(', '),labelsCount:it.labels.size}});const pr={falta:0,vencido:1,d30:2,d60:3,semdata:4,ok:5};all.sort((a,b)=>(pr[a.cls]-pr[b.cls])||((a.days??999999)-(b.days??999999))||a.piece.localeCompare(b.piece,'pt-BR'));dashboard(labs.size,poss.size);filter();banner('')}
-function dashboard(labs,poss){const c={vencido:0,d30:0,d60:0,ok:0,falta:0,semdata:0};let q=0,min=null,max=null;for(const r of all){c[r.cls]++;q+=r.qty;if(r.exp){if(!min||r.exp<min)min=r.exp;if(!max||r.exp>max)max=r.exp}}$('v').textContent=c.vencido;$('d30').textContent=c.d30;$('d60').textContent=c.d60;$('ok').textContent=c.ok+c.semdata;$('falta').textContent=c.falta;$('items').textContent=fmt(all.length);$('qty').textContent=fmt(q);$('labels').textContent=fmt(labs);$('positions').textContent=fmt(poss);$('minDate').textContent=dateBR(min);$('maxDate').textContent=dateBR(max);if(chart)chart.destroy();if(window.Chart)chart=new Chart($('chart'),{type:'bar',data:{labels:['Vencido','Até 30 dias','31–60 dias','OK','Em falta'],datasets:[{data:[c.vencido,c.d30,c.d60,c.ok+c.semdata,c.falta],backgroundColor:['#dc2626','#ea580c','#ca8a04','#15803d','#7c3aed'],borderRadius:7,borderSkipped:false,maxBarThickness:48}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}})}function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function render(rows){const b=$('body'),tw=$('tablewrap'),e=$('empty');if(!rows.length){b.innerHTML='';tw.style.display='none';e.classList.add('show');return}tw.style.display='';e.classList.remove('show');b.innerHTML=rows.map(r=>`<tr title="${esc(r.suppliersText?`Fornecedor: ${r.suppliersText}`:'')}"><td class="code">${esc(r.piece)}</td><td class="desc">${esc(r.desc||'—')}</td><td>${esc(r.exp?dateBR(r.exp):'—')}</td><td class="num">${esc(fmt(r.qty))}</td><td class="num">${esc(fmt(r.labelsCount))}</td><td class="muted">${esc(r.positionsText||'—')}</td><td class="num">${esc(r.days==null?'—':fmt(r.days))}</td><td><span class="badge ${r.cls}">${esc(r.faixa)}</span></td></tr>`).join('')}function filter(){const q=norm($('search').value),s=$('status').value,rows=all.filter(r=>(s==='all'||r.cls===s)&&(!q||norm([r.piece,r.desc,r.positionsText,r.suppliersText].join(' ')).includes(q)));render(rows);$('count').textContent=all.length?`Mostrando ${fmt(rows.length)} de ${fmt(all.length)} materiais`:'Nenhum dado carregado'}
-async function loadDefault(){source('Carregando base automática...');try{const res=await fetch(`${BASE}?v=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw Error(`Falha ao carregar a base (${res.status}).`);const rows=workbook(await res.arrayBuffer());process(rows);source(`Base automática · ${rows.length} etiquetas`,'ready')}catch(err){console.error(err);source('Base automática indisponível','error');banner('Não foi possível carregar a Base perecivel.xlsx automaticamente. Use “Carregar Excel” para selecionar o arquivo manualmente.')}}$('file').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;source('Lendo Excel...');banner('');try{const rows=workbook(await f.arrayBuffer());process(rows);source(`${f.name} · ${rows.length} etiquetas`,'ready');toast('Base de perecíveis atualizada com sucesso.','success')}catch(err){console.error(err);source('Erro ao carregar Excel','error');banner(err.message||'Não foi possível processar o arquivo.');toast('Não foi possível processar o arquivo de perecíveis.','error')}finally{e.target.value=''}});$('search').addEventListener('input',filter);$('status').addEventListener('change',filter);$('clear').addEventListener('click',()=>{$('search').value='';$('status').value='all';filter();$('search').focus()});loadDefault()})();
+(()=>{
+  'use strict';
+  const BASE='Base%20perecivel.xlsx';
+  const DAY=86400000;
+  const $=id=>document.getElementById(id);
+  const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  const fmt=n=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n)||0);
+  const dateBR=d=>d instanceof Date&&!isNaN(d)?d.toLocaleDateString('pt-BR'):'--/--/----';
+  let chart=null,all=[];
+
+  function toast(message,type='info'){
+    if(typeof window.showToast==='function') showToast(message,type);
+  }
+  function source(text,state=''){
+    const el=$('source');
+    el.classList.remove('ready','error');
+    if(state) el.classList.add(state);
+    $('sourceText').textContent=text;
+  }
+  function banner(text=''){
+    const el=$('banner');
+    el.textContent=text;
+    el.classList.toggle('show',!!text);
+  }
+  function setControls(enabled){
+    $('search').disabled=!enabled;
+    $('status').disabled=!enabled;
+    $('clear').disabled=!enabled;
+    $('dataPanel').setAttribute('aria-busy',String(!enabled));
+  }
+  function clock(){
+    const now=new Date();
+    $('date').textContent=now.toLocaleDateString('pt-BR');
+    $('time').textContent=now.toLocaleTimeString('pt-BR');
+  }
+  clock();
+  setInterval(clock,1000);
+
+  function col(headers,names){
+    const hs=headers.map(raw=>({raw,key:norm(raw)}));
+    for(const name of names){const exact=hs.find(h=>h.key===norm(name));if(exact)return exact.raw;}
+    for(const name of names){const key=norm(name),partial=hs.find(h=>h.key.includes(key));if(partial)return partial.raw;}
+    return null;
+  }
+  function num(value){
+    if(typeof value==='number') return isFinite(value)?value:0;
+    if(value==null||value==='') return 0;
+    let s=String(value).trim().replace(/\s/g,'');
+    if(s.includes(',')&&s.includes('.')) s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');
+    else if(s.includes(',')) s=s.replace(',','.');
+    s=s.replace(/[^0-9.\-]/g,'');
+    const n=Number(s);
+    return isFinite(n)?n:0;
+  }
+  function order(data,column){
+    let d=0,m=0;
+    for(const row of data){
+      if(typeof row[column]!=='string') continue;
+      const match=row[column].trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+      if(!match) continue;
+      const a=+match[1],b=+match[2];
+      if(a>12&&b<=12)d++;
+      if(b>12&&a<=12)m++;
+    }
+    return m>d?'MDY':'DMY';
+  }
+  function parseDate(value,dateOrder='DMY'){
+    if(value==null||value==='') return null;
+    if(value instanceof Date) return isNaN(value)?null:value;
+    if(typeof value==='number'){
+      const d=XLSX?.SSF?.parse_date_code?.(value);
+      return d?.y?new Date(d.y,d.m-1,d.d,d.H||0,d.M||0,Math.floor(d.S||0)):new Date(new Date(1899,11,30).getTime()+value*DAY);
+    }
+    const s=String(value).trim();
+    const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(iso) return new Date(+iso[1],+iso[2]-1,+iso[3]);
+    const x=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i);
+    if(!x){const automatic=new Date(s);return isNaN(automatic)?null:automatic;}
+    let a=+x[1],b=+x[2],y=+x[3],h=+(x[4]||0),mi=+(x[5]||0),se=+(x[6]||0),ap=(x[7]||'').toUpperCase();
+    if(y<100)y+=2000;
+    if(ap==='PM'&&h<12)h+=12;
+    if(ap==='AM'&&h===12)h=0;
+    let day,month;
+    if(a>12&&b<=12){day=a;month=b;}
+    else if(b>12&&a<=12){month=a;day=b;}
+    else if(dateOrder==='MDY'){month=a;day=b;}
+    else{day=a;month=b;}
+    const result=new Date(y,month-1,day,h,mi,se);
+    return result.getFullYear()===y&&result.getMonth()===month-1&&result.getDate()===day?result:null;
+  }
+  function cls(days,qty){
+    if(qty<=0)return['falta','Em falta'];
+    if(days==null)return['semdata','Sem validade'];
+    if(days<0)return['vencido','Vencido'];
+    if(days<=30)return['d30','Até 30 dias'];
+    if(days<=60)return['d60','31–60 dias'];
+    return['ok','OK'];
+  }
+
+  function workbook(buffer){
+    if(!window.XLSX) throw Error('Biblioteca de Excel não carregada.');
+    const wb=XLSX.read(buffer,{type:'array',cellDates:false});
+    for(const name of wb.SheetNames){
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:''});
+      if(rows.length) return rows;
+    }
+    return [];
+  }
+
+  function process(data){
+    if(!data.length) throw Error('Nenhuma linha de dados encontrada.');
+    const headers=Object.keys(data[0]);
+    const exp=col(headers,['Expirationdate','validade','vencimento','exp']);
+    const piece=col(headers,['Peças','Pecas','material','produto','codigo','item'])||headers[0];
+    const desc=col(headers,['Descrição','Descricao','description']);
+    const qty=col(headers,['Quantidade total','quantidade','qtd','qty']);
+    const label=col(headers,['Etiqueta1','etiqueta 1','label2','label','etiqueta']);
+    const pos=col(headers,['Posição','Posicao','location','endereco']);
+    const sup=col(headers,['Origen1','origem','fornecedor','supplier']);
+    if(!exp) throw Error('Coluna de validade não encontrada.');
+    if(!qty) throw Error('Coluna de quantidade não encontrada.');
+
+    const dateOrder=order(data,exp);
+    const today=new Date();
+    today.setHours(0,0,0,0);
+    const map=new Map(),labs=new Set(),poss=new Set();
+
+    for(const row of data){
+      const pieceValue=String(row[piece]??'').trim()||'Sem identificação';
+      const quantity=num(row[qty]);
+      const expiration=parseDate(row[exp],dateOrder);
+      const description=desc?String(row[desc]??'').trim():'';
+      const labelValue=label?String(row[label]??'').trim():'';
+      const position=pos?String(row[pos]??'').trim():'';
+      const supplier=sup?String(row[sup]??'').trim():'';
+
+      if(labelValue)labs.add(labelValue);
+      if(position)poss.add(position);
+      if(!map.has(pieceValue))map.set(pieceValue,{piece:pieceValue,desc:'',qty:0,exp:null,labels:new Set(),positions:new Set(),suppliers:new Set()});
+      const item=map.get(pieceValue);
+      item.qty+=quantity;
+      if(!item.desc&&description)item.desc=description;
+      if(labelValue)item.labels.add(labelValue);
+      if(position)item.positions.add(position);
+      if(supplier)item.suppliers.add(supplier);
+      if(expiration&&(!item.exp||expiration<item.exp))item.exp=expiration;
+    }
+
+    all=[...map.values()].map(item=>{
+      const days=item.exp?Math.ceil((item.exp-today)/DAY):null;
+      const [statusClass,statusLabel]=cls(days,item.qty);
+      return{
+        ...item,
+        days,
+        cls:statusClass,
+        faixa:statusLabel,
+        positionsText:[...item.positions].sort().join(', '),
+        suppliersText:[...item.suppliers].sort().join(', '),
+        labelsCount:item.labels.size
+      };
+    });
+
+    const priority={falta:0,vencido:1,d30:2,d60:3,semdata:4,ok:5};
+    all.sort((a,b)=>(priority[a.cls]-priority[b.cls])||((a.days??999999)-(b.days??999999))||a.piece.localeCompare(b.piece,'pt-BR'));
+    dashboard(labs.size,poss.size);
+    setControls(true);
+    filter();
+    banner('');
+  }
+
+  function dashboard(labelCount,positionCount){
+    const counts={vencido:0,d30:0,d60:0,ok:0,falta:0,semdata:0};
+    let totalQty=0,min=null,max=null;
+    for(const row of all){
+      counts[row.cls]++;
+      totalQty+=row.qty;
+      if(row.exp){if(!min||row.exp<min)min=row.exp;if(!max||row.exp>max)max=row.exp;}
+    }
+    $('v').textContent=counts.vencido;
+    $('d30').textContent=counts.d30;
+    $('d60').textContent=counts.d60;
+    $('ok').textContent=counts.ok+counts.semdata;
+    $('falta').textContent=counts.falta;
+    $('items').textContent=fmt(all.length);
+    $('qty').textContent=fmt(totalQty);
+    $('labels').textContent=fmt(labelCount);
+    $('positions').textContent=fmt(positionCount);
+    $('minDate').textContent=dateBR(min);
+    $('maxDate').textContent=dateBR(max);
+
+    const chartLabel=`Distribuição: ${counts.vencido} vencidos, ${counts.d30} até 30 dias, ${counts.d60} entre 31 e 60 dias, ${counts.ok+counts.semdata} OK e ${counts.falta} em falta.`;
+    $('chart').setAttribute('aria-label',chartLabel);
+
+    if(chart)chart.destroy();
+    if(window.Chart){
+      chart=new Chart($('chart'),{
+        type:'bar',
+        data:{
+          labels:['Vencido','Até 30 dias','31–60 dias','OK','Em falta'],
+          datasets:[{
+            data:[counts.vencido,counts.d30,counts.d60,counts.ok+counts.semdata,counts.falta],
+            backgroundColor:['#dc2626','#ea580c','#ca8a04','#15803d','#7c3aed'],
+            borderRadius:7,borderSkipped:false,maxBarThickness:48
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{grid:{display:false},ticks:{color:'#475569'}},
+            y:{beginAtZero:true,ticks:{precision:0,color:'#475569'},grid:{color:'#e8edf4'}}
+          }
+        }
+      });
+    }
+  }
+
+  function esc(value){
+    return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function render(rows){
+    const body=$('body'),tableWrap=$('tablewrap'),empty=$('empty');
+    if(!rows.length){
+      body.innerHTML='';
+      tableWrap.style.display='none';
+      empty.classList.add('show');
+      return;
+    }
+    tableWrap.style.display='';
+    empty.classList.remove('show');
+    body.innerHTML=rows.map(row=>`
+      <tr title="${esc(row.suppliersText?`Fornecedor: ${row.suppliersText}`:'')}">
+        <td class="code">${esc(row.piece)}</td>
+        <td class="desc">${esc(row.desc||'—')}</td>
+        <td>${esc(row.exp?dateBR(row.exp):'—')}</td>
+        <td class="num">${esc(fmt(row.qty))}</td>
+        <td class="num">${esc(fmt(row.labelsCount))}</td>
+        <td class="muted">${esc(row.positionsText||'—')}</td>
+        <td class="num">${esc(row.days==null?'—':fmt(row.days))}</td>
+        <td><span class="badge ${row.cls}">${esc(row.faixa)}</span></td>
+      </tr>`).join('');
+  }
+
+  function filter(){
+    const query=norm($('search').value),status=$('status').value;
+    const rows=all.filter(row=>(status==='all'||row.cls===status)&&(!query||norm([row.piece,row.desc,row.positionsText,row.suppliersText].join(' ')).includes(query)));
+    render(rows);
+    $('count').textContent=all.length?`Mostrando ${fmt(rows.length)} de ${fmt(all.length)} materiais`:'Nenhum dado carregado';
+  }
+
+  async function loadDefault(){
+    source('Carregando base automática...');
+    setControls(false);
+    try{
+      const response=await fetch(`${BASE}?v=${Date.now()}`,{cache:'no-store'});
+      if(!response.ok) throw Error(`Falha ao carregar a base (${response.status}).`);
+      const rows=workbook(await response.arrayBuffer());
+      process(rows);
+      source(`Base automática · ${rows.length} etiquetas`,'ready');
+    }catch(error){
+      console.error(error);
+      source('Base automática indisponível','error');
+      $('count').textContent='Base não carregada';
+      $('dataPanel').setAttribute('aria-busy','false');
+      banner('Não foi possível carregar a Base perecivel.xlsx automaticamente. Use “Carregar Excel” para selecionar o arquivo manualmente.');
+    }
+  }
+
+  $('uploadBtn').addEventListener('click',()=>$('file').click());
+  $('file').addEventListener('change',async event=>{
+    const file=event.target.files?.[0];
+    if(!file)return;
+    source('Lendo Excel...');
+    setControls(false);
+    banner('');
+    try{
+      const rows=workbook(await file.arrayBuffer());
+      process(rows);
+      source(`${file.name} · ${rows.length} etiquetas`,'ready');
+      toast('Base de perecíveis atualizada com sucesso.','success');
+    }catch(error){
+      console.error(error);
+      source('Erro ao carregar Excel','error');
+      $('dataPanel').setAttribute('aria-busy','false');
+      banner(error.message||'Não foi possível processar o arquivo.');
+      toast('Não foi possível processar o arquivo de perecíveis.','error');
+      if(all.length)setControls(true);
+    }finally{
+      event.target.value='';
+    }
+  });
+
+  $('search').addEventListener('input',filter);
+  $('status').addEventListener('change',filter);
+  $('clear').addEventListener('click',()=>{
+    $('search').value='';
+    $('status').value='all';
+    filter();
+    $('search').focus();
+  });
+
+  loadDefault();
+})();
 </script>
-</body></html>
+</body>
+</html>
