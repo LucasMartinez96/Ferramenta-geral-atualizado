@@ -42,6 +42,27 @@
     }catch(e){ /* camada visual opcional; nunca bloquear a ferramenta */ }
   }
 
+  function markKnownTools(){
+    try{
+      const title = document.querySelector('.app-header .title');
+      if(document.body && title && /SALA COFRE/i.test(title.textContent || '')){
+        document.body.classList.add('sala-cofre-polished');
+      }
+    }catch(e){ /* identificação visual opcional */ }
+  }
+
+  function loadKnownToolEnhancements(){
+    try{
+      if(!document.body?.classList.contains('sala-cofre-polished')) return;
+      if(document.querySelector('script[data-sala-cofre-enhancements]')) return;
+      const script = document.createElement('script');
+      script.src = 'js/sala-cofre-enhancements.js';
+      script.async = true;
+      script.dataset.salaCofreEnhancements = '1';
+      document.head.appendChild(script);
+    }catch(e){ console.error('Falha ao carregar aprimoramentos da Sala Cofre:',e); }
+  }
+
   function normalize(){
     attachVisualLayer();
 
@@ -72,6 +93,9 @@
       if(btn.classList.contains('warning')) btn.classList.add('btn-warning');
       if(btn.classList.contains('info')) btn.classList.add('btn-info');
     });
+
+    markKnownTools();
+    loadKnownToolEnhancements();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', normalize);
