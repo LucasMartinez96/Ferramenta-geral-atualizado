@@ -234,7 +234,7 @@
     <article class="panel">
       <div class="ph">
         <h2>Distribuição por faixa de validade</h2>
-        <p>Materiais únicos pelo vencimento mais próximo.</p>
+        <p>Embalagens individuais por etiqueta M- e faixa de validade.</p>
       </div>
       <div class="chart">
         <canvas id="chart" role="img" aria-label="Gráfico de distribuição por faixa de validade">Seu navegador não suporta o gráfico.</canvas>
@@ -563,11 +563,14 @@
   function dashboard(labelCount,positionCount){
     const counts={vencido:0,d30:0,d60:0,ok:0,falta:0,semdata:0};
     let totalQty=0,min=null,max=null;
-    for(const row of all){
+    // Cards e gráfico contam cada embalagem (etiqueta) individualmente,
+    // usando o vencimento de sua própria linha, sem consolidar por material.
+    for(const row of details){
       counts[row.cls]++;
-      totalQty+=row.qty;
       if(row.exp){if(!min||row.exp<min)min=row.exp;if(!max||row.exp>max)max=row.exp;}
     }
+    // O resumo financeiro/quantitativo continua consolidado por material.
+    for(const row of all)totalQty+=row.qty;
     $('v').textContent=counts.vencido;
     $('d30').textContent=counts.d30;
     $('d60').textContent=counts.d60;
