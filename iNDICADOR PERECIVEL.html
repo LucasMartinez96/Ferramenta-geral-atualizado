@@ -322,6 +322,8 @@
   const fmt=n=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n)||0);
   const dateBR=d=>d instanceof Date&&!isNaN(d)?d.toLocaleDateString('pt-BR'):'--/--/----';
   let chart=null,all=[];
+  const descriptions=new Map();
+  let referencePromise=null,manualImportStarted=false;
 
   function toast(message,type='info'){
     if(typeof window.showToast==='function') showToast(message,type);
@@ -440,11 +442,38 @@
     return [];
   }
 
+  // Cruzamento com o cadastro de descrições da base de Perecíveis.
+  function cacheDescriptions(rows){
+    if(!rows.length)return;
+    const headers=Object.keys(rows[0]);
+    const material=col(headers,['Peças','Pecas','Peça','Peca','material','produto','codigo','item']);
+    const description=detailCol(headers,['Descrição','Descricao','description','Descripción','Descripcion','PartDescription','MaterialDescription','ProductDescription','ItemDescription','DescMaterial','DescPart','MaterialDesc','ItemDesc']);
+    if(!material||!description)return;
+    for(const row of rows){
+      const code=norm(row[material]);
+      const text=String(row[description]??'').trim();
+      if(code&&text)descriptions.set(code,text);
+    }
+  }
+  // Uma única leitura, usada tanto pela base automática quanto pelo Excel importado.
+  function referenceRows(){
+    if(!referencePromise){
+      referencePromise=(async()=>{
+        const response=await fetch(BASE+'?v='+Date.now(),{cache:'no-store'});
+        if(!response.ok)throw Error('Falha ao carregar a base ('+response.status+').');
+        const rows=workbook(await response.arrayBuffer());
+        cacheDescriptions(rows);
+        return rows;
+      })().catch(error=>{referencePromise=null;throw error;});
+    }
+    return referencePromise;
+  }
+
   function process(data){
     if(!data.length) throw Error('Nenhuma linha de dados encontrada.');
     const headers=Object.keys(data[0]);
     const exp=col(headers,['Expirationdate','validade','vencimento','exp']);
-    const piece=col(headers,['Peças','Pecas','material','produto','codigo','item'])||headers[0];
+    const piece=col(headers,['Peças','Pecas','Peça','Peca','material','produto','codigo','item'])||headers[0];
     const desc=detailCol(headers,['Descrição','Descricao','description','Descripción','Descripcion','PartDescription','MaterialDescription','ProductDescription','ItemDescription','Descrição do material','Descricao material','Descrição peça','Descricao peca','DescMaterial','DescPart','PartDesc','MaterialDesc','ItemDesc','Nome do material','Nome da peça','Nombre del material','PartName','ItemName']);
     const qty=col(headers,['Quantidade total','quantidade','qtd','qty']);
     const label=col(headers,['Etiqueta1','etiqueta 1','label2','label','etiqueta']);
@@ -462,7 +491,7 @@
       const pieceValue=String(row[piece]??'').trim()||'Sem identificação';
       const quantity=num(row[qty]);
       const expiration=parseDate(row[exp],dateOrder);
-      const description=desc?String(row[desc]??'').trim():'';
+      const description=(desc?String(row[desc]??'').trim():'')||descriptions.get(norm(pieceValue))||'';
       const labelValue=label?String(row[label]??'').trim():'';
       const position=pos?String(row[pos]??'').trim():'';
       const supplier=sup?String(row[sup]??'').trim():'';
@@ -498,10 +527,14 @@
     dashboard(labs.size,poss.size);
     setControls(true);
     filter();
-    const missing=[];
-    if(!desc||!data.some(row=>String(row[desc]??'').trim()))missing.push('descrição');
-    if(!pos||!data.some(row=>String(row[pos]??'').trim()))missing.push('posição');
-    banner(missing.length?'O Excel carregado não contém dados reconhecíveis de '+missing.join(' e ')+'. Verifique se essas colunas estão incluídas na exportação do WMS.':'');
+    const withoutDescription=all.filter(item=>!item.desc).map(item=>item.piece);
+    if(withoutDescription.length){
+      banner('Sem descrição cadastrada na base de referência para '+withoutDescription.length+
+        ' material(is): '+withoutDescription.slice(0,8).join(', ')+
+        (withoutDescription.length>8?'...':'')+'.');
+    }else if(!pos||!data.some(row=>String(row[pos]??'').trim())){
+      banner('O Excel carregado não contém dados reconhecíveis de posição.');
+    }else banner('');
   }
 
   function dashboard(labelCount,positionCount){
@@ -589,12 +622,12 @@
     source('Carregando base automática...');
     setControls(false);
     try{
-      const response=await fetch(`${BASE}?v=${Date.now()}`,{cache:'no-store'});
-      if(!response.ok) throw Error(`Falha ao carregar a base (${response.status}).`);
-      const rows=workbook(await response.arrayBuffer());
+      const rows=await referenceRows();
+      if(manualImportStarted)return;
       process(rows);
       source(`Base automática · ${rows.length} etiquetas`,'ready');
     }catch(error){
+      if(manualImportStarted)return;
       console.error(error);
       source('Base automática indisponível','error');
       $('count').textContent='Base não carregada';
@@ -607,11 +640,16 @@
   $('file').addEventListener('change',async event=>{
     const file=event.target.files?.[0];
     if(!file)return;
+    manualImportStarted=true;
     source('Lendo Excel...');
     setControls(false);
     banner('');
     try{
       const rows=workbook(await file.arrayBuffer());
+      // GridContainerPart tem código da Peça e Localização, mas não traz a descrição.
+      try{await referenceRows();}catch(error){
+        console.warn('Descrições da base de referência indisponíveis:',error);
+      }
       process(rows);
       source(`${file.name} · ${rows.length} etiquetas`,'ready');
       toast('Base de perecíveis atualizada com sucesso.','success');
