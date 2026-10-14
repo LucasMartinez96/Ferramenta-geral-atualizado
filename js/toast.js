@@ -101,25 +101,36 @@
   }
 
   function loadHtml2Canvas() {
+    if (typeof window.html2canvas === 'function') return Promise.resolve();
+    // Usa CDN alternativo se o primeiro estiver indisponível.
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+    ];
     return new Promise(function (resolve, reject) {
-      if (typeof window.html2canvas === 'function') { resolve(); return; }
-      var current = document.querySelector('script[data-perecivel-html2canvas]');
-      if (current) {
-        current.addEventListener('load', resolve, { once: true });
-        current.addEventListener('error', function () { reject(new Error('Não foi possível carregar o gerador de PNG.')); }, { once: true });
-        return;
+      var pending = document.querySelector('script[data-perecivel-html2canvas]');
+      if (pending) pending.remove();
+      function tryNext(i) {
+        if (i === sources.length) {
+          reject(new Error('Não foi possível carregar o gerador de PNG. Verifique sua conexão.'));
+          return;
+        }
+        var script = document.createElement('script');
+        script.src = sources[i];
+        script.async = true;
+        script.dataset.perecivelHtml2canvas = '1';
+        script.onload = function () {
+          if (typeof window.html2canvas === 'function') resolve();
+          else { script.remove(); tryNext(i + 1); }
+        };
+        script.onerror = function () { script.remove(); tryNext(i + 1); };
+        document.head.appendChild(script);
       }
-      var script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-      script.async = true;
-      script.dataset.perecivelHtml2canvas = '1';
-      script.onload = resolve;
-      script.onerror = function () { reject(new Error('Não foi possível carregar o gerador de PNG.')); };
-      document.head.appendChild(script);
+      tryNext(0);
     });
   }
 
-  function createExportBoard() {
+  function createExportBoard(page, size, totalPages, totalRows) {
     var kpis = document.querySelector('.kpis');
     var summary = document.querySelector('.summary');
     var table = document.querySelector('#tablewrap table');
@@ -130,7 +141,7 @@
     var board = document.createElement('div');
     board.setAttribute('aria-hidden', 'true');
     Object.assign(board.style, {
-      position: 'fixed', left: '-20000px', top: '0', width: '1400px',
+      position: 'absolute', left: '0', top: '0', width: '1400px', pointerEvents: 'none',
       background: '#ffffff', color: '#172033', padding: '32px',
       fontFamily: 'Inter, Segoe UI, Arial, sans-serif', zIndex: '-1'
     });
@@ -177,8 +188,18 @@
     Object.assign(tableCard.style, { border: '1px solid #dbe3ef', borderRadius: '14px', overflow: 'hidden', background: '#fff' });
     var tableTitle = document.createElement('div');
     tableTitle.innerHTML = '<div style="padding:16px 18px;border-bottom:1px solid #dbe3ef"><div style="font-size:18px;font-weight:800;color:#172033">Tabela de materiais perecíveis</div><div style="font-size:13px;color:#64748b;margin-top:4px">' + (count ? count.textContent : '') + '</div></div>';
+    if (totalPages > 1) {
+      tableTitle.querySelector('div > div:last-child').textContent =
+        'Registros ' + (firstRow + 1) + ' a ' + lastRow + ' de ' + totalRows +
+        ' · Parte ' + (page + 1) + '/' + totalPages;
+    }
     tableCard.appendChild(tableTitle);
     var tableClone = table.cloneNode(true);
+    var firstRow = page * size;
+    var lastRow = Math.min((page + 1) * size, totalRows);
+    var tableBody = tableClone.tBodies[0];
+    var selectedRows = Array.prototype.slice.call(tableBody.rows, firstRow, lastRow);
+    tableBody.replaceChildren.apply(tableBody, selectedRows);
     tableClone.style.width = '100%';
     tableClone.style.minWidth = '0';
     tableClone.style.fontSize = '12px';
@@ -194,62 +215,147 @@
     return board;
   }
 
+  // Agrupa as imagens em um único ZIP quando a lista ultrapassa uma página.
+  async function zipPngParts(parts) {
+    function wr16(buffer, i, value) {
+      buffer[i] = value & 255; buffer[i+1] = (value >>> 8) & 255;
+    }
+    function wr32(buffer, i, value) {
+      wr16(buffer, i, value & 65535); wr16(buffer, i+2, value >>> 16);
+    }
+    function crc32(data) {
+      var crc = 0xffffffff;
+      for (var i = 0; i < data.length; i++) {
+        crc ^= data[i];
+        for (var j = 0; j < 8; j++)
+          crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+      }
+      return (crc ^ 0xffffffff) >>> 0;
+    }
+    var files = [], catalog = [], offset = 0, catalogSize = 0;
+    for (var part of parts) {
+      var name = new TextEncoder().encode(part.name);
+      var data = new Uint8Array(await part.blob.arrayBuffer());
+      var crc = crc32(data);
+      var header = new Uint8Array(30 + name.length);
+      wr32(header, 0, 0x04034b50);
+      wr16(header, 4, 20);
+      wr32(header, 14, crc);
+      wr32(header, 18, data.length);
+      wr32(header, 22, data.length);
+      wr16(header, 26, name.length);
+      header.set(name, 30);
+      files.push(header, data);
+      var entry = new Uint8Array(46 + name.length);
+      wr32(entry, 0, 0x02014b50);
+      wr16(entry, 4, 20);
+      wr16(entry, 6, 20);
+      wr32(entry, 16, crc);
+      wr32(entry, 20, data.length);
+      wr32(entry, 24, data.length);
+      wr16(entry, 28, name.length);
+      wr32(entry, 42, offset);
+      entry.set(name, 46);
+      catalog.push(entry);
+      offset += header.length + data.length;
+      catalogSize += entry.length;
+    }
+    var end = new Uint8Array(22);
+    wr32(end, 0, 0x06054b50);
+    wr16(end, 8, parts.length); wr16(end, 10, parts.length);
+    wr32(end, 12, catalogSize); wr32(end, 16, offset);
+    return new Blob(files.concat(catalog, [end]), { type: 'application/zip' });
+  }
+
+  function downloadPngExport(file) {
+    var url = URL.createObjectURL(file);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+
   async function exportPngEmail(button) {
     var tableBody = document.getElementById('body');
-    if (!tableBody || !tableBody.children.length) {
+    if (!tableBody || !tableBody.rows.length) {
       if (window.showToast) window.showToast('Não há dados para exportar no momento.', 'warning');
       return;
     }
-
-    var oldText = button.textContent;
+    var oldLabel = button.textContent;
     var board = null;
     button.disabled = true;
-    button.textContent = 'Gerando PNG...';
     try {
       await loadHtml2Canvas();
-      board = createExportBoard();
-      document.body.appendChild(board);
-      var canvas = await window.html2canvas(board, { backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false });
-      var blob = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/png'); });
-      if (!blob) throw new Error('Não foi possível gerar o PNG.');
-
-      var now = new Date();
-      var fileName = 'dashboard_pereciveis_' + now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + '.png';
-      var file = new File([blob], fileName, { type: 'image/png' });
+      var total = tableBody.rows.length;
+      var pageSize = 35;
+      var totalPages = Math.ceil(total / pageSize);
+      var today = new Date();
+      var stem = 'dashboard_pereciveis_' + today.getFullYear() + '-' +
+        String(today.getMonth() + 1).padStart(2, '0') + '-' +
+        String(today.getDate()).padStart(2, '0');
+      var pages = [];
+      for (var page = 0; page < totalPages; page++) {
+        button.textContent = 'Gerando PNG ' + (page + 1) + '/' + totalPages + '...';
+        board = createExportBoard(page, pageSize, totalPages, total);
+        document.body.appendChild(board);
+        var canvas = await window.html2canvas(board, {
+          backgroundColor: '#fff', scale: 1.25, useCORS: true, logging: false,
+          scrollX: 0, scrollY: 0, windowWidth: 1480
+        });
+        var blob = await new Promise(function (done) { canvas.toBlob(done, 'image/png'); });
+        canvas.width = 0; canvas.height = 0;
+        board.remove(); board = null;
+        if (!blob) throw new Error('Falha ao gerar PNG, parte ' + (page + 1) + '.');
+        var suffix = totalPages === 1 ? '' : '_parte_' + String(page + 1).padStart(2, '0');
+        pages.push({ name: stem + suffix + '.png', blob: blob });
+      }
+      var file;
+      if (pages.length === 1) {
+        file = new File([pages[0].blob], pages[0].name, { type: 'image/png' });
+      } else {
+        var zip = await zipPngParts(pages);
+        file = new File([zip], stem + '_PNGs.zip', { type: 'application/zip' });
+      }
       var shared = false;
-
       if (navigator.share && navigator.canShare) {
         try {
           if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Dashboard de Perecíveis', text: 'Segue o dashboard de perecíveis em PNG com gráfico e tabela.' });
+            await navigator.share({
+              files: [file], title: 'Dashboard de Perecíveis',
+              text: pages.length > 1 ? 'Relatório completo em imagens PNG (ZIP).' : 'Dashboard de Perecíveis em PNG.'
+            });
             shared = true;
-            if (window.showToast) window.showToast('PNG pronto para compartilhamento.', 'success');
           }
-        } catch (shareError) {
-          if (shareError && shareError.name !== 'AbortError') console.warn(shareError);
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+          console.warn('Compartilhamento indisponível:', error);
         }
       }
-
-      if (!shared) {
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
-        var subject = encodeURIComponent('Dashboard de Perecíveis');
-        var body = encodeURIComponent('Segue o dashboard de perecíveis em PNG com gráfico e tabela.\n\nAnexe ao e-mail o arquivo PNG que foi baixado automaticamente.');
-        setTimeout(function () { window.location.href = 'mailto:?subject=' + subject + '&body=' + body; }, 350);
-        if (window.showToast) window.showToast('PNG gerado. O download foi iniciado e o e-mail foi aberto para anexar a imagem.', 'success');
+      if (shared) {
+        if (window.showToast) window.showToast('Relatório compartilhado.', 'success');
+        return;
       }
+      downloadPngExport(file);
+      if (window.showToast) window.showToast(
+        pages.length === 1
+          ? 'PNG salvo. Anexe o arquivo ao e-mail.'
+          : 'ZIP com ' + pages.length + ' imagens PNG e todos os ' + total + ' registros salvo. Anexe ao e-mail.',
+        'success'
+      );
+      var subject = encodeURIComponent('Dashboard de Perecíveis');
+      var message = encodeURIComponent('Segue o dashboard de perecíveis.\n\nAnexe o arquivo baixado: ' + file.name);
+      setTimeout(function () {
+        window.location.href = 'mailto:?subject=' + subject + '&body=' + message;
+      }, 350);
     } catch (error) {
-      console.error(error);
-      if (window.showToast) window.showToast(error.message || 'Falha ao gerar o PNG do dashboard.', 'error');
+      console.error('Falha na exportação de Perecíveis:', error);
+      if (window.showToast) window.showToast(error.message || 'Não foi possível exportar o PNG.', 'error');
     } finally {
-      if (board && board.parentNode) board.remove();
-      button.textContent = oldText;
+      if (board) board.remove();
+      button.textContent = oldLabel;
       button.disabled = false;
     }
   }
