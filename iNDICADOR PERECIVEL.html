@@ -357,6 +357,24 @@
     for(const name of names){const key=norm(name),partial=hs.find(h=>h.key.includes(key));if(partial)return partial.raw;}
     return null;
   }
+  // Compatibilidade com cabeçalhos alternativos dos relatórios do WMS.
+  // Usado somente para descrição e posição; demais campos seguem o mapeamento original.
+  function detailCol(headers,names){
+    const key=value=>norm(value).replace(/[^a-z0-9]/g,'');
+    const hs=headers.map(raw=>({raw,key:key(raw)}));
+    const aliases=names.map(key);
+    for(const alias of aliases){
+      const exact=hs.find(h=>h.key===alias);
+      if(exact)return exact.raw;
+    }
+    for(const alias of aliases){
+      if(alias.length<5)continue;
+      const partial=hs.find(h=>h.key.includes(alias));
+      if(partial)return partial.raw;
+    }
+    return null;
+  }
+
   function num(value){
     if(typeof value==='number') return isFinite(value)?value:0;
     if(value==null||value==='') return 0;
@@ -427,10 +445,10 @@
     const headers=Object.keys(data[0]);
     const exp=col(headers,['Expirationdate','validade','vencimento','exp']);
     const piece=col(headers,['Peças','Pecas','material','produto','codigo','item'])||headers[0];
-    const desc=col(headers,['Descrição','Descricao','description']);
+    const desc=detailCol(headers,['Descrição','Descricao','description','Descripción','Descripcion','PartDescription','MaterialDescription','ProductDescription','ItemDescription','Descrição do material','Descricao material','Descrição peça','Descricao peca','DescMaterial','DescPart','PartDesc','MaterialDesc','ItemDesc','Nome do material','Nome da peça','Nombre del material','PartName','ItemName']);
     const qty=col(headers,['Quantidade total','quantidade','qtd','qty']);
     const label=col(headers,['Etiqueta1','etiqueta 1','label2','label','etiqueta']);
-    const pos=col(headers,['Posição','Posicao','location','endereco']);
+    const pos=detailCol(headers,['Posição','Posicao','Posición','Posicion','Position','Ubicación','Ubicacion','Ubicaciones','Localização','Localizacao','Endereço','Endereco','Address','Location','Local de estoque','StorageBin','WarehouseBin','BinLocation','StockLocation','CurrentLocation','LocationCode','LocationName','BinAddress','BinPosition']);
     const sup=col(headers,['Origen1','origem','fornecedor','supplier']);
     if(!exp) throw Error('Coluna de validade não encontrada.');
     if(!qty) throw Error('Coluna de quantidade não encontrada.');
@@ -480,7 +498,10 @@
     dashboard(labs.size,poss.size);
     setControls(true);
     filter();
-    banner('');
+    const missing=[];
+    if(!desc||!data.some(row=>String(row[desc]??'').trim()))missing.push('descrição');
+    if(!pos||!data.some(row=>String(row[pos]??'').trim()))missing.push('posição');
+    banner(missing.length?'O Excel carregado não contém dados reconhecíveis de '+missing.join(' e ')+'. Verifique se essas colunas estão incluídas na exportação do WMS.':'');
   }
 
   function dashboard(labelCount,positionCount){
