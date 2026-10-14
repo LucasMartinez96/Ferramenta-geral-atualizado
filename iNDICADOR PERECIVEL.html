@@ -322,9 +322,25 @@
   const fmt=n=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n)||0);
   const dateBR=d=>d instanceof Date&&!isNaN(d)?d.toLocaleDateString('pt-BR'):'--/--/----';
   let chart=null,all=[];
-  // Cadastro histórico validado para item ausente da Base perecivel.xlsx atual.
-  // Um registro novo na base sempre prevalece sobre esta descrição de apoio.
-  const descriptions=new Map([['2208j1284','JUNTA DE SILICONE? * DOW CORNING 844 *']]);
+  // Cadastro permanente dos códigos classificados como perecíveis.
+  // Validado na Base perecivel.xlsx e no histórico de estoque.
+  // Uma importação Excel nunca altera esta classificação nem as descrições.
+  const PERECIVEIS=Object.freeze({
+    '076703':"TRAVA QUIMICA-LOCTITE 680 (EMBALAGEM 250 ML)",
+    '076785':"TB3924E ADESIVO ESTRUTURAL",
+    '076786':"TB3929E ADESIVO ESTRUTURAL",
+    '1199g4193':"GRAXA",
+    '1199p4072':"GRAXA - RENOLIT SI 708",
+    '2208j1284':"JUNTA DE SILICONE? * DOW CORNING 844 *",
+    '2297e9157':"LOCTITE (OZS)",
+    '2297j6926':"PASTA DE VEDACAO - LOCTITE 574",
+    '2297n8620':"JUNTA DE SILICONE  * DOW CORNING 7091 *",
+    '2297t8626':"PASTA DE TRAVAMENTO  *LOCTITE 243*",
+    '2297v9356':"ADHESIVE-USE AS REQD",
+    '990022':"TB1305 PASTA DE TRAVAMENTO-TORQUE ALTO",
+    'volvo8716744':"GRAXA"
+  });
+  const descriptions=new Map(Object.entries(PERECIVEIS));
   let referencePromise=null,manualImportStarted=false;
 
   function toast(message,type='info'){
@@ -444,19 +460,6 @@
     return [];
   }
 
-  // Cruzamento com o cadastro de descrições da base de Perecíveis.
-  function cacheDescriptions(rows){
-    if(!rows.length)return;
-    const headers=Object.keys(rows[0]);
-    const material=col(headers,['Peças','Pecas','Peça','Peca','material','produto','codigo','item']);
-    const description=detailCol(headers,['Descrição','Descricao','description','Descripción','Descripcion','PartDescription','MaterialDescription','ProductDescription','ItemDescription','DescMaterial','DescPart','MaterialDesc','ItemDesc']);
-    if(!material||!description)return;
-    for(const row of rows){
-      const code=norm(row[material]);
-      const text=String(row[description]??'').trim();
-      if(code&&text)descriptions.set(code,text);
-    }
-  }
   // Uma única leitura, usada tanto pela base automática quanto pelo Excel importado.
   function referenceRows(){
     if(!referencePromise){
@@ -464,7 +467,6 @@
         const response=await fetch(BASE+'?v='+Date.now(),{cache:'no-store'});
         if(!response.ok)throw Error('Falha ao carregar a base ('+response.status+').');
         const rows=workbook(await response.arrayBuffer());
-        cacheDescriptions(rows);
         return rows;
       })().catch(error=>{referencePromise=null;throw error;});
     }
@@ -487,13 +489,19 @@
     const dateOrder=order(data,exp);
     const today=new Date();
     today.setHours(0,0,0,0);
-    const map=new Map(),labs=new Set(),poss=new Set();
+    const map=new Map(),labs=new Set(),poss=new Set(),unregistered=new Set();
 
     for(const row of data){
       const pieceValue=String(row[piece]??'').trim()||'Sem identificação';
+      const key=norm(pieceValue);
+      // O WMS pode conter itens fora da lista; não são classificados como perecíveis.
+      if(!descriptions.has(key)){
+        unregistered.add(pieceValue);
+        continue;
+      }
       const quantity=num(row[qty]);
       const expiration=parseDate(row[exp],dateOrder);
-      const description=(desc?String(row[desc]??'').trim():'')||descriptions.get(norm(pieceValue))||'';
+      const description=descriptions.get(key)||'';
       const labelValue=label?String(row[label]??'').trim():'';
       const position=pos?String(row[pos]??'').trim():'';
       const supplier=sup?String(row[sup]??'').trim():'';
@@ -529,11 +537,9 @@
     dashboard(labs.size,poss.size);
     setControls(true);
     filter();
-    const withoutDescription=all.filter(item=>!item.desc).map(item=>item.piece);
-    if(withoutDescription.length){
-      banner('Sem descrição cadastrada na base de referência para '+withoutDescription.length+
-        ' material(is): '+withoutDescription.slice(0,8).join(', ')+
-        (withoutDescription.length>8?'...':'')+'.');
+    if(unregistered.size){
+      banner(unregistered.size+' código(s) fora do cadastro de perecíveis foram ignorados: '+
+        [...unregistered].slice(0,8).join(', ')+(unregistered.size>8?'...':'')+'.');
     }else if(!pos||!data.some(row=>String(row[pos]??'').trim())){
       banner('O Excel carregado não contém dados reconhecíveis de posição.');
     }else banner('');
@@ -648,10 +654,7 @@
     banner('');
     try{
       const rows=workbook(await file.arrayBuffer());
-      // GridContainerPart tem código da Peça e Localização, mas não traz a descrição.
-      try{await referenceRows();}catch(error){
-        console.warn('Descrições da base de referência indisponíveis:',error);
-      }
+      // Descrições permanentes: não dependem do conteúdo do Excel ou do WMS.
       process(rows);
       source(`${file.name} · ${rows.length} etiquetas`,'ready');
       toast('Base de perecíveis atualizada com sucesso.','success');
