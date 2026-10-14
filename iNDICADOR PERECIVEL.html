@@ -322,7 +322,9 @@
   const fmt=n=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n)||0);
   const dateBR=d=>d instanceof Date&&!isNaN(d)?d.toLocaleDateString('pt-BR'):'--/--/----';
   let chart=null,all=[];
-  const descriptions=new Map();
+  // Cadastro histórico validado para item ausente da Base perecivel.xlsx atual.
+  // Um registro novo na base sempre prevalece sobre esta descrição de apoio.
+  const descriptions=new Map([['2208j1284','JUNTA DE SILICONE? * DOW CORNING 844 *']]);
   let referencePromise=null,manualImportStarted=false;
 
   function toast(message,type='info'){
