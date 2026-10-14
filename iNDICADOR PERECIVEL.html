@@ -287,14 +287,14 @@
     <p class="scroll-hint" aria-hidden="true">Deslize para o lado para ver todas as colunas.</p>
     <div id="tablewrap" class="tablewrap">
       <table>
-        <caption class="sr-only">Materiais perecíveis consolidados por código</caption>
+        <caption class="sr-only">Registros individuais de materiais perecíveis</caption>
         <thead>
           <tr>
             <th scope="col">Material</th>
             <th scope="col">Descrição</th>
             <th scope="col">Vencimento</th>
             <th scope="col" class="num">Quantidade</th>
-            <th scope="col" class="num">Etiquetas</th>
+            <th scope="col">Etiqueta</th>
             <th scope="col">Posições</th>
             <th scope="col" class="num">Dias</th>
             <th scope="col">Status</th>
@@ -321,7 +321,7 @@
   const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   const fmt=n=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(Number(n)||0);
   const dateBR=d=>d instanceof Date&&!isNaN(d)?d.toLocaleDateString('pt-BR'):'--/--/----';
-  let chart=null,all=[];
+  let chart=null,all=[],details=[];
   // Cadastro permanente dos códigos classificados como perecíveis.
   // Validado na Base perecivel.xlsx e no histórico de estoque.
   // Uma importação Excel nunca altera esta classificação nem as descrições.
@@ -481,6 +481,8 @@
     const desc=detailCol(headers,['Descrição','Descricao','description','Descripción','Descripcion','PartDescription','MaterialDescription','ProductDescription','ItemDescription','Descrição do material','Descricao material','Descrição peça','Descricao peca','DescMaterial','DescPart','PartDesc','MaterialDesc','ItemDesc','Nome do material','Nome da peça','Nombre del material','PartName','ItemName']);
     const qty=col(headers,['Quantidade total','quantidade','qtd','qty']);
     const label=col(headers,['Etiqueta1','etiqueta 1','label2','label','etiqueta']);
+    // Cada caixa recebe a etiqueta individual; a contagem geral de etiquetas fica preservada.
+    const recordLabel=detailCol(headers,['Código da Origem','Codigo da Origem','Etiqueta1','Etiqueta 1','Label2','Etiqueta','Label']);
     const pos=detailCol(headers,['Posição','Posicao','Posición','Posicion','Position','Ubicación','Ubicacion','Ubicaciones','Localização','Localizacao','Endereço','Endereco','Address','Location','Local de estoque','StorageBin','WarehouseBin','BinLocation','StockLocation','CurrentLocation','LocationCode','LocationName','BinAddress','BinPosition']);
     const sup=col(headers,['Origen1','origem','fornecedor','supplier']);
     if(!exp) throw Error('Coluna de validade não encontrada.');
@@ -489,7 +491,7 @@
     const dateOrder=order(data,exp);
     const today=new Date();
     today.setHours(0,0,0,0);
-    const map=new Map(),labs=new Set(),poss=new Set(),unregistered=new Set();
+    const map=new Map(),labs=new Set(),poss=new Set(),unregistered=new Set(),individual=[];
 
     for(const row of data){
       const pieceValue=String(row[piece]??'').trim()||'Sem identificação';
@@ -503,6 +505,7 @@
       const expiration=parseDate(row[exp],dateOrder);
       const description=descriptions.get(key)||'';
       const labelValue=label?String(row[label]??'').trim():'';
+      const recordLabelValue=recordLabel?String(row[recordLabel]??'').trim():labelValue;
       const position=pos?String(row[pos]??'').trim():'';
       const supplier=sup?String(row[sup]??'').trim():'';
 
@@ -516,6 +519,16 @@
       if(position)item.positions.add(position);
       if(supplier)item.suppliers.add(supplier);
       if(expiration&&(!item.exp||expiration<item.exp))item.exp=expiration;
+
+      // Não agrupar na tabela: uma linha por registro original do Excel.
+      const days=expiration?Math.ceil((expiration-today)/DAY):null;
+      const [statusClass,statusLabel]=cls(days,quantity);
+      individual.push({
+        piece:pieceValue,desc:description,qty:quantity,exp:expiration,
+        labelText:recordLabelValue,positionsText:position,suppliersText:supplier,
+        labelsCount:recordLabelValue?1:0,
+        days,cls:statusClass,faixa:statusLabel
+      });
     }
 
     all=[...map.values()].map(item=>{
@@ -533,7 +546,9 @@
     });
 
     const priority={falta:0,vencido:1,d30:2,d60:3,semdata:4,ok:5};
-    all.sort((a,b)=>(priority[a.cls]-priority[b.cls])||((a.days??999999)-(b.days??999999))||a.piece.localeCompare(b.piece,'pt-BR'));
+    const byPriority=(a,b)=>(priority[a.cls]-priority[b.cls])||((a.days??999999)-(b.days??999999))||a.piece.localeCompare(b.piece,'pt-BR');
+    all.sort(byPriority);
+    details=individual.sort(byPriority);
     dashboard(labs.size,poss.size);
     setControls(true);
     filter();
@@ -612,7 +627,7 @@
         <td class="desc">${esc(row.desc||'—')}</td>
         <td>${esc(row.exp?dateBR(row.exp):'—')}</td>
         <td class="num">${esc(fmt(row.qty))}</td>
-        <td class="num">${esc(fmt(row.labelsCount))}</td>
+        <td class="code">${esc(row.labelText||'—')}</td>
         <td class="muted">${esc(row.positionsText||'—')}</td>
         <td class="num">${esc(row.days==null?'—':fmt(row.days))}</td>
         <td><span class="badge ${row.cls}">${esc(row.faixa)}</span></td>
@@ -621,9 +636,9 @@
 
   function filter(){
     const query=norm($('search').value),status=$('status').value;
-    const rows=all.filter(row=>(status==='all'||row.cls===status)&&(!query||norm([row.piece,row.desc,row.positionsText,row.suppliersText].join(' ')).includes(query)));
+    const rows=details.filter(row=>(status==='all'||row.cls===status)&&(!query||norm([row.piece,row.desc,row.labelText,row.positionsText,row.suppliersText].join(' ')).includes(query)));
     render(rows);
-    $('count').textContent=all.length?`Mostrando ${fmt(rows.length)} de ${fmt(all.length)} materiais`:'Nenhum dado carregado';
+    $('count').textContent=details.length?`Mostrando ${fmt(rows.length)} de ${fmt(details.length)} registros`:'Nenhum dado carregado';
   }
 
   async function loadDefault(){
