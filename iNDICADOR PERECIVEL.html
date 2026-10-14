@@ -509,7 +509,7 @@
       const position=pos?String(row[pos]??'').trim():'';
       const supplier=sup?String(row[sup]??'').trim():'';
 
-      if(labelValue)labs.add(labelValue);
+      if(recordLabelValue)labs.add(recordLabelValue);
       if(position)poss.add(position);
       if(!map.has(pieceValue))map.set(pieceValue,{piece:pieceValue,desc:'',qty:0,exp:null,labels:new Set(),positions:new Set(),suppliers:new Set()});
       const item=map.get(pieceValue);
