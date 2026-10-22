@@ -1,0 +1,15 @@
+# Evitar novos uploads acidentais de credenciais e dados operacionais.
+# Arquivos ja publicados nao sao apagados por este ignore.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.key
+backups/
+private/
+*.xlsx
+*.xls
+*.csv
+*.zip
