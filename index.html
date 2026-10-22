@@ -87,7 +87,7 @@
         <div class="users-inner">
           <div class="users-header"><h2>Gestão de Usuários</h2><p>Administração dos acessos já existentes no sistema.</p></div>
           <div class="users-grid">
-            <div class="users-card"><h3>Criar usuário</h3><div class="users-form"><input id="emailNovo" type="email" placeholder="Email" autocomplete="email"><input id="senhaNovo" type="password" placeholder="Senha" autocomplete="new-password"><select id="tipoNovo"><option value="admin">Admin</option><option value="operador">Operador</option></select><button class="btn btn-primary" type="button" onclick="criarUsuario()">Criar usuário</button></div></div>
+            <div class="users-card"><h3>Cadastro controlado</h3><p>Por segurança, contas e permissões administrativas devem ser gerenciadas por um administrador autorizado no serviço de autenticação. O cadastro pelo navegador foi suspenso.</p></div>
             <div class="users-card"><h3>Usuários cadastrados</h3><div class="users-table-wrap"><table class="users-table"><thead><tr><th>Email</th><th>Tipo</th><th>Ação</th></tr></thead><tbody id="listaUsuarios"></tbody></table></div></div>
           </div>
         </div>
@@ -100,8 +100,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA88k9VQ3rjNt7OWTVwLYenrA0R4wwtPGs",
@@ -170,36 +170,68 @@ window.abrirPorCard = (card)=>{ const page=card.dataset.cardPage; abrir(page,nav
 window.ativarCardTeclado = (event,card)=>{ if(event.key==="Enter" || event.key===" "){ event.preventDefault(); abrirPorCard(card); } };
 frame.addEventListener("load",()=>{ aplicarPadraoVisualNoFrame(); if(frame.style.display!=="none"){ frame.style.opacity="1"; loading.style.display="none"; } });
 
+// Admin somente mediante perfil já provisionado. Nunca autoconceder privilégios.
+let currentAdmin = false;
+const navUsers = document.getElementById("navUsers");
+navUsers.style.display = "none";
+function exigirAdmin(){
+  if(currentAdmin && auth.currentUser) return true;
+  window.alert("Acesso restrito: perfil de administrador autorizado necessário.");
+  return false;
+}
+
 window.abrirPainel = (el)=>{
+  if(!exigirAdmin()) return;
   setActive(el); frame.style.display="none"; homePanel.style.display="none"; panel.style.display="block"; loading.style.display="none";
-  setContext("Gestão de Usuários","Administração dos acessos existentes"); fecharMenu();
+  setContext("Gestão de Usuários","Consulta de acessos autorizados"); fecharMenu();
 };
 
 onAuthStateChanged(auth, async(user)=>{
+  currentAdmin = false;
+  navUsers.style.display = "none";
   if(!user){ location="login.html"; return; }
-  document.getElementById("user").innerText = user.email;
-  const ref = doc(db,"usuarios",user.uid); const snap = await getDoc(ref);
-  if(!snap.exists()) await setDoc(ref,{ email:user.email, tipo:"admin" });
-  carregarUsuarios();
+  document.getElementById("user").textContent = user.email || "Usuário autenticado";
+  try {
+    const snap=await getDoc(doc(db,"usuarios",user.uid));
+    currentAdmin = snap.exists() && snap.data()?.tipo === "admin";
+    navUsers.style.display = currentAdmin ? "" : "none";
+    if(currentAdmin) await carregarUsuarios();
+  } catch (_) {
+    // Falha na consulta NUNCA habilita privilégios.
+    console.warn("Perfil administrativo indisponível; acesso de gestão bloqueado.");
+  }
   const ultima = localStorage.getItem("pagina");
   if(ultima && TOOLS[ultima]) abrir(ultima,navForPage(ultima));
   else { if(ultima) localStorage.removeItem("pagina"); mostrarInicio(document.getElementById("navHome"),false); }
 });
 
-window.criarUsuario = async()=>{
-  const email = document.getElementById('emailNovo').value;
-  const senha = document.getElementById('senhaNovo').value;
-  const tipo = document.getElementById('tipoNovo').value;
-  const cred = await createUserWithEmailAndPassword(auth,email,senha);
-  await setDoc(doc(db,"usuarios",cred.user.uid),{ email, tipo });
-  carregarUsuarios();
-};
+// Criação, alteração e remoção de contas exigem backend privilegiado e regras Firestore.
+// Essas operações não podem ser executadas de forma segura diretamente do navegador.
+window.criarUsuario = ()=>{ if(exigirAdmin()) alert("Cadastro suspenso. Solicite o provisionamento no Firebase Admin SDK/backend autorizado."); };
 async function carregarUsuarios(){
-  const query = await getDocs(collection(db,"usuarios")); const linhas = [];
-  query.forEach(docu=>{ const u = docu.data(); linhas.push(`<tr><td>${escHtml(u.email)}</td><td>${escHtml(u.tipo)}</td><td><button class="btn btn-danger btn-sm" onclick="remover('${escHtml(docu.id)}')">Excluir</button></td></tr>`); });
-  document.getElementById('listaUsuarios').innerHTML = linhas.join("");
+  if(!currentAdmin || !auth.currentUser) return;
+  const tbody=document.getElementById("listaUsuarios");
+  try {
+    const snapshot=await getDocs(collection(db,"usuarios"));
+    const rows=[];
+    snapshot.forEach(entry=>{
+      const u=entry.data();
+      const tr=document.createElement("tr");
+      for(const value of [u.email || "", u.tipo || "", "Alterações somente no servidor"]){
+        const td=document.createElement("td"); td.textContent=String(value); tr.appendChild(td);
+      }
+      rows.push(tr);
+    });
+    tbody.replaceChildren(...rows);
+  } catch (_) {
+    tbody.replaceChildren();
+    const tr=document.createElement("tr");
+    const td=document.createElement("td"); td.colSpan=3;
+    td.textContent="Consulta de usuários indisponível. Verifique as permissões do banco.";
+    tr.appendChild(td); tbody.appendChild(tr);
+  }
 }
-window.remover = async(id)=>{ await deleteDoc(doc(db,"usuarios",id)); carregarUsuarios(); };
+window.remover = ()=>{ if(exigirAdmin()) alert("Exclusão de usuários suspensa no navegador. Use o backend administrativo autorizado."); };
 window.logout = ()=>{ signOut(auth).then(()=>location="login.html"); };
 </script>
 </body>
